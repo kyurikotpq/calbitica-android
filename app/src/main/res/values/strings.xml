@@ -1,0 +1,8 @@
+<resources>
+    <!--Default name when created-->
+    <string name="app_name">Calbitica Android</string>
+
+    <!--Define Open and Close Navigation bar here-->
+    <string name="navigation_open">Open navigation</string>
+    <string name="navigation_close">Close navigation</string>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:icon="@drawable/more"
+        android:title=""
+        app:showAsAction="always">
+
+        <menu xmlns:android="http://schemas.android.com/apk/res/android">
+            <item
+                android:id="@+id/nav_week"
+                android:icon="@drawable/week"
+                android:title="Week"
+                app:showAsAction="ifRoom" />
+
+            <item
+                android:id="@+id/nav_schedule"
+                android:icon="@drawable/schedule"
+                android:title="Schedule"
+                app:showAsAction="ifRoom" />
+        </menu>
+    </item>
+</menu>
