@@ -5,4 +5,22 @@
     <!--Define Open and Close Navigation bar here-->
     <string name="navigation_open">Open navigation</string>
     <string name="navigation_close">Close navigation</string>
+
+    <!--Event color drop-down-->
+    <string-array name="color">
+        <item>Teal 1</item>
+        <item>Teal 2</item>
+        <item>Orange 1</item>
+        <item>Orange 2</item>
+        <item>Blue 1</item>
+        <item>Blue 2</item>
+        <item>Purple 1</item>
+        <item>Purple 2</item>
+        <item>Pink 1</item>
+        <item>Pink 2</item>
+        <item>Red 1</item>
+        <item>Red 2</item>
+        <item>Green 1</item>
+        <item>Green 2</item>
+    </string-array>
 </resources>

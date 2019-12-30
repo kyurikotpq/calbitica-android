@@ -1,19 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/c_pink_2"
     android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Week View"
-        android:layout_gravity="center"
-        android:textSize="30sp" />
-
-    <com.applandeo.materialcalendarview.CalendarView
-        android:id="@+id/bigCalendar"
+    <LinearLayout
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:background="@color/c_pink_2">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Week View"
+            android:textSize="30sp" />
+    </LinearLayout>
+
+    <com.alamkanak.weekview.WeekView
+        android:id="@+id/weekView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:eventTextColor="@color/blue_1"
+        app:textSize="12sp"
+        app:hourHeight="60dp"
+        app:headerColumnPadding="8dp"
+        app:headerColumnTextColor="@color/teal_1"
+        app:headerRowPadding="12dp"
+        app:columnGap="8dp"
+        app:noOfVisibleDays="7"
+        app:todayHeaderTextColor="@color/red_1"
+        app:headerRowBackgroundColor="@color/white"
+        app:dayBackgroundColor="@color/cardview_dark_background"
+        app:todayBackgroundColor="@color/green_1"/>
+
+    <!--Month Calendar, Need install from previous libraries first-->
+    <!--    <com.prolificinteractive.materialcalendarview.MaterialCalendarView-->
+    <!--        android:id="@+id/bigCalendar"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        app:mcv_showOtherDates="all"-->
+    <!--        app:mcv_calendarMode="week"-->
+    <!--        app:mcv_tileHeight="26dp"-->
+    <!--        app:mcv_selectionColor="@color/colorPrimary"/>-->
 </LinearLayout>
