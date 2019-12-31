@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "829888365188",
-    "firebase_url": "https://calbitica-android-e9ecb.firebaseio.com",
-    "project_id": "calbitica-android-e9ecb",
-    "storage_bucket": "calbitica-android-e9ecb.appspot.com"
+    "project_number": "817950820521",
+    "firebase_url": "https://calbitica-android-ddaae.firebaseio.com",
+    "project_id": "calbitica-android-ddaae",
+    "storage_bucket": "calbitica-android-ddaae.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:829888365188:android:d7e211c58950ee39a638d1",
+        "mobilesdk_app_id": "1:817950820521:android:3bcce2029d1c1ae88f81b8",
         "android_client_info": {
           "package_name": "edu.nyp.calbiticaandroid"
         }
       },
       "oauth_client": [
         {
-          "client_id": "829888365188-2kkka0jb0ehpu4uameevr9v9emd6h359.apps.googleusercontent.com",
+          "client_id": "817950820521-picgopbn6j3q9jpnjrsv54218ru63b3f.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "edu.nyp.calbiticaandroid",
@@ -23,20 +23,20 @@
           }
         },
         {
-          "client_id": "829888365188-9ugf08i2m9t54oo792bt5vc6mmkoucsf.apps.googleusercontent.com",
+          "client_id": "817950820521-3elnsunbcbfqc5bc7kh5g8t6b71lumoa.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCfi-Yg6L2oR8mYeggObZnhn1s9MwQYfSM"
+          "current_key": "AIzaSyDN1W7EYuRb2LBQUxTAFhIop9yxOf7TLTI"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "829888365188-9ugf08i2m9t54oo792bt5vc6mmkoucsf.apps.googleusercontent.com",
+              "client_id": "817950820521-3elnsunbcbfqc5bc7kh5g8t6b71lumoa.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

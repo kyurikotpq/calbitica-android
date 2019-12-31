@@ -12,7 +12,7 @@
         tools:replace="android:theme">
         <!-- Splash Screen Page -->
         <activity
-            android:name=".SplashScreen"
+            android:name=".SplashScreen.SplashScreen"
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,8 +21,10 @@
             </intent-filter>
         </activity>
         <!-- Fixed Main Page of Navigation Bar -->
-        <activity android:name=".NavigationBar" />
+        <activity android:name=".Navigation_Bar.NavigationBar" />
         <!-- WeekFragment CreateEvent Page-->
-        <activity android:name=".Week_CreateEvent" />
+        <activity android:name=".Week_Calendar.Week_CreateEvent" />
+        <!-- WeekFragment EditEvent Page-->
+        <activity android:name=".Week_Calendar.Week_EditEvent" />
     </application>
 </manifest>

@@ -1,4 +1,4 @@
-package edu.nyp.calbiticaandroid;
+package edu.nyp.calbiticaandroid.Navigation_Bar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -6,6 +6,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import edu.nyp.calbiticaandroid.Google_Acccount.LogoutFragment;
+import edu.nyp.calbiticaandroid.Help.HelpFragment;
+import edu.nyp.calbiticaandroid.R;
+import edu.nyp.calbiticaandroid.Schedule_Calendar.ScheduleFragment;
+import edu.nyp.calbiticaandroid.Settings.SettingsFragment;
+import edu.nyp.calbiticaandroid.Week_Calendar.WeekFragment;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;

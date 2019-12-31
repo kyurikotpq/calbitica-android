@@ -1,8 +1,9 @@
-package edu.nyp.calbiticaandroid;
+package edu.nyp.calbiticaandroid.Week_Calendar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import edu.nyp.calbiticaandroid.R;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
@@ -19,18 +20,16 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.UUID;
 
 public class Week_CreateEvent extends AppCompatActivity {
-    Toolbar toolbar = null;
-    ImageView close = null;
     EditText title = null;
-    Spinner color = null;
-    int colorText = 0;
-    TextView startDate, startTime, endDate, endTime = null;
+    JSONObject colorInfo = new JSONObject();
     Calendar startDateTime, endDateTime = null;
     WeekViewEvent event = null;
     edu.nyp.calbiticaandroid.Database.Firebase firebase;
@@ -58,12 +57,12 @@ public class Week_CreateEvent extends AppCompatActivity {
         }
 
         // Default the text will be Calbitica Android, by setting as empty for custom TextView to be shown instead
-        toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("");
 
         // When click the cross image, will go back to WeekFragment
-        close = findViewById(R.id.nav_Close);
+        ImageView close = (ImageView) findViewById(R.id.nav_Close);
         close.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -71,67 +70,151 @@ public class Week_CreateEvent extends AppCompatActivity {
             }
         });
 
-        // When selected the drop-down, the background color will change accordingly
-        color = findViewById(R.id.color);
+        // When selected the Spinner drop-down, the background color will change accordingly
+        Spinner color = (Spinner) findViewById(R.id.color);
         color.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
                     case 0:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_teal_1));
-                        colorText = getResources().getColor(R.color.c_teal_1);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_teal_1));
+                            colorInfo.put("colorText", "Teal 1");
+                            colorInfo.put("colorPosition", 0);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 1:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_teal_2));
-                        colorText = getResources().getColor(R.color.c_teal_2);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_teal_2));
+                            colorInfo.put("colorText", "Teal 2");
+                            colorInfo.put("colorPosition", 1);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 2:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_orange_1));
-                        colorText = getResources().getColor(R.color.c_orange_1);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_orange_1));
+                            colorInfo.put("colorText", "Orange 1");
+                            colorInfo.put("colorPosition", 2);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 3:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_orange_2));
-                        colorText = getResources().getColor(R.color.c_orange_2);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_orange_2));
+                            colorInfo.put("colorText", "Orange 2");
+                            colorInfo.put("colorPosition", 3);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 4:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_blue_1));
-                        colorText = getResources().getColor(R.color.c_blue_1);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_blue_1));
+                            colorInfo.put("colorText", "Blue 1");
+                            colorInfo.put("colorPosition", 4);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 5:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_blue_2));
-                        colorText = getResources().getColor(R.color.c_blue_2);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_blue_2));
+                            colorInfo.put("colorText", "Blue 2");
+                            colorInfo.put("colorPosition", 5);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 6:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_purple_1));
-                        colorText = getResources().getColor(R.color.c_purple_1);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_purple_1));
+                            colorInfo.put("colorText", "Purple 1");
+                            colorInfo.put("colorPosition", 6);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 7:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_purple_2));
-                        colorText = getResources().getColor(R.color.c_purple_2);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_purple_2));
+                            colorInfo.put("colorText", "Purple 2");
+                            colorInfo.put("colorPosition", 7);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 8:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_pink_1));
-                        colorText = getResources().getColor(R.color.c_pink_1);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_pink_1));
+                            colorInfo.put("colorText", "Pink 1");
+                            colorInfo.put("colorPosition", 8);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 9:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_pink_2));
-                        colorText = getResources().getColor(R.color.c_pink_2);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_pink_2));
+                            colorInfo.put("colorText", "Pink 2");
+                            colorInfo.put("colorPosition", 9);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 10:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_red_1));
-                        colorText = getResources().getColor(R.color.c_red_1);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_red_1));
+                            colorInfo.put("colorText", "Red 1");
+                            colorInfo.put("colorPosition", 10);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 11:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_red_2));
-                        colorText = getResources().getColor(R.color.c_red_2);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_red_2));
+                            colorInfo.put("colorText", "Red 2");
+                            colorInfo.put("colorPosition", 11);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 12:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_green_1));
-                        colorText = getResources().getColor(R.color.c_green_1);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_green_1));
+                            colorInfo.put("colorText", "Green 1");
+                            colorInfo.put("colorPosition", 12);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case 13:
                         parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_green_2));
-                        colorText = getResources().getColor(R.color.c_green_2);
+                        try {
+                            colorInfo.put("color", getResources().getColor(R.color.c_green_2));
+                            colorInfo.put("colorText", "Green 2");
+                            colorInfo.put("colorPosition", 13);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                         break;
                 }
             }
@@ -143,7 +226,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // Prompt the Start Date Picker to choose
-        startDate = findViewById(R.id.startDate);
+        final TextView startDate = (TextView) findViewById(R.id.startDate);
         startDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -164,7 +247,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // Prompt the Start Time Picker to choose
-        startTime = findViewById(R.id.startTime);
+        final TextView startTime = (TextView) findViewById(R.id.startTime);
         startTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -200,7 +283,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         }
 
         // Prompt the End Date Picker to choose
-        endDate = findViewById(R.id.endDate);
+        final TextView endDate = (TextView) findViewById(R.id.endDate);
         endDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -221,7 +304,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // Prompt the End Time Picker to choose
-        endTime = findViewById(R.id.endTime);
+        final TextView endTime = (TextView) findViewById(R.id.endTime);
         endTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -271,18 +354,26 @@ public class Week_CreateEvent extends AppCompatActivity {
         if (item.getItemId() == R.id.ok) {
             if(title.getText().toString().equals("")) {
                 Toast.makeText(Week_CreateEvent.this,"Please enter your title", Toast.LENGTH_SHORT).show();
+            } else if (startDateTime.getTime().getTime() >= endDateTime.getTime().getTime()) {
+                // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
+                Toast.makeText(Week_CreateEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
             } else {
                 long calendarID = (UUID.randomUUID().getMostSignificantBits());
 
                 // Create a new event.
                 // calendarID -> random generate long id(unique), name -> event title
                 event = new WeekViewEvent(calendarID, title.getText().toString(), startDateTime, endDateTime);
-                event.setColor(colorText);
+                try {
+                    int colorText = (Integer) colorInfo.get("color");
+                    event.setColor(colorText);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 WeekFragment.mNewEvents.add(event);
 
                 // Save in Firebase
                 firebase = new edu.nyp.calbiticaandroid.Database.Firebase();
-                firebase.saveInFirebase(calendarID, title.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), String.valueOf(colorText));
+                firebase.saveInFirebase(calendarID, title.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
 
                 // Refresh the week view. onMonthChange will be called again.
                 WeekFragment.weekView.notifyDatasetChanged();

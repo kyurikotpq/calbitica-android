@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+// For Firebase
 apply plugin: 'com.google.gms.google-services'
 
 android {
@@ -6,7 +7,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "edu.nyp.calbiticaandroid"
-        minSdkVersion 16
+        minSdkVersion 24    // -> For firebase getOrDefault function(Able to retrieve the key of the checking values(Important)), previously is 16
         targetSdkVersion 27 // -> For the week calendar to work, previously is 29
         versionCode 1
         versionName "1.0"
@@ -15,9 +16,9 @@ android {
     }
     buildTypes {
         release {
+            // Modify a bit from the firstly created
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // Modify a bit from the firstly created
         }
     }
 }
@@ -35,6 +36,8 @@ dependencies {
 //    implementation 'com.github.prolificinteractive:material-calendarview:2.0.0'
     // Added Firebase libraries
     implementation 'com.google.firebase:firebase-database:16.0.5'
+    // Added JSON format for firebase
+    implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.0.2'

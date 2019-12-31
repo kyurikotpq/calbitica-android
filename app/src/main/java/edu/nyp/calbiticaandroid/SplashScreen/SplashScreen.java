@@ -1,7 +1,8 @@
-package edu.nyp.calbiticaandroid;
+package edu.nyp.calbiticaandroid.SplashScreen;
 
 import androidx.appcompat.app.AppCompatActivity;
-
+import edu.nyp.calbiticaandroid.Navigation_Bar.NavigationBar;
+import edu.nyp.calbiticaandroid.R;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;

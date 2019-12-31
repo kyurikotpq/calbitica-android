@@ -1,10 +1,10 @@
 # calbitica-android
 
-## * Using Fixed Firebase Account for now(for Group Project, and convenience)
-* Please refer to: https://cdn.discordapp.com/attachments/646719733730639917/661096924018901002/Calbitica_Firebase_Account.txt
-
-## Reference Links: https://github.com/alamkanak/Android-Week-View/issues/541
-* Example: change "targetSdkVersion" 28 to 27 from app level build.gradle(from one of the comment in the link)
+## Take Notes:
+* Reference Links: https://github.com/alamkanak/Android-Week-View/issues/541
+    * Example: change "targetSdkVersion" 28 to 27 from app level build.gradle(from one of the comment in the link)
+* minSdkVersion 24 -> For firebase getOrDefault function(Able to retrieve the key of the checking values(Important)), previously is version 16
+* Refer to your Google Account(firebase website) to read/edit the database(Shared)
 * File → Settings → Build, Excecution, Deployment
     * Sync Project with Gradle before building, if needed(Tick this), to prevent Java Compiler Issue
     
