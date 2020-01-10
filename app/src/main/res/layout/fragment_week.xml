@@ -35,14 +35,4 @@
         app:headerRowBackgroundColor="@color/white"
         app:dayBackgroundColor="@color/cardview_dark_background"
         app:todayBackgroundColor="#ebeb34"/>
-
-    <!--Month Calendar, Need install from previous libraries first-->
-    <!--    <com.prolificinteractive.materialcalendarview.MaterialCalendarView-->
-    <!--        android:id="@+id/bigCalendar"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        app:mcv_showOtherDates="all"-->
-    <!--        app:mcv_calendarMode="week"-->
-    <!--        app:mcv_tileHeight="26dp"-->
-    <!--        app:mcv_selectionColor="@color/colorPrimary"/>-->
 </LinearLayout>

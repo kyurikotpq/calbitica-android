@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="edu.nyp.calbiticaandroid">
+    package="com.calbitica.app">
+
+    <!-- Internet Access for the Google Account(MUST)-->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -12,7 +16,7 @@
         tools:replace="android:theme">
         <!-- Splash Screen Page -->
         <activity
-            android:name=".SplashScreen.SplashScreen"
+            android:name="com.calbitica.app.SplashScreen.SplashScreen"
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,11 +24,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Login Google Account Page-->
+        <activity android:name="com.calbitica.app.Google_Acccount.SignInActivity" />
         <!-- Fixed Main Page of Navigation Bar -->
-        <activity android:name=".Navigation_Bar.NavigationBar" />
+        <activity android:name="com.calbitica.app.Navigation_Bar.NavigationBar" />
         <!-- WeekFragment CreateEvent Page-->
-        <activity android:name=".Week_Calendar.Week_CreateEvent" />
+        <activity android:name="com.calbitica.app.Week_Calendar.Week_CreateEvent" />
         <!-- WeekFragment EditEvent Page-->
-        <activity android:name=".Week_Calendar.Week_EditEvent" />
+        <activity android:name="com.calbitica.app.Week_Calendar.Week_EditEvent" />
     </application>
 </manifest>

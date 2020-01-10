@@ -7,6 +7,7 @@
 * Refer to your Google Account(firebase website) to read/edit the database(Shared)
 * File → Settings → Build, Excecution, Deployment
     * Sync Project with Gradle before building, if needed(Tick this), to prevent Java Compiler Issue
+* Uninstall the app from the emulator, then clean and rebuild, re-run the android studio to get our app logo/icons
     
 ## To use more for individual project(Optional):
 ```

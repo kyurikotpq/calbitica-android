@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:817950820521:android:3bcce2029d1c1ae88f81b8",
         "android_client_info": {
-          "package_name": "edu.nyp.calbiticaandroid"
+          "package_name": "com.calbitica.app"
         }
       },
       "oauth_client": [
@@ -43,6 +43,6 @@
         }
       }
     }
-  ],
+  ],    
   "configuration_version": "1"
 }
