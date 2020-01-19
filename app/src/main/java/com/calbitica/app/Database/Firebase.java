@@ -1,6 +1,7 @@
 package com.calbitica.app.Database;
 
 import com.alamkanak.weekview.WeekViewEvent;
+import com.calbitica.app.Navigation_Bar.NavigationBar;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 import com.github.tibolte.agendacalendarview.models.CalendarEvent;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -57,16 +58,19 @@ public class Firebase {
 
     // Get the week events from firebase, only render once(will be discard after that)
     public void getWeekEventsFromFirebase() {
-        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child("Calbitica").child("Calendar");
+        // Pin-point the location of the data that you want
+        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
         firebase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
+                    // Get the unique key for each, due to cannot pin-point the unique value
                     Map<String, String> eventData = (Map<String, String>) dataSnapshot.getValue();
                     for (String key : eventData.keySet()) {
                         Object data = eventData.get(key);
 
                         try {
+                            // Retrieve as a object, easier to do the conversion
                             HashMap<String, Object> eventObject = (HashMap<String, Object>) data;
 
                             long calendarID = (long) eventObject.get("calendarID");
@@ -85,7 +89,7 @@ public class Firebase {
                                 e.printStackTrace();
                             }
 
-                            // Getting the JSON Object from colorInfo, based on key
+                            // Getting the JSON Object from colorInfo, based on key again
                             HashMap<String, Object> colorObject = (HashMap<String, Object>) eventObject.get("colorInfo");
                             String colorText = colorObject.get("color").toString();
                             int color = Integer.parseInt(colorText);
@@ -94,6 +98,8 @@ public class Firebase {
                             WeekViewEvent weekEvents = new WeekViewEvent(calendarID, title, startDateTime, endDateTime);
                             weekEvents.setColor(color);
                             WeekFragment.mNewEvents.add(weekEvents);
+
+                            // Refresh the Week Calendar
                             WeekFragment.weekView.notifyDatasetChanged();
                         } catch (ClassCastException cce) {
                             // If the object can’t be casted into HashMap, it means that it is of type String.
@@ -132,7 +138,7 @@ public class Firebase {
         Map<String, Object> colorMap = new Gson().fromJson(colorInfo.toString(), new TypeToken<HashMap<String, Object>>() {}.getType());
         data.setColorInfo(colorMap);
 
-        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child("Calbitica").child("Calendar");
+        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
         // push -> automatically create a firebase unique id
         firebase.push().setValue(data).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
@@ -150,15 +156,17 @@ public class Firebase {
     // Update week event in Firebase with the new data
     public void updateWeekEventInFirebase(final long calendarID, final String title, final String startDateTime, final String endDateTime, final JSONObject colorInfo) {
         // Getting all the firebase data again to do the check and save the firebase id accordingly
-        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child("Calbitica").child("Calendar");
+        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
         firebase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
+                    // Get the unique key for each, due to cannot pin-point the unique value
                     Map<String, String> eventData = (Map<String, String>) dataSnapshot.getValue();
                     for (String key : eventData.keySet()) {
                         Object data = eventData.get(key);
                         try {
+                            // Retrieve as a object, easier to do the conversion
                             HashMap<String, Object> eventObject = (HashMap<String, Object>) data;
 
                             // Making use of calendarID to do the checking(Unique id also)
@@ -181,7 +189,7 @@ public class Firebase {
                                 firebaseData.setColorInfo(colorMap);
 
                                 // Adding one more child according to the parent key, to change the respective update values
-                                DatabaseReference fire = FirebaseDatabase.getInstance().getReference().child("Calbitica").child("Calendar");
+                                DatabaseReference fire = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
                                 fire.child(firebaseID).setValue(firebaseData).addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
@@ -217,15 +225,17 @@ public class Firebase {
     // Delete week event from Firebase with the existing data
     public void deleteWeekEventFromFirebase (final long calendarID) {
         // Getting all the firebase data again to do the check and delete using firebase id accordingly
-        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child("Calbitica").child("Calendar");
+        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
         firebase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
+                    // Get the unique key for each, due to cannot pin-point the unique value
                     Map<String, String> eventData = (Map<String, String>) dataSnapshot.getValue();
                     for (String key : eventData.keySet()) {
                         Object data = eventData.get(key);
                         try {
+                            // Retrieve as a object, easier to do the conversion
                             HashMap<String, Object> eventObject = (HashMap<String, Object>) data;
 
                             // Making use of calendarID to do the checking(Unique id also)
@@ -237,7 +247,7 @@ public class Firebase {
                                 String firebaseID = eventData.getOrDefault(eventData.keySet(), key);
 
                                 // Deleting by using the parent key, to remove the whole of the child values
-                                DatabaseReference fire = FirebaseDatabase.getInstance().getReference().child("Calbitica").child("Calendar");
+                                DatabaseReference fire = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
                                 fire.child(firebaseID).removeValue().addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
@@ -273,16 +283,18 @@ public class Firebase {
     // Get the schedule events from firebase, only render once(will be discard after that)
     public void getScheduleEventsFromFirebase(final List<CalendarEvent> eventList) {
         // Get the events from firebase, only render once(will be discard after that)
-        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child("Calbitica").child("Calendar");
+        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
         firebase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
+                    // Get the unique key for each, due to cannot pin-point the unique value
                     Map<String, String> eventData = (Map<String, String>) dataSnapshot.getValue();
                     for (String key : eventData.keySet()) {
                         Object data = eventData.get(key);
 
                         try {
+                            // Retrieve as a object, easier to do the conversion
                             HashMap<String, Object> eventObject = (HashMap<String, Object>) data;
 
                             long calendarID = (long) eventObject.get("calendarID");
@@ -306,7 +318,9 @@ public class Firebase {
                             String colorText = colorObject.get("color").toString();
                             int color = Integer.parseInt(colorText);
 
+                            // Based on the Schedule Calendar format, and return back the list
                             BaseCalendarEvent allEvent = new BaseCalendarEvent(title, "", "", color, startDateTime, endDateTime, false);
+                            allEvent.setId(calendarID);
                             eventList.add(allEvent);
                         } catch (ClassCastException cce) {
                             // If the object can’t be casted into HashMap, it means that it is of type String.
@@ -331,4 +345,6 @@ public class Firebase {
             }
         });
     }
+
+    // For the Schedule Calendar (Create, Edit, Delete) will be the same as the weekView Calendar...
 }

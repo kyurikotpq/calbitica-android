@@ -1,23 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    // 3 dot icons with some linked pages/fragments
+<!--    <item-->
+<!--        android:icon="@drawable/more"-->
+<!--        android:title=""-->
+<!--        app:showAsAction="always">-->
+
+<!--        <menu xmlns:android="http://schemas.android.com/apk/res/android">-->
+<!--            <item-->
+<!--                android:id="@+id/nav_week"-->
+<!--                android:icon="@drawable/week"-->
+<!--                android:title="Week"-->
+<!--                app:showAsAction="ifRoom" />-->
+
+<!--            <item-->
+<!--                android:id="@+id/nav_schedule"-->
+<!--                android:icon="@drawable/schedule"-->
+<!--                android:title="Schedule"-->
+<!--                app:showAsAction="ifRoom" />-->
+<!--        </menu>-->
+<!--    </item>-->
+
     <item
-        android:icon="@drawable/more"
+        android:id="@+id/calendar_today"
         android:title=""
-        app:showAsAction="always">
+        android:icon="@drawable/today"
+        app:showAsAction="ifRoom"/>
 
-        <menu xmlns:android="http://schemas.android.com/apk/res/android">
-            <item
-                android:id="@+id/nav_week"
-                android:icon="@drawable/week"
-                android:title="Week"
-                app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/calendar_refresh"
+        android:title=""
+        android:icon="@drawable/refresh"
+        app:showAsAction="ifRoom"/>
 
-            <item
-                android:id="@+id/nav_schedule"
-                android:icon="@drawable/schedule"
-                android:title="Schedule"
-                app:showAsAction="ifRoom" />
-        </menu>
-    </item>
+    <item
+        android:id="@+id/calendar_add"
+        android:title=""
+        android:icon="@drawable/add"
+        app:showAsAction="ifRoom"/>
 </menu>

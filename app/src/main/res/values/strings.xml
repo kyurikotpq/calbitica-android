@@ -6,6 +6,15 @@
     <string name="navigation_open">Open navigation</string>
     <string name="navigation_close">Close navigation</string>
 
+    <!-- Company Contact Details -->
+    <string name="call">
+        <a href="">61157894</a>
+    </string>
+
+    <string name="message">
+        <a href="">calbitica@support.com</a>
+    </string>
+
     <!--Event color drop-down-->
     <string-array name="color">
         <item>Teal 1</item>

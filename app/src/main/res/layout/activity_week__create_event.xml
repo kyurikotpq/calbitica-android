@@ -66,7 +66,7 @@
                     android:layout_weight="1"
                     android:textSize="16sp"
                     android:textAlignment="center"
-                    android:text="startDate" />
+                    android:hint="startDate" />
 
                 <TextView
                     android:id="@+id/startTime"
@@ -75,7 +75,7 @@
                     android:layout_weight="1"
                     android:textSize="16sp"
                     android:textAlignment="center"
-                    android:text="startTime" />
+                    android:hint="startTime" />
             </LinearLayout>
 
             <LinearLayout
@@ -91,7 +91,7 @@
                     android:layout_weight="1"
                     android:textSize="16sp"
                     android:textAlignment="center"
-                    android:text="endDate" />
+                    android:hint="endDate" />
 
                 <TextView
                     android:id="@+id/endTime"
@@ -100,7 +100,7 @@
                     android:layout_weight="1"
                     android:textSize="16sp"
                     android:textAlignment="center"
-                    android:text="endTime" />
+                    android:hint="endTime" />
             </LinearLayout>
 
             <LinearLayout

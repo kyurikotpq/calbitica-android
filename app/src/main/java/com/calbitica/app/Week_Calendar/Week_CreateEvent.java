@@ -3,6 +3,8 @@ package com.calbitica.app.Week_Calendar;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import com.calbitica.app.Navigation_Bar.NavigationBar;
 import com.calbitica.app.R;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -20,6 +22,9 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
+import com.calbitica.app.Schedule_Calendar.ScheduleFragment;
+import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
@@ -28,10 +33,11 @@ import java.util.Locale;
 import java.util.UUID;
 
 public class Week_CreateEvent extends AppCompatActivity {
-    EditText title = null;
-    JSONObject colorInfo = new JSONObject();
-    Calendar startDateTime, endDateTime = null;
-    WeekViewEvent event = null;
+    EditText title = null;                                  // Input Calendar Title
+    TextView startDate, startTime, endDate, endTime;        // This is just the display from the layout
+    JSONObject colorInfo = new JSONObject();                // To make it more information and more easier
+    Calendar startDateTime, endDateTime;                    // This is the one that goes database
+    WeekViewEvent event = null;                             // The events that will in Week Calendar
     com.calbitica.app.Database.Firebase firebase;
 
     @Override
@@ -48,12 +54,15 @@ public class Week_CreateEvent extends AppCompatActivity {
         startDateTime = Calendar.getInstance();
         endDateTime = Calendar.getInstance();
 
-        try{
-            SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-            startDateTime.setTime(sdf.parse(startDT));
-            endDateTime.setTime(sdf.parse(endDT));
-        } catch (java.text.ParseException e) {
-            e.printStackTrace();
+        // From the plus icon from Navigation_Bar
+        if(!startDT.equals("") || !endDT.equals("")) {
+            try{
+                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                startDateTime.setTime(sdf.parse(startDT));
+                endDateTime.setTime(sdf.parse(endDT));
+            } catch (java.text.ParseException e) {
+                e.printStackTrace();
+            }
         }
 
         // Default the text will be Calbitica Android, by setting as empty for custom TextView to be shown instead
@@ -71,6 +80,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // When selected the Spinner drop-down, the background color will change accordingly
+        // Due to some libraries require specific version, it become deprecated, for now it will still work, but have to take note in future
         Spinner color = (Spinner) findViewById(R.id.color);
         color.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -226,7 +236,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // Prompt the Start Date Picker to choose
-        final TextView startDate = (TextView) findViewById(R.id.startDate);
+        startDate = (TextView) findViewById(R.id.startDate);
         startDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -247,7 +257,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // Prompt the Start Time Picker to choose
-        final TextView startTime = (TextView) findViewById(R.id.startTime);
+        startTime = (TextView) findViewById(R.id.startTime);
         startTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -273,17 +283,19 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // Default startDateTime will be automatically configure
-        int startMonth = startDateTime.get(Calendar.MONTH) + 1;
+        if(!startDT.equals("")) {
+            int startMonth = startDateTime.get(Calendar.MONTH) + 1;
+            startDate.setText(startDateTime.get(Calendar.DAY_OF_MONTH) + "/" + startMonth + "/" + startDateTime.get(Calendar.YEAR));
 
-        if(startDateTime.getTime() != null) {
-            startDate.setText(startDateTime.get(Calendar.DAY_OF_MONTH) + "/"
-                    + startMonth + "/" + startDateTime.get(Calendar.YEAR));
-
-            startTime.setText(startDateTime.get(Calendar.HOUR) + ":" + "0" + startDateTime.get(Calendar.MINUTE));
+            if(startDateTime.get(Calendar.MINUTE) < 10) {
+                startTime.setText(startDateTime.get(Calendar.HOUR_OF_DAY) + ":" + "0" + startDateTime.get(Calendar.MINUTE));
+            } else {
+                startTime.setText(startDateTime.get(Calendar.HOUR_OF_DAY) + ":" + startDateTime.get(Calendar.MINUTE));
+            }
         }
 
         // Prompt the End Date Picker to choose
-        final TextView endDate = (TextView) findViewById(R.id.endDate);
+        endDate = (TextView) findViewById(R.id.endDate);
         endDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -304,7 +316,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // Prompt the End Time Picker to choose
-        final TextView endTime = (TextView) findViewById(R.id.endTime);
+        endTime = (TextView) findViewById(R.id.endTime);
         endTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -330,13 +342,15 @@ public class Week_CreateEvent extends AppCompatActivity {
         });
 
         // Default endDateTime will be automatically configure
-        int endMonth = endDateTime.get(Calendar.MONTH) + 1;
+        if(!endDT.equals("")) {
+            int endMonth = endDateTime.get(Calendar.MONTH) + 1;
+            endDate.setText(endDateTime.get(Calendar.DAY_OF_MONTH) + "/" + endMonth + "/" + endDateTime.get(Calendar.YEAR));
 
-        if(endDateTime.getTime() != null) {
-            endDate.setText(endDateTime.get(Calendar.DAY_OF_MONTH) + "/"
-                    + endMonth + "/" + endDateTime.get(Calendar.YEAR));
-
-            endTime.setText(endDateTime.get(Calendar.HOUR) + ":" + "0" + endDateTime.get(Calendar.MINUTE));
+            if(endDateTime.get(Calendar.MINUTE) < 10) {
+                endTime.setText(endDateTime.get(Calendar.HOUR_OF_DAY) + ":" + "0" + endDateTime.get(Calendar.MINUTE));
+            } else {
+                endTime.setText(endDateTime.get(Calendar.HOUR_OF_DAY) + ":" + endDateTime.get(Calendar.MINUTE));
+            }
         }
     }
 
@@ -352,31 +366,51 @@ public class Week_CreateEvent extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.ok) {
-            if(title.getText().toString().equals("")) {
-                Toast.makeText(Week_CreateEvent.this,"Please enter your title", Toast.LENGTH_SHORT).show();
+            // Due to Schedule Calendar "No events" is a empty view as default
+            if(title.getText().toString().equals("") || title.getText().toString().equals("No events") ||
+               startDate.getText().toString().equals("") || startTime.getText().toString().equals("") ||
+               endDate.getText().toString().equals("") || endTime.getText().toString().equals("")) {
+                Toast.makeText(Week_CreateEvent.this,"Please fill in all the fields", Toast.LENGTH_SHORT).show();
             } else if (startDateTime.getTime().getTime() >= endDateTime.getTime().getTime()) {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
                 Toast.makeText(Week_CreateEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
             } else {
+                // calendarID -> random generate long id(unique), to represent the specific unique events
                 long calendarID = (UUID.randomUUID().getMostSignificantBits());
 
-                // Create a new event.
-                // calendarID -> random generate long id(unique), name -> event title
-                event = new WeekViewEvent(calendarID, title.getText().toString(), startDateTime, endDateTime);
-                try {
-                    int colorText = (Integer) colorInfo.get("color");
-                    event.setColor(colorText);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                WeekFragment.mNewEvents.add(event);
+                if(NavigationBar.selectedPages == "nav_week") {
+                    // Create a new event for Week Calendar
+                    event = new WeekViewEvent(calendarID, title.getText().toString(), startDateTime, endDateTime);
+                    try {
+                        int colorText = (Integer) colorInfo.get("color");
+                        event.setColor(colorText);
+                        WeekFragment.mNewEvents.add(event);
 
-                // Save in Firebase
+                        // Refresh the week view. onMonthChange will be called again.
+                        WeekFragment.weekView.notifyDatasetChanged();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else if (NavigationBar.selectedPages == "nav_schedule") {
+                    // Create a new event for Schedule Calendar
+                    try {
+                        int colorText = (Integer) colorInfo.get("color");
+
+                        BaseCalendarEvent allEvent = new BaseCalendarEvent(title.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
+                        allEvent.setId(calendarID);
+                        ScheduleFragment.eventList.add(allEvent);
+
+                        // Schedule Calendar will also re-render the events as well
+                        ScheduleFragment.scheduleView.init(ScheduleFragment.eventList, ScheduleFragment.minDate, ScheduleFragment.maxDate, Locale.getDefault(), ScheduleFragment.calendarPickerController);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                // Save in Firebase, this will saved both calendar
                 firebase = new com.calbitica.app.Database.Firebase();
                 firebase.saveWeekEventInFirebase(calendarID, title.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
 
-                // Refresh the week view. onMonthChange will be called again.
-                WeekFragment.weekView.notifyDatasetChanged();
                 finish();
                 Toast.makeText(Week_CreateEvent.this,"Event successfully created", Toast.LENGTH_SHORT).show();
             }

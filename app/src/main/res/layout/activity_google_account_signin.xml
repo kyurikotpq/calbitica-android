@@ -7,13 +7,14 @@
     android:background="@color/c_dblue_1">
 
     <TextView
+        android:id="@+id/error"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="100dp"
         android:text="Sign In Your Google Account"
         android:textColor="@color/white"
-        android:textSize="30sp"/>
+        android:textSize="25sp"/>
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/btn_signinGoogle"

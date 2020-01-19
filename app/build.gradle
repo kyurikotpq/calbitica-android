@@ -33,6 +33,10 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:29.1.0'
 
+    // Async Task libraries
+    // Reference: https://github.com/Arasthel/AsyncJobLibrary
+    implementation 'com.arasthel:asyncjob-library:1.0.3'
+
     // Added Design(For nav bar) libraries
     implementation 'com.android.support:design:29.1.0'
 
@@ -41,7 +45,11 @@ dependencies {
     implementation 'com.github.tibolte:agendacalendarview:1.0.4'
 
     // Added Request handle libraries
-    implementation 'com.squareup.okhttp3:okhttp:3.9.1'
+    // Reference: https://square.github.io/retrofit/
+    // Reference: https://jsonplaceholder.typicode.com/
+    implementation 'com.squareup.retrofit2:retrofit:2.5.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.1'
 
     // Added Google Sign-in Libraries
     implementation 'com.google.android.gms:play-services-auth:17.0.0'

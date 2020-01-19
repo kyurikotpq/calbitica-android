@@ -5,8 +5,15 @@
 
     <!-- Internet Access for the Google Account(MUST)-->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Check the user got the conntection to the internet (MUST have INTERNET then can work)-->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Allow to call for the About Page(MUST)-->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
 
+<!--    For application android:name -> When there more than 1 MVC in android, it will call the Notification first, then to CheckInternetConnection,-->
+<!--    back again to Application-->
     <application
+        android:name=".Notification.Notification"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -32,5 +39,14 @@
         <activity android:name="com.calbitica.app.Week_Calendar.Week_CreateEvent" />
         <!-- WeekFragment EditEvent Page-->
         <activity android:name="com.calbitica.app.Week_Calendar.Week_EditEvent" />
+
+        <!-- Check the Internet Connection-->
+        <receiver
+            android:name= ".Internet.ConnectivityReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

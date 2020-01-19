@@ -1,10 +1,14 @@
 package com.calbitica.app.Google_Acccount;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.calbitica.app.Internet.CheckInternetConnection;
+import com.calbitica.app.Internet.ConnectivityReceiver;
 import com.calbitica.app.Navigation_Bar.NavigationBar;
 import com.calbitica.app.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -15,6 +19,7 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -25,14 +30,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-public class SignInActivity extends AppCompatActivity {
+public class SignInActivity extends AppCompatActivity implements ConnectivityReceiver.ConnectivityReceiverListener {
     private SignInButton btn_signinGoogle;
     public static GoogleSignInClient mGoogleSignInClient;
     private FirebaseAuth mAuth;
     private int RC_SIGN_IN = 1;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_google_account_signin);
 
@@ -51,9 +56,11 @@ public class SignInActivity extends AppCompatActivity {
         btn_signinGoogle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Google display all the account that you currently have
-                Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-                startActivityForResult(signInIntent, RC_SIGN_IN);
+                if(checkConnection()) {
+                    // Google display all the account that you currently have
+                    Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+                    startActivityForResult(signInIntent, RC_SIGN_IN);
+                }
             }
         });
     }
@@ -81,7 +88,6 @@ public class SignInActivity extends AppCompatActivity {
             // The ApiException status code indicates the detailed failure reason
             // Refer to GoogleSignInStatusCodes to know out more info
             Toast.makeText(SignInActivity.this, "Fail to Sign In", Toast.LENGTH_SHORT).show();
-            FirebaseGoogleAuth(null);
         }
     }
 
@@ -112,18 +118,64 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
-    // Every time it will check you got existing account still logged in
-    // Yes -> Go to Navigation Bar, No -> Go from the start of this Sign in Activity Page
+    // Method to check connection status
+    private boolean checkConnection() {
+        boolean isConnected = ConnectivityReceiver.isConnected();
+        showSnack(isConnected);
+        return isConnected;
+    }
+
+    // Showing the status on below the screen(Something like Toast)
+    private void showSnack(boolean isConnected) {
+        String message;
+        int color;
+        if (isConnected) {
+            message = "Good! Connected to Internet";
+            color = Color.WHITE;
+        } else {
+            message = "Sorry! Not connected to internet";
+            color = Color.RED;
+        }
+
+        // Another fancy message like Toast
+        Snackbar snackbar = Snackbar.make(findViewById(R.id.btn_signinGoogle), message, Snackbar.LENGTH_LONG);
+
+        // Making use of any of the TextView find in the layout, to publish as a View
+        View sbView = snackbar.getView();
+        TextView textView = (TextView) sbView.findViewById(com.google.android.material.R.id.snackbar_text);
+        textView.setTextColor(color);
+        snackbar.show();
+    }
+
+    // Confirm there is connection
+    @Override
+    public void onNetworkConnectionChanged(boolean isConnected) {
+        showSnack(isConnected);
+    }
+
+    // It will check you got existing account still logged in
+    // Yes -> Redirect to Navigation Bar, No -> Redirect from the start of this Sign in Activity Page
     @Override
     protected void onStart() {
         // Check for existing Google Sign In account, if the user is already signed In
         // the GoogleSignInAccount will be non-null.
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
 
-        if(account != null) {
-            startActivity(new Intent(SignInActivity.this, NavigationBar.class));
+        // Check there is internet connection
+        if(checkConnection()) {
+            if(account != null) {
+                startActivity(new Intent(SignInActivity.this, NavigationBar.class));
+            }
         }
 
         super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // register connection status listener
+        CheckInternetConnection.getInstance().setConnectivityListener(this);
     }
 }

@@ -16,6 +16,9 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
+import com.calbitica.app.Navigation_Bar.NavigationBar;
+import com.calbitica.app.Schedule_Calendar.ScheduleFragment;
+import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -35,15 +38,16 @@ import androidx.appcompat.widget.Toolbar;
 import com.calbitica.app.R;
 
 public class Week_EditEvent extends AppCompatActivity {
-    EditText eventTitle = null;
-    JSONObject colorInfo = new JSONObject();
-    Calendar startDateTime, endDateTime = null;
-    WeekViewEvent event = null;
+    EditText eventTitle = null;                             // The iuput calendar title
+    JSONObject colorInfo = new JSONObject();                // To make it more information and more easier
+    Calendar startDateTime, endDateTime = null;             // The input calendar start and end datetime
+    WeekViewEvent event = null;                             // The events that will in Week Calendar
     com.calbitica.app.Database.Firebase firebase;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         // Using the same layout of the Event Create
         setContentView(R.layout.activity_week__create_event);
 
@@ -88,7 +92,7 @@ public class Week_EditEvent extends AppCompatActivity {
         final Spinner eventColor = (Spinner) findViewById(R.id.color);
 
         // Get the colorPosition from the firebase, as selected on default
-        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child("Calbitica").child("Calendar");
+        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
         firebase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -131,6 +135,7 @@ public class Week_EditEvent extends AppCompatActivity {
         });
 
         // When selected the Spinner drop-down, the background color will change accordingly
+        // Due to some libraries require specific version, it become deprecated, for now it will still work, but have to take note in future
         eventColor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -297,8 +302,8 @@ public class Week_EditEvent extends AppCompatActivity {
                 DatePickerDialog datePickerDialog = new DatePickerDialog(Week_EditEvent.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
-                    startDateTime.set(year, month, day);
-                    startDate.setText(day + "/" + (month + 1) + "/" + year);
+                        startDateTime.set(year, month, day);
+                        startDate.setText(day + "/" + (month + 1) + "/" + year);
                     }
                 }, year, month, dayOfMonth);
                 datePickerDialog.show();
@@ -336,7 +341,12 @@ public class Week_EditEvent extends AppCompatActivity {
 
         if(startDateTime.getTime() != null) {
             startDate.setText(startDateTime.get(Calendar.DAY_OF_MONTH) + "/" + startMonth + "/" + startDateTime.get(Calendar.YEAR));
-            startTime.setText(startDateTime.get(Calendar.HOUR) + ":" + "0" + startDateTime.get(Calendar.MINUTE));
+
+            if(startDateTime.get(Calendar.MINUTE) < 10) {
+                startTime.setText(startDateTime.get(Calendar.HOUR_OF_DAY) + ":" + "0" + startDateTime.get(Calendar.MINUTE));
+            } else {
+                startTime.setText(startDateTime.get(Calendar.HOUR_OF_DAY) + ":" + startDateTime.get(Calendar.MINUTE));
+            }
         }
 
         // Prompt the End Date Picker to choose
@@ -352,8 +362,8 @@ public class Week_EditEvent extends AppCompatActivity {
                 DatePickerDialog datePickerDialog = new DatePickerDialog(Week_EditEvent.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
-                    endDateTime.set(year, month, day);
-                    endDate.setText(day + "/" + (month + 1) + "/" + year);
+                        endDateTime.set(year, month, day);
+                        endDate.setText(day + "/" + (month + 1) + "/" + year);
                     }
                 }, year, month, dayOfMonth);
                 datePickerDialog.show();
@@ -391,7 +401,12 @@ public class Week_EditEvent extends AppCompatActivity {
 
         if(endDateTime.getTime() != null) {
             endDate.setText(endDateTime.get(Calendar.DAY_OF_MONTH) + "/" + endMonth + "/" + endDateTime.get(Calendar.YEAR));
-            endTime.setText(endDateTime.get(Calendar.HOUR) + ":" + "0" + endDateTime.get(Calendar.MINUTE));
+
+            if(endDateTime.get(Calendar.MINUTE) < 10) {
+                endTime.setText(endDateTime.get(Calendar.HOUR_OF_DAY) + ":" + "0" + endDateTime.get(Calendar.MINUTE));
+            } else {
+                endTime.setText(endDateTime.get(Calendar.HOUR_OF_DAY) + ":" + endDateTime.get(Calendar.MINUTE));
+            }
         }
     }
 
@@ -416,27 +431,52 @@ public class Week_EditEvent extends AppCompatActivity {
                 Bundle bundle = getIntent().getExtras();
                 Long id = bundle.getLong("id");
 
-                // Modify event with new data(Only 1 data will be found and modify)
-                for(WeekViewEvent event : WeekFragment.mNewEvents) {
-                    if(event.getId() == id) {
-                        event.setName(eventTitle.getText().toString());
-                        event.setStartTime(startDateTime);
-                        event.setEndTime(endDateTime);
-                        try {
-                            int colorText = (Integer) colorInfo.get("color");
-                            event.setColor(colorText);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+                if(NavigationBar.selectedPages == "nav_week") {
+                    // Modify event with new data(Only 1 data will be found and modify)
+                    for(WeekViewEvent event : WeekFragment.mNewEvents) {
+                        if(event.getId() == id) {
+                            event.setName(eventTitle.getText().toString());
+                            event.setStartTime(startDateTime);
+                            event.setEndTime(endDateTime);
+                            try {
+                                int colorText = (Integer) colorInfo.get("color");
+                                event.setColor(colorText);
+
+                                // Refresh the week view. onMonthChange will be called again.
+                                WeekFragment.weekView.notifyDatasetChanged();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                } else if (NavigationBar.selectedPages == "nav_schedule") {
+                    // First, I delete the Schedule Calendar selected event(Only 1), due to BaseCalendarEvent options is inside CalendarEvent(only color is not in the list, so...)
+                    // Secondly, then I add again with the updated values, so will still serve as the edit portion...
+                    for(int i = 0; i < ScheduleFragment.eventList.size(); i++) {
+                        if(ScheduleFragment.eventList.get(i).getId() == id) {
+                            ScheduleFragment.eventList.remove(i);   // remove only 1
+
+                            try {
+                                int colorText = (Integer) colorInfo.get("color");
+
+                                BaseCalendarEvent allEvent = new BaseCalendarEvent(eventTitle.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
+                                allEvent.setId(id);
+                                ScheduleFragment.eventList.add(allEvent);
+
+                                // Schedule Calendar will also re-render the events as well
+                                ScheduleFragment.scheduleView.init(ScheduleFragment.eventList, ScheduleFragment.minDate, ScheduleFragment.maxDate, Locale.getDefault(), ScheduleFragment.calendarPickerController);
+                            } catch (JSONException e) {
+                                Toast.makeText(Week_EditEvent.this, "Something went wrong, Please Try Again!", Toast.LENGTH_SHORT).show();
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
 
-                // Update in Firebase with the new data
+                // Update in Firebase with the new data, in 2 calendar as well
                 firebase = new com.calbitica.app.Database.Firebase();
                 firebase.updateWeekEventInFirebase(id, eventTitle.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
 
-                // Refresh the week view. onMonthChange will be called again.
-                WeekFragment.weekView.notifyDatasetChanged();
                 finish();
                 Toast.makeText(Week_EditEvent.this,"Event successfully updated", Toast.LENGTH_SHORT).show();
             }

@@ -5,19 +5,6 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/c_orange_2"
-        android:gravity="center">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Schedule View"
-            android:textSize="30sp" />
-    </LinearLayout>
-
     <com.github.tibolte.agendacalendarview.AgendaCalendarView
         android:id="@+id/scheduleView"
         android:layout_width="match_parent"
@@ -29,4 +16,15 @@
         agendaCalendar:calendarHeaderColor="@color/theme_primary_dark"
         agendaCalendar:calendarPastDayTextColor="@color/theme_light_primary"
         agendaCalendar:fabColor="@color/theme_accent" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/text_viewResult"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#000"/>
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>

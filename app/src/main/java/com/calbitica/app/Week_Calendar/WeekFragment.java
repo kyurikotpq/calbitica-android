@@ -7,13 +7,18 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.alamkanak.weekview.DateTimeInterpreter;
 import com.alamkanak.weekview.MonthLoader;
 import com.alamkanak.weekview.WeekView;
 import com.alamkanak.weekview.WeekViewEvent;
+
+import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -22,11 +27,14 @@ import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.arasthel.asyncjob.AsyncJob;
+import com.calbitica.app.Navigation_Bar.NavigationBar;
 import com.calbitica.app.R;
 
 public class WeekFragment extends Fragment {
-    public static WeekView weekView;
-    public static ArrayList<WeekViewEvent> mNewEvents;
+    public static WeekView weekView;                                // Mostly used from Navigation_Bar refresh, etc...(Week Calender)
+    public static ArrayList<WeekViewEvent> mNewEvents;              // Mostly used from Navigation_Bar refresh, etc...(Event in Week Calendar)
 
     public static WeekFragment newInstance(String selectedDate) {
         WeekFragment fragment = new WeekFragment();
@@ -39,7 +47,7 @@ public class WeekFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_week, container, false);//Inflate Layout
+        View view = inflater.inflate(R.layout.fragment_week_calendar, container, false);//Inflate Layout
         return view;//return default view
     }
 
@@ -47,178 +55,204 @@ public class WeekFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        weekView = getActivity().findViewById(R.id.weekView);
-        mNewEvents = new ArrayList<WeekViewEvent>();
-
-        // Get the information from the getCalendarMonths(required)
-        weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
+        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
             @Override
-            public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
-                // Populate the week view with the events that was added by tapping on empty view.
-                List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
-                ArrayList<WeekViewEvent> newEvents = getCalendarMonths(newYear, newMonth);
-                events.addAll(newEvents);
-                return events;
-            }
-        });
+            public Boolean doAsync() {
+                weekView = getActivity().findViewById(R.id.weekView);
+                mNewEvents = new ArrayList<WeekViewEvent>();
 
-        // Get the event from firebase
-        com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-        firebase.getWeekEventsFromFirebase();
-
-        // When click on the empty event(Will be the creating event)
-        weekView.setEmptyViewClickListener(new WeekView.EmptyViewClickListener() {
-            @Override
-            public void onEmptyViewClicked(Calendar startDateTime) {
-                Intent intent = new Intent(getContext(), Week_CreateEvent.class);
-                Toast.makeText(getActivity(), "Empty event selected: " + getEventTitle(startDateTime), Toast.LENGTH_SHORT).show();
-
-                // Set the new event with duration one hour.
-                Calendar endDateTime = (Calendar) startDateTime.clone();
-                endDateTime.add(Calendar.HOUR, 1);
-
-                Bundle data = new Bundle();
-                data.putString("startDateTime", startDateTime.getTime().toString());
-                data.putString("endDateTime", endDateTime.getTime().toString());
-                intent.putExtras(data);
-
-                startActivity(intent);
-            }
-        });
-
-        // When click on the existing event(Will be the editing event)
-        weekView.setOnEventClickListener(new WeekView.EventClickListener() {
-            @Override
-            public void onEventClick(final WeekViewEvent event, RectF eventRect) {
-                // Get the layout and render from the Week Calendar Edit Modal
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                final View mView = getLayoutInflater().inflate(R.layout.week_modal_edit, null);
-
-                TextView title = (TextView) mView.findViewById(R.id.edit_Modal_eventTitle);
-                TextView startDateTime = (TextView) mView.findViewById(R.id.edit_Modal_eventStartDateTime);
-                TextView endDateTime = (TextView) mView.findViewById(R.id.edit_Modal_eventEndDateTime);
-                Button editing = (Button) mView.findViewById(R.id.edit_Modal_editing);
-                Button cancel = (Button) mView.findViewById(R.id.edit_Modal_cancel);
-
-                title.setText("Event Title: \n" + event.getName());
-                startDateTime.setText("Event Start DateTime: \n" + event.getStartTime().getTime());
-                endDateTime.setText("Event End DateTime: \n" + event.getEndTime().getTime());
-
-                // Render the Modal, must be in the last of the code
-                builder.setView(mView);
-                final AlertDialog dialog = builder.create();
-                dialog.show();
-
-                editing.setOnClickListener(new View.OnClickListener() {
+                // Get the information from the getCalendarMonths(required)
+                weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
                     @Override
-                    public void onClick(View v) {
-                    Intent intent = new Intent(getContext(), Week_EditEvent.class);
-
-                    Bundle data = new Bundle();
-                    data.putLong("id", event.getId());
-                    data.putString("title", event.getName());
-                    data.putString("startDateTime", event.getStartTime().getTime().toString());
-                    data.putString("endDateTime", event.getEndTime().getTime().toString());
-                    data.putInt("color", event.getColor());
-                    intent.putExtras(data);
-
-                    startActivity(intent);
-                    dialog.dismiss();
+                    public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
+                        // Populate the week view with the events
+                        List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
+                        ArrayList<WeekViewEvent> newEvents = getCalendarMonths(newYear, newMonth);
+                        events.addAll(newEvents);
+                        return events;
                     }
                 });
 
-                cancel.setOnClickListener(new View.OnClickListener() {
+                // Get the event from firebase
+                com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
+                firebase.getWeekEventsFromFirebase();
+
+                // When click on the empty event(Will be the creating event)
+                weekView.setEmptyViewClickListener(new WeekView.EmptyViewClickListener() {
                     @Override
-                    public void onClick(View v) {
-                        dialog.dismiss();
+                    public void onEmptyViewClicked(Calendar startDateTime) {
+                        Intent intent = new Intent(getContext(), Week_CreateEvent.class);
+                        Toast.makeText(getActivity(), "Empty event selected: " + getEventTitle(startDateTime), Toast.LENGTH_SHORT).show();
+
+                        // Set the new event with duration one hour.
+                        Calendar endDateTime = (Calendar) startDateTime.clone();
+                        endDateTime.add(Calendar.HOUR, 1);
+
+                        Bundle data = new Bundle();
+                        data.putString("startDateTime", startDateTime.getTime().toString());
+                        data.putString("endDateTime", endDateTime.getTime().toString());
+                        intent.putExtras(data);
+
+                        startActivity(intent);
                     }
                 });
-            }
-        });
 
-        // When hold & click on the existing event(Will be the deleting event)
-        weekView.setEventLongPressListener(new WeekView.EventLongPressListener() {
-            @Override
-            public void onEventLongPress(final WeekViewEvent event, RectF eventRect) {
-                // Get the layout and render from the Week Calendar Delete Modal
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                final View mView = getLayoutInflater().inflate(R.layout.week_modal_delete, null);
-
-                TextView title = (TextView) mView.findViewById(R.id.delete_Modal_eventTitle);
-                TextView startDateTime = (TextView) mView.findViewById(R.id.delete_Modal_eventStartDateTime);
-                TextView endDateTime = (TextView) mView.findViewById(R.id.delete_Modal_eventEndDateTime);
-                Button yes = (Button) mView.findViewById(R.id.delete_Modal_yes);
-                Button no = (Button) mView.findViewById(R.id.delete_Modal_no);
-
-                title.setText("Event Title: \n" + event.getName());
-                startDateTime.setText("Event Start DateTime: \n" + event.getStartTime().getTime());
-                endDateTime.setText("Event End DateTime: \n" + event.getEndTime().getTime());
-
-                // Render the Modal, must be in the last of the code
-                builder.setView(mView);
-                final AlertDialog dialog = builder.create();
-                dialog.show();
-
-                yes.setOnClickListener(new View.OnClickListener() {
+                // When click on the existing event(Will be the editing event & deleting event)
+                weekView.setOnEventClickListener(new WeekView.EventClickListener() {
                     @Override
-                    public void onClick(View v) {
-                        // Delete from Firebase with the existing data
-                        com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-                        firebase.deleteWeekEventFromFirebase(event.getId());
+                    public void onEventClick(final WeekViewEvent event, RectF eventRect) {
+                        // Get the layout and render from the Calendar Modal
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
 
-                        // Delete event with existing data(Only 1 data will be found and delete)
-                        for(int i = 0; i < mNewEvents.size(); i++) {
-                            System.out.println("mNewEvents " + mNewEvents.get(i).getId());
-                            if(mNewEvents.get(i).getId() == event.getId()) {
-                                mNewEvents.remove(event);
+                        CheckBox check = (CheckBox) mView.findViewById(R.id.calendar_Modal_eventCheckBox);
+                        TextView title = (TextView) mView.findViewById(R.id.calendar_Modal_eventTitle);
+                        TextView startDateTime = (TextView) mView.findViewById(R.id.calendar_Modal_eventStartDateTime);
+                        TextView endDateTime = (TextView) mView.findViewById(R.id.calendar_Modal_eventEndDateTime);
+                        ImageView editing = (ImageView) mView.findViewById(R.id.calendar_Modal_editing);
+                        ImageView deleting = (ImageView) mView.findViewById(R.id.calendar_Modal_deleting);
+                        ImageView close = (ImageView) mView.findViewById(R.id.calendar_Modal_eventClose);
+
+                        // Convert to our respective  datetime format of start and end DateTime
+                        Timestamp startTimeStamp = new Timestamp(event.getStartTime().getTimeInMillis());
+                        Timestamp endTimeStamp = new Timestamp(event.getEndTime().getTimeInMillis());
+                        SimpleDateFormat sdf = new SimpleDateFormat("MMM D, YYYY HH:mm", Locale.ENGLISH);
+                        String start = sdf.format(startTimeStamp);
+                        String end = sdf.format(endTimeStamp);
+
+                        // Put the existing data in the Modal
+                        title.setText(event.getName());
+                        startDateTime.setText("\n" + start + " - ");
+                        endDateTime.setText("\n" + end);
+
+                        // Render the Modal, must be in the last of the code
+                        builder.setView(mView);
+                        final AlertDialog dialog = builder.create();
+                        dialog.show();
+
+                        check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                if(isChecked) {
+                                    Toast.makeText(getActivity(), "Completed the task and earn the exp points", Toast.LENGTH_LONG).show();
+                                }
                             }
-                        }
+                        });
 
-                        // Refresh the week view. onMonthChange will be called again.
-                        weekView.notifyDatasetChanged();
-                        Toast.makeText(getActivity(),"Event successfully deleted", Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
+                        editing.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Intent intent = new Intent(getContext(), Week_EditEvent.class);
+
+                                Bundle data = new Bundle();
+                                data.putLong("id", event.getId());
+                                data.putString("title", event.getName());
+                                data.putString("startDateTime", event.getStartTime().getTime().toString());
+                                data.putString("endDateTime", event.getEndTime().getTime().toString());
+                                data.putInt("color", event.getColor());
+                                intent.putExtras(data);
+
+                                startActivity(intent);
+                                dialog.dismiss();
+                            }
+                        });
+
+                        deleting.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                // Delete from Firebase with the existing data
+                                com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
+                                firebase.deleteWeekEventFromFirebase(event.getId());
+
+                                // Delete event with existing data(Only 1 data will be found and delete)
+                                for(int i = 0; i < mNewEvents.size(); i++) {
+                                    if(mNewEvents.get(i).getId() == event.getId()) {
+                                        mNewEvents.remove(event);
+                                    }
+                                }
+
+                                // Refresh the week view. onMonthChange will be called again.
+                                weekView.notifyDatasetChanged();
+                                Toast.makeText(getActivity(),"Event successfully deleted", Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            }
+                        });
+
+                        close.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                dialog.dismiss();
+                            }
+                        });
                     }
                 });
 
-                no.setOnClickListener(new View.OnClickListener() {
+                // When click & hold on the existing event
+                weekView.setEventLongPressListener(new WeekView.EventLongPressListener() {
                     @Override
-                    public void onClick(View v) {
-                        dialog.dismiss();
+                    public void onEventLongPress(final WeekViewEvent event, RectF eventRect) {
+                        // For now, not needed...
                     }
                 });
+
+                // When scrolling horizontally under the Week Calendar date
+                weekView.setScrollListener(new WeekView.ScrollListener() {
+                    @Override
+                    public void onFirstVisibleDayChanged(Calendar newFirstVisibleDay, Calendar oldFirstVisibleDay) {
+                        // When it scroll then...
+                        if(oldFirstVisibleDay != null) {
+                            // Setting the Calendar title as the scrolled Calendar
+                            String currentMonth = DateFormat.getDateInstance(DateFormat.LONG).format(newFirstVisibleDay.getTime());
+                            NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "") + " "  + newFirstVisibleDay.get(Calendar.YEAR));
+                        }
+                    }
+                });
+
+                // Set up a date time interpreter to interpret how the date and time will be formatted in
+                // the week view. This is optional.
+                setupDateTimeInterpreter(true);
+
+                // Able to retrieve the data from the Navigation Bar of the drop-down, and change the weekView when clicked
+                if (getArguments() != null) {
+                    String selectedDate = getArguments().getString("selectedDate");
+
+                    try{
+                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+
+                        // Assign to the same calendar to have a link relationship of the Navigation Bar and Today
+                        NavigationBar.calendar.setTime(sdf.parse(selectedDate));
+                    } catch (java.text.ParseException e) {
+                        e.printStackTrace();
+                    }
+
+                    weekView.goToDate(NavigationBar.calendar);
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                return true;
             }
-        });
-
-        // Set up a date time interpreter to interpret how the date and time will be formatted in
-        // the week view. This is optional.
-        setupDateTimeInterpreter(true);
-
-        // Able to retrieve the data from the Navigation Bar of the drop-down, and change the weekView when clicked
-        if (getArguments() != null) {
-            String selectedDate = getArguments().getString("selectedDate");
-            Calendar chooseDate = Calendar.getInstance();
-
-            try{
-                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                chooseDate.setTime(sdf.parse(selectedDate));
-            } catch (java.text.ParseException e) {
-                e.printStackTrace();
+        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+            @Override
+            public void onResult(Boolean  result) {
+                System.out.println("WeekFragment result is " + result);
             }
-
-            weekView.goToDate(chooseDate);
-        }
+        }).create().start();
     }
 
     // To get the respective selected date and time
-    protected String getEventTitle(Calendar time) {
+    public static String getEventTitle(Calendar time) {
         // Modify the start Minute to fixed value, rather than minute goes by actual click like 37, 32, etc...
         time.set(Calendar.MINUTE, 0);
         return String.format("Event of %02d:%02d %s/%d", time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE), time.get(Calendar.MONTH) + 1, time.get(Calendar.DAY_OF_MONTH));
     }
 
     // Provide calendar information
-    private ArrayList<WeekViewEvent> getCalendarMonths(int year, int month) {
+    public static ArrayList<WeekViewEvent> getCalendarMonths(int year, int month) {
         // Get the starting point and ending point of the given month. We need this to find the events of the given month.
         Calendar startOfMonth = Calendar.getInstance();
         startOfMonth.set(Calendar.YEAR, year);
@@ -247,11 +281,11 @@ public class WeekFragment extends Fragment {
     }
 
     // To modify the column and the row text to your needs
-    private void setupDateTimeInterpreter(final boolean shortDate) {
+    public static void setupDateTimeInterpreter(final boolean shortDate) {
         weekView.setDateTimeInterpreter(new DateTimeInterpreter() {
             @Override
             public String interpretDate(Calendar date) {
-                // Default Date & Time construct
+                // Display Date & Time construct on the top and the left bar
                 SimpleDateFormat weekdayNameFormat = new SimpleDateFormat("EEE", Locale.getDefault());
                 String weekday = weekdayNameFormat.format(date.getTime());
                 SimpleDateFormat format = new SimpleDateFormat(" M/d", Locale.getDefault());

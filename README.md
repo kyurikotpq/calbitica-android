@@ -8,6 +8,8 @@
 * File → Settings → Build, Excecution, Deployment
     * Sync Project with Gradle before building, if needed(Tick this), to prevent Java Compiler Issue
 * Uninstall the app from the emulator, then clean and rebuild, re-run the android studio to get our app logo/icons
+* Reference Links: https://stackoverflow.com/questions/28333343/android-studio-delete-file-from-vcs/30584348
+    * Easily delete any folder/files in the .gitignore with this method
     
 ## To use more for individual project(Optional):
 ```

@@ -1,7 +1,6 @@
 package com.calbitica.app.SplashScreen;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.calbitica.app.Google_Acccount.SignInActivity;
 import com.calbitica.app.R;
 import android.content.Intent;
@@ -15,6 +14,7 @@ public class SplashScreen extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
+
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {

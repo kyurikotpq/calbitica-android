@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    // With a title
+    <item android:title="Calendar">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item android:id="@+id/nav_week"
+                    android:icon="@drawable/week"
+                    android:title="Week"/>
+                <item android:id="@+id/nav_schedule"
+                    android:icon="@drawable/schedule"
+                    android:title="Schedule" />
+            </group>
+        </menu>
+    </item>
+
+    // Without a title
     <group android:checkableBehavior="single">
+        <item android:id="@+id/nav_api"
+            android:icon="@drawable/api"
+            android:title="API Docs"/>
         <item android:id="@+id/nav_settings"
             android:icon="@drawable/settings"
             android:title="Settings" />
