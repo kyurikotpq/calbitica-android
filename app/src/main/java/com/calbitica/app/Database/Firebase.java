@@ -1,7 +1,6 @@
 package com.calbitica.app.Database;
 
-import com.alamkanak.weekview.WeekViewEvent;
-import com.calbitica.app.Navigation_Bar.NavigationBar;
+import com.calbitica.app.NavigationBar.NavigationBar;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 import com.github.tibolte.agendacalendarview.models.CalendarEvent;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import androidx.annotation.NonNull;
-import com.calbitica.app.Week_Calendar.WeekFragment;
 
 public class Firebase {
     // Necessary fields for Week Calendar Event
@@ -59,6 +57,7 @@ public class Firebase {
     // Get the week events from firebase, only render once(will be discard after that)
     public void getWeekEventsFromFirebase() {
         // Pin-point the location of the data that you want
+        /*
         DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
         firebase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -123,6 +122,8 @@ public class Firebase {
                 System.out.println(databaseError.getCode());
             }
         });
+        */
+
     }
 
     // Save week event in Firebase

@@ -1,4 +1,4 @@
-package com.calbitica.app.Week_Calendar;
+package com.calbitica.app.Week;
 
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -29,12 +29,12 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
-import com.calbitica.app.Navigation_Bar.NavigationBar;
+import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 
 public class WeekFragment extends Fragment {
-    public static WeekView weekView;                                // Mostly used from Navigation_Bar refresh, etc...(Week Calender)
-    public static ArrayList<WeekViewEvent> mNewEvents;              // Mostly used from Navigation_Bar refresh, etc...(Event in Week Calendar)
+    public static WeekView weekView;                                // Mostly used from NavigationBar refresh, etc...(Week Calender)
+    public static ArrayList<WeekViewEvent> mNewEvents;              // Mostly used from NavigationBar refresh, etc...(Event in Week Calendar)
 
     public static WeekFragment newInstance(String selectedDate) {
         WeekFragment fragment = new WeekFragment();
@@ -81,7 +81,7 @@ public class WeekFragment extends Fragment {
                 weekView.setEmptyViewClickListener(new WeekView.EmptyViewClickListener() {
                     @Override
                     public void onEmptyViewClicked(Calendar startDateTime) {
-                        Intent intent = new Intent(getContext(), Week_CreateEvent.class);
+                        Intent intent = new Intent(getContext(), WeekCreateEvent.class);
                         Toast.makeText(getActivity(), "Empty event selected: " + getEventTitle(startDateTime), Toast.LENGTH_SHORT).show();
 
                         // Set the new event with duration one hour.
@@ -142,7 +142,7 @@ public class WeekFragment extends Fragment {
                         editing.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                Intent intent = new Intent(getContext(), Week_EditEvent.class);
+                                Intent intent = new Intent(getContext(), WeekEditEvent.class);
 
                                 Bundle data = new Bundle();
                                 data.putLong("id", event.getId());

@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Google_Acccount.SignInActivity"
+    tools:context=".Auth.SignInActivity"
     android:background="@color/c_dblue_1">
 
     <TextView

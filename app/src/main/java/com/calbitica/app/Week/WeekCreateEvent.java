@@ -1,10 +1,10 @@
-package com.calbitica.app.Week_Calendar;
+package com.calbitica.app.Week;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.calbitica.app.Navigation_Bar.NavigationBar;
+import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -22,7 +22,7 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
-import com.calbitica.app.Schedule_Calendar.ScheduleFragment;
+import com.calbitica.app.Agenda.AgendaFragment;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 
 import org.json.JSONException;
@@ -32,7 +32,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.UUID;
 
-public class Week_CreateEvent extends AppCompatActivity {
+public class WeekCreateEvent extends AppCompatActivity {
     EditText title = null;                                  // Input Calendar Title
     TextView startDate, startTime, endDate, endTime;        // This is just the display from the layout
     JSONObject colorInfo = new JSONObject();                // To make it more information and more easier
@@ -54,7 +54,7 @@ public class Week_CreateEvent extends AppCompatActivity {
         startDateTime = Calendar.getInstance();
         endDateTime = Calendar.getInstance();
 
-        // From the plus icon from Navigation_Bar
+        // From the plus icon from NavigationBar
         if(!startDT.equals("") || !endDT.equals("")) {
             try{
                 SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
@@ -245,7 +245,7 @@ public class Week_CreateEvent extends AppCompatActivity {
                 int month = calendar.get(Calendar.MONTH);
                 int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialog = new DatePickerDialog(Week_CreateEvent.this, new DatePickerDialog.OnDateSetListener() {
+                DatePickerDialog datePickerDialog = new DatePickerDialog(WeekCreateEvent.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                         startDateTime.set(year, month, day);
@@ -265,7 +265,7 @@ public class Week_CreateEvent extends AppCompatActivity {
                 int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
                 int minute = calendar.get(Calendar.MINUTE);
 
-                TimePickerDialog timePickerDialog = new TimePickerDialog(Week_CreateEvent.this, new TimePickerDialog.OnTimeSetListener() {
+                TimePickerDialog timePickerDialog = new TimePickerDialog(WeekCreateEvent.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
                         if(minute < 10) {
@@ -277,7 +277,7 @@ public class Week_CreateEvent extends AppCompatActivity {
                         startDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                         startDateTime.set(Calendar.MINUTE, minute);
                     }
-                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(Week_CreateEvent.this));
+                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekCreateEvent.this));
                 timePickerDialog.show();
             }
         });
@@ -304,7 +304,7 @@ public class Week_CreateEvent extends AppCompatActivity {
                 int month = calendar.get(Calendar.MONTH);
                 int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialog = new DatePickerDialog(Week_CreateEvent.this, new DatePickerDialog.OnDateSetListener() {
+                DatePickerDialog datePickerDialog = new DatePickerDialog(WeekCreateEvent.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                         endDateTime.set(year, month, day);
@@ -324,7 +324,7 @@ public class Week_CreateEvent extends AppCompatActivity {
                 int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
                 int minute = calendar.get(Calendar.MINUTE);
 
-                TimePickerDialog timePickerDialog = new TimePickerDialog(Week_CreateEvent.this, new TimePickerDialog.OnTimeSetListener() {
+                TimePickerDialog timePickerDialog = new TimePickerDialog(WeekCreateEvent.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
                         if(minute < 10) {
@@ -336,7 +336,7 @@ public class Week_CreateEvent extends AppCompatActivity {
                         endDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                         endDateTime.set(Calendar.MINUTE, minute);
                     }
-                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(Week_CreateEvent.this));
+                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekCreateEvent.this));
                 timePickerDialog.show();
             }
         });
@@ -370,10 +370,10 @@ public class Week_CreateEvent extends AppCompatActivity {
             if(title.getText().toString().equals("") || title.getText().toString().equals("No events") ||
                startDate.getText().toString().equals("") || startTime.getText().toString().equals("") ||
                endDate.getText().toString().equals("") || endTime.getText().toString().equals("")) {
-                Toast.makeText(Week_CreateEvent.this,"Please fill in all the fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(WeekCreateEvent.this,"Please fill in all the fields", Toast.LENGTH_SHORT).show();
             } else if (startDateTime.getTime().getTime() >= endDateTime.getTime().getTime()) {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
-                Toast.makeText(Week_CreateEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
+                Toast.makeText(WeekCreateEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
             } else {
                 // calendarID -> random generate long id(unique), to represent the specific unique events
                 long calendarID = (UUID.randomUUID().getMostSignificantBits());
@@ -398,10 +398,10 @@ public class Week_CreateEvent extends AppCompatActivity {
 
                         BaseCalendarEvent allEvent = new BaseCalendarEvent(title.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
                         allEvent.setId(calendarID);
-                        ScheduleFragment.eventList.add(allEvent);
+                        AgendaFragment.eventList.add(allEvent);
 
                         // Schedule Calendar will also re-render the events as well
-                        ScheduleFragment.scheduleView.init(ScheduleFragment.eventList, ScheduleFragment.minDate, ScheduleFragment.maxDate, Locale.getDefault(), ScheduleFragment.calendarPickerController);
+                        AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -412,7 +412,7 @@ public class Week_CreateEvent extends AppCompatActivity {
                 firebase.saveWeekEventInFirebase(calendarID, title.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
 
                 finish();
-                Toast.makeText(Week_CreateEvent.this,"Event successfully created", Toast.LENGTH_SHORT).show();
+                Toast.makeText(WeekCreateEvent.this,"Event successfully created", Toast.LENGTH_SHORT).show();
             }
         }
 

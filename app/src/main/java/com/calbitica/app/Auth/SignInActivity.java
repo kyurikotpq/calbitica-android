@@ -1,16 +1,21 @@
-package com.calbitica.app.Google_Acccount;
+package com.calbitica.app.Auth;
 
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.calbitica.app.Database.MongoDB;
 import com.calbitica.app.Internet.CheckInternetConnection;
 import com.calbitica.app.Internet.ConnectivityReceiver;
-import com.calbitica.app.Navigation_Bar.NavigationBar;
+import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
+import com.calbitica.app.Util.CalbiticaAPI;
+import com.calbitica.app.Util.JSONUtil;
+import com.calbitica.app.Util.UserData;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -25,40 +30,40 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.gson.JsonElement;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class SignInActivity extends AppCompatActivity implements ConnectivityReceiver.ConnectivityReceiverListener {
     private SignInButton btn_signinGoogle;
-    public static GoogleSignInClient mGoogleSignInClient;
-    private FirebaseAuth mAuth;
     private int RC_SIGN_IN = 1;
 
     @Override
-        protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_google_account_signin);
 
         btn_signinGoogle = findViewById(R.id.btn_signinGoogle);
-        mAuth = FirebaseAuth.getInstance();
 
-        // Configure sign-in to request the user's ID, email address, and basic
-        // profile ID and basic profile are included in DEFAULT_SIGN_IN.
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
-
-        // Build a GoogleSignInClient with the options specified by gso
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         btn_signinGoogle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(checkConnection()) {
-                    // Google display all the account that you currently have
-                    Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+                if (checkConnection()) {
+                    // Display all Google accounts that you currently have;
+                    Intent signInIntent = GoogleAuth.getInstance(getApplicationContext())
+                                            .getClient()
+                                            .getSignInIntent();
                     startActivityForResult(signInIntent, RC_SIGN_IN);
                 }
             }
@@ -83,7 +88,57 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
             // Pass the Google information to the firebase side
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
             Toast.makeText(SignInActivity.this, "Signing In Process...", Toast.LENGTH_SHORT).show();
-            FirebaseGoogleAuth(account);
+
+            // Retrieve the authCode and send to Calbitica server
+            // Then store the JWT in sharedPreferences
+            String authCode = account.getServerAuthCode();
+
+            // very bad typing, I'm sorry
+            HashMap<String, Object> codeObj = new HashMap<>();
+            codeObj.put("code", authCode);
+
+            // Build the API Call
+            Call<HashMap<String, Object>> apiCall = CalbiticaAPI.getInstance().auth()
+                                                        .tokensFromAuthCode(codeObj);
+            // Make the API Call
+            apiCall.enqueue(new Callback<HashMap<String, Object>>() {
+                @Override
+                public void onResponse(Call<HashMap<String, Object>> call, Response<HashMap<String, Object>> response) {
+                    if (!response.isSuccessful()) {
+                        Log.d("API JWT CALL", response.toString());
+                        return;
+                    }
+                    try {
+                        HashMap<String, Object> data = response.body();
+                        if (data.containsKey("jwt")) {
+                            String jwt = (String) data.get("jwt");
+
+                            // Get other profile info as well
+                            String displayName = account.getDisplayName();
+                            String thumbnail = account.getPhotoUrl().toString();
+
+                            // Handle JWT
+                            HashMap<String, String> user = new HashMap<>();
+                            user.put("jwt", jwt);
+                            data.put("displayName", displayName);
+                            data.put("thumbnail", thumbnail);
+
+                            UserData.save(user, getApplicationContext());
+                            Log.d("API JWT: ", jwt);
+                            updateUI();
+                        }
+                    } catch (Exception e) {
+                        Log.d("API JWT FAILED", e.getLocalizedMessage());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<HashMap<String, Object>> call, Throwable t) {
+                    Log.d("API JWT FAILED", call.toString());
+                    Log.d("API JWT MORE DETAILS", t.getLocalizedMessage());
+                }
+            });
+
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason
             // Refer to GoogleSignInStatusCodes to know out more info
@@ -91,30 +146,15 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
         }
     }
 
-    // Check if the google account able to retrieve
-    private void FirebaseGoogleAuth(GoogleSignInAccount acct) {
-        AuthCredential authCredential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
-        mAuth.signInWithCredential(authCredential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                if (task.isSuccessful()) {
-                    Toast.makeText(SignInActivity.this, "Approved", Toast.LENGTH_SHORT).show();
-                    FirebaseUser user = mAuth.getCurrentUser();
-                    updateUI(user);
-                } else {
-                    Toast.makeText(SignInActivity.this, "Failed", Toast.LENGTH_SHORT).show();
-                    updateUI(null);
-                }
-            }
-        });
-    }
-
-    // Check the google account information is valid, then direct to Navigation Bar for the display
-    private void updateUI(FirebaseUser fUser) {
+    // Check if sign-in exists in both SharedPreferences and Google SignIn
+    private void updateUI() {
+        String jwt = UserData.get("jwt", getApplicationContext());
         GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
-        if (acct != null) {
-            // Signed in successfully, show authenticated UI at Navigation_Bar
+
+        if (acct != null && jwt != null) {
+            // Signed in successfully, show authenticated UI at NavigationBar
             startActivity(new Intent(SignInActivity.this, NavigationBar.class));
+            finish();
         }
     }
 
@@ -157,17 +197,6 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
     // Yes -> Redirect to Navigation Bar, No -> Redirect from the start of this Sign in Activity Page
     @Override
     protected void onStart() {
-        // Check for existing Google Sign In account, if the user is already signed In
-        // the GoogleSignInAccount will be non-null.
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-
-        // Check there is internet connection
-        if(checkConnection()) {
-            if(account != null) {
-                startActivity(new Intent(SignInActivity.this, NavigationBar.class));
-            }
-        }
-
         super.onStart();
     }
 

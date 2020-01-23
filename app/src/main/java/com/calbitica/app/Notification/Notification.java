@@ -3,7 +3,7 @@ package com.calbitica.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
-import com.calbitica.app.Navigation_Bar.NavigationBar;
+import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import androidx.core.app.NotificationCompat;
 

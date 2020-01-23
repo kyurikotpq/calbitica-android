@@ -1,4 +1,4 @@
-package com.calbitica.app.Schedule_Calendar;
+package com.calbitica.app.Agenda;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -18,11 +18,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
-import com.calbitica.app.Navigation_Bar.NavigationBar;
+import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
-import com.calbitica.app.Week_Calendar.WeekFragment;
-import com.calbitica.app.Week_Calendar.Week_CreateEvent;
-import com.calbitica.app.Week_Calendar.Week_EditEvent;
+import com.calbitica.app.Week.WeekEditEvent;
+import com.calbitica.app.Week.WeekFragment;
+import com.calbitica.app.Week.WeekCreateEvent;
 import com.github.tibolte.agendacalendarview.AgendaCalendarView;
 import com.github.tibolte.agendacalendarview.CalendarPickerController;
 import com.github.tibolte.agendacalendarview.models.CalendarEvent;
@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class ScheduleFragment extends Fragment{
+public class AgendaFragment extends Fragment{
     public static AgendaCalendarView scheduleView;                      // Mainly modify from the Refresh, etc
     public static List<CalendarEvent> eventList;                        // The events based on Schedule Calendar,
                                                                         // but 1 more phrase on BaseCalendarEvent as a child (From firebase guide)
@@ -146,7 +146,7 @@ public class ScheduleFragment extends Fragment{
                 public void onEventSelected(CalendarEvent event) {
                     if (event.getTitle().equals("No events")) {
                         // Re-use the same design & code as the Week Calendar Create Page
-                        Intent intent = new Intent(getContext(), Week_CreateEvent.class);
+                        Intent intent = new Intent(getContext(), WeekCreateEvent.class);
                         Toast.makeText(getActivity(), "No events selected: " + WeekFragment.getEventTitle(event.getInstanceDay()), Toast.LENGTH_SHORT).show();
 
                         // Set the new event with duration one hour.
@@ -201,8 +201,8 @@ public class ScheduleFragment extends Fragment{
                         editing.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                // Using back the same design as the Week_EditEvent
-                                Intent intent = new Intent(getContext(), Week_EditEvent.class);
+                                // Using back the same design as the WeekEditEvent
+                                Intent intent = new Intent(getContext(), WeekEditEvent.class);
 
                                 Bundle calendarData = new Bundle();
                                 calendarData.putLong("id", event.getId());
@@ -272,10 +272,10 @@ public class ScheduleFragment extends Fragment{
                                 // Delete event with existing data
                                 for (int i = 0; i < eventList.size(); i++) {
                                     if(eventList.get(i).getId() == event.getId()) {
-                                        ScheduleFragment.eventList.remove(i);   // remove only 1
+                                        AgendaFragment.eventList.remove(i);   // remove only 1
 
                                         // Schedule Calendar will also re-render the events as well
-                                        ScheduleFragment.scheduleView.init(ScheduleFragment.eventList, ScheduleFragment.minDate, ScheduleFragment.maxDate, Locale.getDefault(), ScheduleFragment.calendarPickerController);
+                                        AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                                     }
                                 }
 

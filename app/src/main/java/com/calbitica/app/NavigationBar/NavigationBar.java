@@ -1,4 +1,4 @@
-package com.calbitica.app.Navigation_Bar;
+package com.calbitica.app.NavigationBar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -13,12 +13,14 @@ import com.arasthel.asyncjob.AsyncJob;
 import com.bumptech.glide.Glide;
 import com.calbitica.app.API_Docs.API_DocsFragment;
 import com.calbitica.app.About.AboutFragment;
-import com.calbitica.app.Google_Acccount.SignInActivity;
+import com.calbitica.app.Auth.GoogleAuth;
+import com.calbitica.app.Auth.SignInActivity;
 import com.calbitica.app.Notification.Notification;
 import com.calbitica.app.R;
-import com.calbitica.app.Schedule_Calendar.ScheduleFragment;
+import com.calbitica.app.Agenda.AgendaFragment;
 import com.calbitica.app.Settings.SettingsFragment;
-import com.calbitica.app.Week_Calendar.WeekFragment;
+import com.calbitica.app.Util.UserData;
+import com.calbitica.app.Week.WeekFragment;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -33,7 +35,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.calbitica.app.Week_Calendar.Week_CreateEvent;
+import com.calbitica.app.Week.WeekCreateEvent;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -46,10 +48,10 @@ import java.util.Calendar;
 import java.util.Locale;
 
 public class NavigationBar extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
-    private DrawerLayout drawerLayout;                              // Relate to all the Navigation_Bar stuff
-    boolean arrowTrigger = false;                                   // When pressed the Middle Navigation_Bar arrow
-    public static TextView title;                                   // Middle Navigation_Bar
-    public static ImageView arrow;                                  // Middle Navigation_Bar
+    private DrawerLayout drawerLayout;                              // Relate to all the NavigationBar stuff
+    boolean arrowTrigger = false;                                   // When pressed the Middle NavigationBar arrow
+    public static TextView title;                                   // Middle NavigationBar
+    public static ImageView arrow;                                  // Middle NavigationBar
     public static String selectedPages;                             // Tell which fragment you are in
     ArrayList<String> selectedList = new ArrayList<>();             // Mainly for the sync, when click on back button stuff
     public static Calendar calendar;                                // Mainly for Week, Schedule Calendar, etc...
@@ -248,7 +250,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     title.setText(selectedMonth + " "  + calendar.get(Calendar.YEAR));
 
                     // addToBackStack(null) -> Allow to go previous page, rather than exit the app
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ScheduleFragment()).addToBackStack(null).commit();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new AgendaFragment()).addToBackStack(null).commit();
                     selectedPages = "nav_schedule";
                     selectedList.add("nav_schedule");
                 }
@@ -303,8 +305,11 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                 break;
             case R.id.nav_logout:
-                // It will logout from the Google Account, and direct back to Sign In for Google Page
-                SignInActivity.mGoogleSignInClient.signOut();
+                // Logout from Google Account, AND clear shared preferences
+                GoogleAuth.getInstance(getApplicationContext()).getClient().signOut();
+                UserData.clearAll(getApplicationContext());
+
+                // direct back to Sign In Activity
                 startActivity(new Intent(NavigationBar.this, SignInActivity.class));
                 Toast.makeText(getApplicationContext(), "Logged out successfully", Toast.LENGTH_SHORT).show();
                 break;
@@ -384,11 +389,11 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         @Override
                         public Boolean doAsync() {
                             // Set the Schedule Fragment list as empty again
-                            ScheduleFragment.eventList = new ArrayList<>();
+                            AgendaFragment.eventList = new ArrayList<>();
 
                             // Get the event from firebase
                             com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-                            firebase.getScheduleEventsFromFirebase(ScheduleFragment.eventList);
+                            firebase.getScheduleEventsFromFirebase(AgendaFragment.eventList);
 
                             try {
                                 Thread.sleep(1000);
@@ -402,8 +407,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         @Override
                         public void onResult(Boolean result) {
                             // Reload the schedule calendar
-                            ScheduleFragment.scheduleView.init(ScheduleFragment.eventList, ScheduleFragment.minDate, ScheduleFragment.maxDate,
-                                    Locale.getDefault(), ScheduleFragment.calendarPickerController);
+                            AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate,
+                                    Locale.getDefault(), AgendaFragment.calendarPickerController);
                             nav_refresh.setEnabled(true);
                         }
                     }).create().start();
@@ -411,7 +416,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 break;
             case R.id.calendar_add:
                 // Just the empty fields, to give user to key in themselves
-                Intent intent = new Intent(NavigationBar.this, Week_CreateEvent.class);
+                Intent intent = new Intent(NavigationBar.this, WeekCreateEvent.class);
 
                 Bundle data = new Bundle();
                 data.putString("startDateTime", "");

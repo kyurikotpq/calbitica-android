@@ -1,4 +1,4 @@
-package com.calbitica.app.Week_Calendar;
+package com.calbitica.app.Week;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -16,8 +16,8 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
-import com.calbitica.app.Navigation_Bar.NavigationBar;
-import com.calbitica.app.Schedule_Calendar.ScheduleFragment;
+import com.calbitica.app.NavigationBar.NavigationBar;
+import com.calbitica.app.Agenda.AgendaFragment;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -37,7 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import com.calbitica.app.R;
 
-public class Week_EditEvent extends AppCompatActivity {
+public class WeekEditEvent extends AppCompatActivity {
     EditText eventTitle = null;                             // The iuput calendar title
     JSONObject colorInfo = new JSONObject();                // To make it more information and more easier
     Calendar startDateTime, endDateTime = null;             // The input calendar start and end datetime
@@ -299,7 +299,7 @@ public class Week_EditEvent extends AppCompatActivity {
                 int month = calendar.get(Calendar.MONTH);
                 int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialog = new DatePickerDialog(Week_EditEvent.this, new DatePickerDialog.OnDateSetListener() {
+                DatePickerDialog datePickerDialog = new DatePickerDialog(WeekEditEvent.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                         startDateTime.set(year, month, day);
@@ -319,7 +319,7 @@ public class Week_EditEvent extends AppCompatActivity {
                 int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
                 int minute = calendar.get(Calendar.MINUTE);
 
-                TimePickerDialog timePickerDialog = new TimePickerDialog(Week_EditEvent.this, new TimePickerDialog.OnTimeSetListener() {
+                TimePickerDialog timePickerDialog = new TimePickerDialog(WeekEditEvent.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
                     if(minute < 10) {
@@ -331,7 +331,7 @@ public class Week_EditEvent extends AppCompatActivity {
                     startDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                     startDateTime.set(Calendar.MINUTE, minute);
                     }
-                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(Week_EditEvent.this));
+                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekEditEvent.this));
                 timePickerDialog.show();
             }
         });
@@ -359,7 +359,7 @@ public class Week_EditEvent extends AppCompatActivity {
                 int month = calendar.get(Calendar.MONTH);
                 int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialog = new DatePickerDialog(Week_EditEvent.this, new DatePickerDialog.OnDateSetListener() {
+                DatePickerDialog datePickerDialog = new DatePickerDialog(WeekEditEvent.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                         endDateTime.set(year, month, day);
@@ -379,7 +379,7 @@ public class Week_EditEvent extends AppCompatActivity {
                 int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
                 int minute = calendar.get(Calendar.MINUTE);
 
-                TimePickerDialog timePickerDialog = new TimePickerDialog(Week_EditEvent.this, new TimePickerDialog.OnTimeSetListener() {
+                TimePickerDialog timePickerDialog = new TimePickerDialog(WeekEditEvent.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
                     if(minute < 10) {
@@ -391,7 +391,7 @@ public class Week_EditEvent extends AppCompatActivity {
                     endDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                     endDateTime.set(Calendar.MINUTE, minute);
                     }
-                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(Week_EditEvent.this));
+                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekEditEvent.this));
                 timePickerDialog.show();
             }
         });
@@ -423,10 +423,10 @@ public class Week_EditEvent extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.ok) {
             if(eventTitle.getText().toString().equals("")) {
-                Toast.makeText(Week_EditEvent.this,"Please enter your title", Toast.LENGTH_SHORT).show();
+                Toast.makeText(WeekEditEvent.this,"Please enter your title", Toast.LENGTH_SHORT).show();
             } else if (startDateTime.getTime().getTime() >= endDateTime.getTime().getTime()) {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
-                Toast.makeText(Week_EditEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
+                Toast.makeText(WeekEditEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
             } else {
                 Bundle bundle = getIntent().getExtras();
                 Long id = bundle.getLong("id");
@@ -452,21 +452,21 @@ public class Week_EditEvent extends AppCompatActivity {
                 } else if (NavigationBar.selectedPages == "nav_schedule") {
                     // First, I delete the Schedule Calendar selected event(Only 1), due to BaseCalendarEvent options is inside CalendarEvent(only color is not in the list, so...)
                     // Secondly, then I add again with the updated values, so will still serve as the edit portion...
-                    for(int i = 0; i < ScheduleFragment.eventList.size(); i++) {
-                        if(ScheduleFragment.eventList.get(i).getId() == id) {
-                            ScheduleFragment.eventList.remove(i);   // remove only 1
+                    for(int i = 0; i < AgendaFragment.eventList.size(); i++) {
+                        if(AgendaFragment.eventList.get(i).getId() == id) {
+                            AgendaFragment.eventList.remove(i);   // remove only 1
 
                             try {
                                 int colorText = (Integer) colorInfo.get("color");
 
                                 BaseCalendarEvent allEvent = new BaseCalendarEvent(eventTitle.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
                                 allEvent.setId(id);
-                                ScheduleFragment.eventList.add(allEvent);
+                                AgendaFragment.eventList.add(allEvent);
 
                                 // Schedule Calendar will also re-render the events as well
-                                ScheduleFragment.scheduleView.init(ScheduleFragment.eventList, ScheduleFragment.minDate, ScheduleFragment.maxDate, Locale.getDefault(), ScheduleFragment.calendarPickerController);
+                                AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                             } catch (JSONException e) {
-                                Toast.makeText(Week_EditEvent.this, "Something went wrong, Please Try Again!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(WeekEditEvent.this, "Something went wrong, Please Try Again!", Toast.LENGTH_SHORT).show();
                                 e.printStackTrace();
                             }
                         }
@@ -478,7 +478,7 @@ public class Week_EditEvent extends AppCompatActivity {
                 firebase.updateWeekEventInFirebase(id, eventTitle.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
 
                 finish();
-                Toast.makeText(Week_EditEvent.this,"Event successfully updated", Toast.LENGTH_SHORT).show();
+                Toast.makeText(WeekEditEvent.this,"Event successfully updated", Toast.LENGTH_SHORT).show();
             }
         }
 

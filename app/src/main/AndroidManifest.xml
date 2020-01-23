@@ -32,13 +32,13 @@
             </intent-filter>
         </activity>
         <!-- Login Google Account Page-->
-        <activity android:name="com.calbitica.app.Google_Acccount.SignInActivity" />
+        <activity android:name="com.calbitica.app.Auth.SignInActivity" />
         <!-- Fixed Main Page of Navigation Bar -->
-        <activity android:name="com.calbitica.app.Navigation_Bar.NavigationBar" />
+        <activity android:name="com.calbitica.app.NavigationBar.NavigationBar" />
         <!-- WeekFragment CreateEvent Page-->
-        <activity android:name="com.calbitica.app.Week_Calendar.Week_CreateEvent" />
+        <activity android:name="com.calbitica.app.Week.WeekCreateEvent" />
         <!-- WeekFragment EditEvent Page-->
-        <activity android:name="com.calbitica.app.Week_Calendar.Week_EditEvent" />
+        <activity android:name="com.calbitica.app.Week.WeekEditEvent" />
 
         <!-- Check the Internet Connection-->
         <receiver
