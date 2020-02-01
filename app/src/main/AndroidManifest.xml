@@ -5,8 +5,6 @@
 
     <!-- Internet Access for the Google Account(MUST)-->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Check the user got the conntection to the internet (MUST have INTERNET then can work)-->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Allow to call for the About Page(MUST)-->
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
@@ -39,14 +37,5 @@
         <activity android:name="com.calbitica.app.Week.WeekCreateEvent" />
         <!-- WeekFragment EditEvent Page-->
         <activity android:name="com.calbitica.app.Week.WeekEditEvent" />
-
-        <!-- Check the Internet Connection-->
-        <receiver
-            android:name= ".Internet.ConnectivityReceiver"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
     </application>
 </manifest>

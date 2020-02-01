@@ -149,6 +149,7 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
                     "Signing in failed. Check your\nconnection and try again.",
                     Toast.LENGTH_SHORT
             ).show();
+            System.out.println("GoogleSignInStatusCodes " + e.getLocalizedMessage());
         }
     }
 

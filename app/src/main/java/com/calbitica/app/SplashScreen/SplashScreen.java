@@ -3,6 +3,7 @@ package com.calbitica.app.SplashScreen;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.calbitica.app.Auth.SignInActivity;
+import com.calbitica.app.Internet.ConnectivityReceiver;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import com.calbitica.app.Util.UserData;
@@ -10,6 +11,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 

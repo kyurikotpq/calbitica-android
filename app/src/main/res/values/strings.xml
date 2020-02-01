@@ -8,11 +8,11 @@
 
     <!-- Company Contact Details -->
     <string name="call">
-        <a href="">61157894</a>
+        <a href=""><font fgcolor='#44D3FF'>61157894</font></a>
     </string>
 
     <string name="message">
-        <a href="">calbitica@support.com</a>
+        <a href=""><font fgcolor='#44D3FF'>calbitica@support.com</font></a>
     </string>
 
     <!--Event color drop-down-->

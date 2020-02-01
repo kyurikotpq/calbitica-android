@@ -6,7 +6,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="@color/gray_1">
 
         <!-- Company -->
         <TextView
@@ -17,6 +18,7 @@
             android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
             android:text="Calbitica Company"
+            android:textColor="#FF7E80"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -27,6 +29,7 @@
             android:layout_marginRight="20dp"
             android:layout_marginBottom="20dp"
             android:text="A to-do list helps you keep track of what needs to be done, but not WHEN to do it \n\n A calendar helps you keep track of WHEN to do things, but not WHETHER you've done it or not"
+            android:textColor="@color/white"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -37,6 +40,7 @@
             android:layout_marginRight="20dp"
             android:layout_marginBottom="20dp"
             android:text="If you leave your time to randomness, you are stealing from your greatness. - (Brendon Burchard, World's #1 High Performance Coach)"
+            android:textColor="@color/white"
             android:textSize="15sp"
             android:textStyle="italic" />
 
@@ -49,6 +53,7 @@
             android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
             android:text="Application"
+            android:textColor="#FF7E80"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -59,6 +64,7 @@
             android:layout_marginRight="20dp"
             android:layout_marginBottom="20dp"
             android:text="To allow anyone to have fun while practising healthy habits and being insanely productive."
+            android:textColor="@color/white"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -72,7 +78,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="Be Authenticated"
-            android:textColor="@color/red_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -84,7 +90,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="Link their Habitica accounts with Calbitica"
-            android:textColor="@color/red_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -96,7 +102,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="Import Google Calendars' Events into Habitica"
-            android:textColor="@color/red_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -108,7 +114,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="View Habitica Items in Calendar Format"
-            android:textColor="@color/red_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -120,7 +126,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="Create Habitica Items in Specific Time Slots"
-            android:textColor="@color/red_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -132,7 +138,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="Modify and Delete Habitica Items"
-            android:textColor="@color/yellow_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -144,7 +150,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="View Habitica Stats"
-            android:textColor="@color/yellow_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -156,7 +162,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="Modify Calbitica Settings"
-            android:textColor="@color/blue_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -168,7 +174,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="Be Notified When They Want To"
-            android:textColor="@color/blue_1" />
+            android:textColor="@color/white" />
 
         <Button
             android:layout_width="match_parent"
@@ -180,7 +186,7 @@
             android:drawableLeft="@drawable/target"
             android:gravity="center"
             android:text="Be Able To Take Part In Quests"
-            android:textColor="@color/blue_1" />
+            android:textColor="@color/white" />
 
         <!-- Developer -->
         <TextView
@@ -191,6 +197,7 @@
             android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
             android:text="Developer"
+            android:textColor="#FF7E80"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -205,6 +212,7 @@
                 android:layout_alignParentLeft="true"
                 android:layout_marginLeft="20dp"
                 android:text="Lee Poh Heng (174160P) \n\n60% - Frontend, \n40% - Backend \n\nxerokail@gmail.com"
+                android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -220,6 +228,7 @@
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="20dp"
                 android:text="Tea Pei Qi (170239G) \n\n40% - Frontend, \n60% - Backend \n\nmoneysdew@gmail.com"
+                android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </RelativeLayout>
@@ -233,6 +242,7 @@
             android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
             android:text="Contact Us"
+            android:textColor="#FF7E80"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -247,6 +257,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="CALBITICA Support Hotline: "
+                android:textColor="@color/white"
                 android:textStyle="bold" />
 
             <TextView
@@ -270,14 +281,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="CALBITICA Support Site: "
+                android:layout_marginLeft="20dp"
+                android:textColor="@color/white"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/messageValue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignBaseline="@+id/messageText"
-                android:layout_toEndOf="@+id/messageText"
+                android:layout_marginTop="25dp"
                 android:text="@string/message"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
         </RelativeLayout>
