@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -81,6 +82,10 @@ public class AgendaFragment extends Fragment{
             // setProgressStyle will change the turning loading(default), to the 0 to 10 loading process
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.show();
+
+            // Prevent the user to press anything
+            progressDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
         }
 
         // (Required)Perform a computation on a background thread, not allow to have UI components(View & void function, etc...)
@@ -106,7 +111,7 @@ public class AgendaFragment extends Fragment{
             firebase.getScheduleEventsFromFirebase(eventList);
 
             // This will populate the progressDialog
-            for (int count = 0; count < 11; count++) {
+            for (int count = 0; count < 6; count++) {
                 // Each time will load and update the progress accordingly
                 progressDialog.setProgress(count);
 

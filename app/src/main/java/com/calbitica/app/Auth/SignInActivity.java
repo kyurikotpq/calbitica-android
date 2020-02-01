@@ -142,6 +142,7 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason
             // Refer to GoogleSignInStatusCodes to know out more info
+            System.out.println("GoogleSignInStatusCodes " + e.getLocalizedMessage());
             Toast.makeText(SignInActivity.this, "Fail to Sign In", Toast.LENGTH_SHORT).show();
         }
     }
