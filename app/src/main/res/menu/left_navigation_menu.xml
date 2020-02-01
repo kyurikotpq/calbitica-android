@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    // With a title
-    <item android:title="Calendar">
+    <!-- With a title -->
+    <item android:title="Calendar" android:id="@+id/calendarHeading">
         <menu>
             <group android:checkableBehavior="single">
                 <item android:id="@+id/nav_week"
@@ -27,6 +27,6 @@
             android:title="About" />
         <item android:id="@+id/nav_logout"
             android:icon="@drawable/logout"
-            android:title="Logout"></item>
+            android:title="Logout" />
     </group>
 </menu>

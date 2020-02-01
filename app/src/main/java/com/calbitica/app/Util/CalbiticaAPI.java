@@ -1,7 +1,10 @@
 package com.calbitica.app.Util;
 
-import com.calbitica.app.Models.AuthInterface;
+import android.util.Log;
+
+import com.calbitica.app.Auth.AuthInterface;
 import com.calbitica.app.Models.CalbitInterface;
+import com.calbitica.app.Settings.SettingsInterface;
 
 import java.io.IOException;
 
@@ -16,31 +19,39 @@ public class CalbiticaAPI {
     private static final String BASE_URL = "https://app.kyurikotpq.com/calbitica/api/";
 
     // HTTP interceptor - add header to all requests
-    private static final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-            .addInterceptor(new Interceptor() {
-                @Override
-                public okhttp3.Response intercept(Chain chain) throws IOException {
-                    Request originalRequest = chain.request();
-
-                    Request newRequest = originalRequest.newBuilder()
-                            .header("Content-Type", "application/json")
-                            .header("Accept", "application/json")
-                            // add authorization soon....
-                            .build();
-
-                    return chain.proceed(newRequest);
-                }
-            })
-            .build();
+    private static OkHttpClient okHttpClient;
 
     private static CalbiticaAPI instance = null;
+
+    // Interfaces
     private AuthInterface authInterface = null;
     private CalbitInterface calbitInterface = null;
+    private SettingsInterface settingsInterface = null;
 
-    private CalbiticaAPI() {
+    private CalbiticaAPI(String jwt) {
+        okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public okhttp3.Response intercept(Chain chain) throws IOException {
+                        Request originalRequest = chain.request();
+
+                        Request newRequest = originalRequest.newBuilder()
+                                .header("Content-Type", "application/json")
+                                .header("Accept", "application/json")
+                                // add authorization soon....
+                                .header("Authorization", "Bearer " + jwt)
+                                .build();
+
+                        Log.d("BUILDING THE HTTP CLIENT", jwt);
+                        return chain.proceed(newRequest);
+                    }
+                })
+                .build();
+
         // build the different interfaces for use later
         setAuthInterface();
         setCalbitInterface();
+        setSettingsInterface();
     }
 
     private void setAuthInterface() {
@@ -67,9 +78,21 @@ public class CalbiticaAPI {
         calbitInterface = retrofit.create(CalbitInterface.class);
     }
 
-    public static CalbiticaAPI getInstance() {
+    private void setSettingsInterface() {
+        //  Build the Retrofit wrapper
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL + "settings/")
+                .addConverterFactory(GsonConverterFactory.create()) // convert JSON data (got from server) into java (model) objects (POJO)
+                .client(okHttpClient)
+                .build();
+
+        // Populate all the respective HTTP Methods & links
+        settingsInterface = retrofit.create(SettingsInterface.class);
+    }
+
+    public static CalbiticaAPI getInstance(String jwt) {
         if (instance == null)
-            instance = new CalbiticaAPI();
+            instance = new CalbiticaAPI(jwt);
 
         return instance;
     }
@@ -78,4 +101,11 @@ public class CalbiticaAPI {
         return this.authInterface;
     }
 
+    public CalbitInterface calbit() {
+        return this.calbitInterface;
+    }
+
+    public SettingsInterface settings() {
+        return this.settingsInterface;
+    }
 }

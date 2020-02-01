@@ -1,4 +1,4 @@
-package com.calbitica.app.Models;
+package com.calbitica.app.Auth;
 
 
 import java.util.HashMap;
@@ -11,7 +11,7 @@ import retrofit2.http.POST;
 public interface AuthInterface {
     // Exchange serverAuthCode for a Calbitia JWT
     @POST("code")
-    Call<HashMap<String, Object>> tokensFromAuthCode (
-            @Body HashMap<String, Object> codeHM
+    Call<HashMap<String, String>> tokensFromAuthCode (
+            @Body HashMap<String, String> codeHM
     );
 }

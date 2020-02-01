@@ -73,6 +73,21 @@ public class WeekFragment extends Fragment {
                     }
                 });
 
+                // Set up a date time interpreter to interpret how the date and time will be formatted in
+                // the week view. This is optional.
+                setupDateTimeInterpreter(true);
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                return true;
+            }
+        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+            @Override
+            public void onResult(Boolean  result) {
                 // Get the event from firebase
                 com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
                 firebase.getWeekEventsFromFirebase();
@@ -208,10 +223,6 @@ public class WeekFragment extends Fragment {
                     }
                 });
 
-                // Set up a date time interpreter to interpret how the date and time will be formatted in
-                // the week view. This is optional.
-                setupDateTimeInterpreter(true);
-
                 // Able to retrieve the data from the Navigation Bar of the drop-down, and change the weekView when clicked
                 if (getArguments() != null) {
                     String selectedDate = getArguments().getString("selectedDate");
@@ -227,19 +238,6 @@ public class WeekFragment extends Fragment {
 
                     weekView.goToDate(NavigationBar.calendar);
                 }
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                return true;
-            }
-        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-            @Override
-            public void onResult(Boolean  result) {
-                System.out.println("WeekFragment result is " + result);
             }
         }).create().start();
     }

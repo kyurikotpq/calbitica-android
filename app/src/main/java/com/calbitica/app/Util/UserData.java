@@ -20,7 +20,7 @@ public class UserData {
                 editor.putString(key, value);
             }
 
-            editor.commit();
+            editor.apply(); // BG thread
         } catch (Exception e) {
             successful = false;
         }

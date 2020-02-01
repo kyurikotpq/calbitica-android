@@ -85,37 +85,39 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
 
     private void googleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
-            // Pass the Google information to the firebase side
+            // Get the google account
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            Toast.makeText(SignInActivity.this, "Signing In Process...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(SignInActivity.this, "Signing you in...", Toast.LENGTH_SHORT).show();
 
             // Retrieve the authCode and send to Calbitica server
             // Then store the JWT in sharedPreferences
             String authCode = account.getServerAuthCode();
 
             // very bad typing, I'm sorry
-            HashMap<String, Object> codeObj = new HashMap<>();
+            HashMap<String, String> codeObj = new HashMap<>();
             codeObj.put("code", authCode);
 
             // Build the API Call
-            Call<HashMap<String, Object>> apiCall = CalbiticaAPI.getInstance().auth()
+            Call<HashMap<String, String>> apiCall = CalbiticaAPI.getInstance("").auth()
                                                         .tokensFromAuthCode(codeObj);
             // Make the API Call
-            apiCall.enqueue(new Callback<HashMap<String, Object>>() {
+            apiCall.enqueue(new Callback<HashMap<String, String>>() {
                 @Override
-                public void onResponse(Call<HashMap<String, Object>> call, Response<HashMap<String, Object>> response) {
+                public void onResponse(Call<HashMap<String, String>> call,
+                                       Response<HashMap<String, String>> response) {
                     if (!response.isSuccessful()) {
                         Log.d("API JWT CALL", response.toString());
                         return;
                     }
                     try {
-                        HashMap<String, Object> data = response.body();
+                        HashMap<String, String> data = response.body();
                         if (data.containsKey("jwt")) {
-                            String jwt = (String) data.get("jwt");
+                            String jwt = data.get("jwt");
 
                             // Get other profile info as well
                             String displayName = account.getDisplayName();
-                            String thumbnail = account.getPhotoUrl().toString();
+                            String thumbnail = (account.getPhotoUrl() != null)
+                                    ? account.getPhotoUrl().toString() : "";
 
                             // Handle JWT
                             HashMap<String, String> user = new HashMap<>();
@@ -133,7 +135,7 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
                 }
 
                 @Override
-                public void onFailure(Call<HashMap<String, Object>> call, Throwable t) {
+                public void onFailure(Call<HashMap<String, String>> call, Throwable t) {
                     Log.d("API JWT FAILED", call.toString());
                     Log.d("API JWT MORE DETAILS", t.getLocalizedMessage());
                 }
@@ -142,7 +144,11 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason
             // Refer to GoogleSignInStatusCodes to know out more info
-            Toast.makeText(SignInActivity.this, "Fail to Sign In", Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                    SignInActivity.this,
+                    "Signing in failed. Check your\nconnection and try again.",
+                    Toast.LENGTH_SHORT
+            ).show();
         }
     }
 
