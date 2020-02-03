@@ -10,15 +10,18 @@
                 <item android:id="@+id/nav_schedule"
                     android:icon="@drawable/schedule"
                     android:title="Schedule" />
+                <item android:id="@+id/sync_calendars"
+                    android:icon="@drawable/sync"
+                    android:title="Sync Calendars"/>
             </group>
         </menu>
     </item>
 
-    // Without a title
+    <!-- Without a title -->
     <group android:checkableBehavior="single">
-        <item android:id="@+id/nav_api"
-            android:icon="@drawable/api"
-            android:title="API Docs"/>
+        <item android:id="@+id/nav_profile"
+            android:icon="@drawable/profile"
+            android:title="Profile" />
         <item android:id="@+id/nav_settings"
             android:icon="@drawable/settings"
             android:title="Settings" />

@@ -5,9 +5,9 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 
 public interface CalbitInterface {
-
-    @GET("")
-    Call<Calbit[]> getCalbits();
+    // Get the Events from the Calbitica
+    @GET("calbit")
+    Call<Calbits> getAllCalbits();
 
     @POST("")
     void createCalbit();

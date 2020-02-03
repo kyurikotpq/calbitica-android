@@ -8,11 +8,16 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import com.alamkanak.weekview.WeekViewEvent;
 import com.arasthel.asyncjob.AsyncJob;
 import com.bumptech.glide.Glide;
-import com.calbitica.app.API_Docs.API_DocsFragment;
+import com.calbitica.app.Profile.ProfileFragment;
+import com.calbitica.app.SyncCalendars.Calendars;
+import com.calbitica.app.SyncCalendars.SyncCalendars;
 import com.calbitica.app.About.AboutFragment;
 import com.calbitica.app.Auth.GoogleAuth;
 import com.calbitica.app.Auth.SignInActivity;
@@ -20,6 +25,7 @@ import com.calbitica.app.Notification.Notification;
 import com.calbitica.app.R;
 import com.calbitica.app.Agenda.AgendaFragment;
 import com.calbitica.app.Settings.SettingsFragment;
+import com.calbitica.app.Util.CalbiticaAPI;
 import com.calbitica.app.Util.UserData;
 import com.calbitica.app.Week.WeekFragment;
 
@@ -71,6 +77,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_navigation_bar);
 
         notificationManager = NotificationManagerCompat.from(this);
@@ -120,7 +127,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         calendar = Calendar.getInstance();
         String currentMonth = DateFormat.getDateInstance(DateFormat.LONG).format(calendar.getTime());
         title = findViewById(R.id.title);
-        title.setText(currentMonth.replaceAll("[^a-zA-Z]", "") + " " + calendar.get(Calendar.YEAR));
+        title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
         SimpleDateFormat month_date = new SimpleDateFormat("d/MM/YYYY");
         currentMonth = month_date.format(calendar.getTime());
@@ -159,7 +166,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 calendar.set(year, month, dayOfMonth);
                 SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
                 String selectedMonth = month_date.format(calendar.getTime());
-                title.setText(selectedMonth + " " + calendar.get(Calendar.YEAR));
+                title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
                 String selected = dayOfMonth + "/" + (month + 1) + "/" + year;
                 Toast.makeText(NavigationBar.this, "Selected: " + selected, Toast.LENGTH_LONG).show();
@@ -260,19 +267,35 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 }
 
                 break;
-            case R.id.nav_api:
+            case R.id.sync_calendars:
                 if (!menuItem.isChecked()) {
                     // Setting the necessary items for each respective pages
-                    title.setText("API Docs");
+                    title.setText("Sync Calendars");
                     arrow.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
 
                     // addToBackStack(null) -> Allow to go previous page, rather than exit the app
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new API_DocsFragment()).addToBackStack(null).commit();
-                    selectedPages = "nav_api";
-                    selectedList.add("nav_api");
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SyncCalendars()).addToBackStack(null).commit();
+                    selectedPages = "sync_calendars";
+                    selectedList.add("sync_calendars");
+                }
+
+                break;
+            case R.id.nav_profile:
+                if (!menuItem.isChecked()) {
+                    // Setting the necessary items for each respective pages
+                    title.setText("Profile");
+                    arrow.setVisibility(View.GONE);
+                    nav_today.setVisible(false);
+                    nav_refresh.setVisible(false);
+                    nav_add.setVisible(false);
+
+                    // addToBackStack(null) -> Allow to go previous page, rather than exit the app
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ProfileFragment()).addToBackStack(null).commit();
+                    selectedPages = "nav_profile";
+                    selectedList.add("nav_profile");
                 }
 
                 break;
@@ -358,7 +381,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         // Title change as well
                         SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
                         String selectedMonth = month_date.format(calendar.getTime());
-                        title.setText(selectedMonth + " "  + calendar.get(Calendar.YEAR));
+                        title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
 
                         // As then also pass the data into WeekFragment
                         WeekFragment fragment = WeekFragment.newInstance(calendar.getTime().toString());
@@ -371,12 +394,6 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         }
 
                         return true;
-                    }
-                })
-                .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                    @Override
-                    public void onResult(Boolean result) {
-                        nav_today.setEnabled(true);
                     }
                 }).create().start();
                 break;
@@ -520,16 +537,26 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     title.setText(selectedMonth + " "  + calendar.get(Calendar.YEAR));
 
                     navigationView.setCheckedItem(R.id.nav_schedule);
-                } else if (selectedPages == "nav_api") {
+                } else if (selectedPages == "sync_calendars") {
                     // Setting the necessary items for each respective pages
-                    title.setText("API Docs");
+                    title.setText("Sync Calendars");
                     arrow.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
 
-                    navigationView.setCheckedItem(R.id.nav_api);
-                } else if(selectedPages == "nav_settings") {
+                    navigationView.setCheckedItem(R.id.sync_calendars);
+                } else if(selectedPages == "nav_profile") {
+                    // Setting the necessary items for each respective pages
+                    title.setText("Profile");
+                    arrow.setVisibility(View.GONE);
+                    nav_today.setVisible(false);
+                    nav_refresh.setVisible(false);
+                    nav_add.setVisible(false);
+
+                    navigationView.setCheckedItem(R.id.nav_profile);
+                }
+                else if(selectedPages == "nav_settings") {
                     // Setting the necessary items for each respective pages
                     title.setText("Settings");
                     arrow.setVisibility(View.GONE);

@@ -4,7 +4,9 @@ import android.util.Log;
 
 import com.calbitica.app.Auth.AuthInterface;
 import com.calbitica.app.Models.CalbitInterface;
+import com.calbitica.app.Profile.HabiticaInterface;
 import com.calbitica.app.Settings.SettingsInterface;
+import com.calbitica.app.SyncCalendars.CalendarsInterface;
 
 import java.io.IOException;
 
@@ -27,6 +29,8 @@ public class CalbiticaAPI {
     private AuthInterface authInterface = null;
     private CalbitInterface calbitInterface = null;
     private SettingsInterface settingsInterface = null;
+    private CalendarsInterface calendarsInterface = null;
+    private HabiticaInterface habiticaInterface = null;
 
     private CalbiticaAPI(String jwt) {
         okHttpClient = new OkHttpClient.Builder()
@@ -52,6 +56,8 @@ public class CalbiticaAPI {
         setAuthInterface();
         setCalbitInterface();
         setSettingsInterface();
+        setCalendarsInterface();
+        setHabiticaInterface();
     }
 
     private void setAuthInterface() {
@@ -69,7 +75,7 @@ public class CalbiticaAPI {
     private void setCalbitInterface() {
         //  Build the Retrofit wrapper
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL + "calbit/")
+                .baseUrl(BASE_URL)                                  // Interface cannot be empty string, so declare as nothing here
                 .addConverterFactory(GsonConverterFactory.create()) // convert JSON data (got from server) into java (model) objects (POJO)
                 .client(okHttpClient)
                 .build();
@@ -90,6 +96,30 @@ public class CalbiticaAPI {
         settingsInterface = retrofit.create(SettingsInterface.class);
     }
 
+    private void setCalendarsInterface() {
+        // Build the Retrofit wrapper
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)                                  // Interface cannot be empty string, so declare as nothing here
+                .addConverterFactory(GsonConverterFactory.create()) // convert JSON data (got from server) into java (model) objects (POJO)
+                .client(okHttpClient)
+                .build();
+
+        // Populate all the respective HTTP Methods & links
+        calendarsInterface = retrofit.create(CalendarsInterface.class);
+    }
+
+    private void setHabiticaInterface() {
+        // Build the Retrofit wrapper
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL + "h/")
+                .addConverterFactory(GsonConverterFactory.create()) // convert JSON data (got from server) into java (model) objects (POJO)
+                .client(okHttpClient)
+                .build();
+
+        // Populate all the respective HTTP Methods & links
+        habiticaInterface = retrofit.create(HabiticaInterface.class);
+    }
+
     public static CalbiticaAPI getInstance(String jwt) {
         if (instance == null)
             instance = new CalbiticaAPI(jwt);
@@ -108,4 +138,8 @@ public class CalbiticaAPI {
     public SettingsInterface settings() {
         return this.settingsInterface;
     }
+
+    public CalendarsInterface calendars() { return this.calendarsInterface; }
+
+    public HabiticaInterface habitica() { return this.habiticaInterface; }
 }

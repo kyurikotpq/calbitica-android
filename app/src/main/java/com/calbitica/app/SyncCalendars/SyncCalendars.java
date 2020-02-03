@@ -1,4 +1,4 @@
-package com.calbitica.app.API_Docs;
+package com.calbitica.app.SyncCalendars;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -8,9 +8,10 @@ import android.widget.TextView;
 
 import com.calbitica.app.Database.MongoAPI;
 import com.calbitica.app.Database.MongoDB;
+import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.calbitica.app.Util.CalbiticaAPI;
+import com.calbitica.app.Util.UserData;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,14 +31,14 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class API_DocsFragment extends Fragment {
+public class SyncCalendars extends Fragment {
     private TextView textViewResult;
     private MongoAPI mongoApi;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_api_docs, container, false);
+        return inflater.inflate(R.layout.fragment_sync_calendars, container, false);
     }
 
     @Override
@@ -241,6 +242,36 @@ public class API_DocsFragment extends Fragment {
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 textViewResult.setText(t.getMessage());
+            }
+        });
+    }
+
+    public void getAllCalendars() {
+        // Retrieve the JWT
+        String jwt = UserData.get("jwt", getContext());
+
+        // Build the API Call
+        Call<Calendars> apiCall = CalbiticaAPI.getInstance(jwt).calendars().getAllCalendars();
+
+        // Make the API Call
+        apiCall.enqueue(new Callback<Calendars>() {
+            @Override
+            public void onResponse(Call<Calendars> call, Response<Calendars> response) {
+                if (!response.isSuccessful()) {
+                    System.out.println("Unsuccessful to get all Calendars " + response.code());
+                    return;
+                }
+
+                Calendars allCalendars = response.body();
+
+                for(int i = 0; i < allCalendars.getData().size(); i++) {
+                    System.out.println(allCalendars.getData().get(i).getGoogleID());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Calendars> call, Throwable t) {
+                System.out.println("Fail to get all Calendars " + t.getMessage());
             }
         });
     }

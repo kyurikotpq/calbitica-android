@@ -12,6 +12,6 @@ public interface AuthInterface {
     // Exchange serverAuthCode for a Calbitia JWT
     @POST("code")
     Call<HashMap<String, String>> tokensFromAuthCode (
-            @Body HashMap<String, String> codeHM
+        @Body HashMap<String, String> codeHM
     );
 }

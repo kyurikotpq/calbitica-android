@@ -93,6 +93,8 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
             // Then store the JWT in sharedPreferences
             String authCode = account.getServerAuthCode();
 
+            System.out.println("authCode: " + authCode);
+
             // very bad typing, I'm sorry
             HashMap<String, String> codeObj = new HashMap<>();
             codeObj.put("code", authCode);
@@ -100,6 +102,7 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
             // Build the API Call
             Call<HashMap<String, String>> apiCall = CalbiticaAPI.getInstance("").auth()
                                                         .tokensFromAuthCode(codeObj);
+
             // Make the API Call
             apiCall.enqueue(new Callback<HashMap<String, String>>() {
                 @Override

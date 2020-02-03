@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    // 3 dot icons with some linked pages/fragments
+<!--    3 dot icons with some linked pages/fragments-->
 <!--    <item-->
 <!--        android:icon="@drawable/more"-->
 <!--        android:title=""-->
@@ -22,6 +22,26 @@
 <!--                app:showAsAction="ifRoom" />-->
 <!--        </menu>-->
 <!--    </item>-->
+
+
+<!--    SubMenu-->
+<!--    <item android:id="@+id/item1"-->
+<!--        android:title="Item 1"-->
+<!--        app:showAsAction="never" />-->
+
+<!--    <item android:id="@+id/item2"-->
+<!--        android:title="Item 2"-->
+<!--        app:showAsAction="never">-->
+
+<!--        <menu>-->
+<!--            <item android:id="@+id/subitem1"-->
+<!--                android:title="Sub Item 1"/>-->
+
+<!--            <item android:id="@+id/subitem2"-->
+<!--                android:title="Sub Item 2"/>-->
+<!--        </menu>-->
+<!--    </item>-->
+
 
     <item
         android:id="@+id/calendar_today"

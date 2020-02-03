@@ -78,7 +78,7 @@ public class AgendaFragment extends Fragment{
             progressDialog.setTitle("Loading in Progress...");
             // Range of 0 to 10, for the ProgressDialog(Loading)
             progressDialog.setProgress(0);
-            progressDialog.setMax(10);
+            progressDialog.setMax(5);
             // setProgressStyle will change the turning loading(default), to the 0 to 10 loading process
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.show();
@@ -304,7 +304,7 @@ public class AgendaFragment extends Fragment{
                 public void onScrollToDate(Calendar calendar) {
                     // When selected different date or scroll the date, it will change the Navigation Bar of the Title
                     String currentMonth = DateFormat.getDateInstance(DateFormat.LONG).format(calendar.getTime());
-                    NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "") + " "  + calendar.get(Calendar.YEAR));
+                    NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
                 }
             });
 
