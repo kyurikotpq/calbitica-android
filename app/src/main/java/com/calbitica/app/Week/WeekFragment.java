@@ -72,21 +72,17 @@ public class WeekFragment extends Fragment {
                 weekView = getActivity().findViewById(R.id.weekView);
                 mNewEvents = new ArrayList<WeekViewEvent>();
 
-                try {
-                    // Get the information from the getCalendarMonths(required)
-                    weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
-                        @Override
-                        public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
-                            // Populate the week view with the events
-                            List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
-                            ArrayList<WeekViewEvent> newEvents = getCalendarMonths(newYear, newMonth);
-                            events.addAll(newEvents);
-                            return events;
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                // Get the information from the getCalendarMonths(required)
+                weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
+                    @Override
+                    public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
+                        // Populate the week view with the events
+                        List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
+                        ArrayList<WeekViewEvent> newEvents = getCalendarMonths(newYear, newMonth);
+                        events.addAll(newEvents);
+                        return events;
+                    }
+                });
 
                 // Set up a date time interpreter to interpret how the date and time will be formatted in
                 // the week view. This is optional.
@@ -94,12 +90,6 @@ public class WeekFragment extends Fragment {
 
                 // Get the event from database
                 getAllCalbits();
-
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
 
                 return true;
             }

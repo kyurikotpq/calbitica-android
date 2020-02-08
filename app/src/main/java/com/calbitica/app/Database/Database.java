@@ -18,6 +18,8 @@ import com.calbitica.app.SyncCalendars.SyncCalendarsFragment;
 import com.calbitica.app.Util.CalbiticaAPI;
 import com.calbitica.app.Util.UserData;
 
+import java.util.HashMap;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -29,10 +31,11 @@ import static com.calbitica.app.SyncCalendars.SyncCalendarsFragment.message;
 
 public class Database {
     Context mcontext;
+    HashMap<String, String> allCalendars;                   //
 
     public Database(Context context) {mcontext = context;}
 
-    public void GetAllCalendars() {
+    public Boolean GetAllCalendars() {
         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
             @Override
             public Boolean doAsync() {
@@ -104,6 +107,8 @@ public class Database {
                 return true;
             }
         }).create().start();
+
+        return false;
     }
 
     public void UpdateCalendarSyncStatus() {
