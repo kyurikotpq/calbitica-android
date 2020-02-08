@@ -30,9 +30,6 @@ public class StartDateTime {
         this.timeZone = timeZone;
     }
 
-    public StartDateTime(Date dateTime, Date date, String timeZone) {
-        this.dateTime = dateTime;
-        this.date = date;
-        this.timeZone = timeZone;
+    public StartDateTime() {
     }
 }

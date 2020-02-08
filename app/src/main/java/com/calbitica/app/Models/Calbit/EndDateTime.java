@@ -30,9 +30,6 @@ public class EndDateTime {
         this.timeZone = timeZone;
     }
 
-    public EndDateTime(Date dateTime, Date date, String timeZone) {
-        this.dateTime = dateTime;
-        this.date = date;
-        this.timeZone = timeZone;
+    public EndDateTime() {
     }
 }
