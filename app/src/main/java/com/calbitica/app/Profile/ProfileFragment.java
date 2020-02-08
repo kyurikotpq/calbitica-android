@@ -8,21 +8,47 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.calbitica.app.Models.Habitica.Habitica;
+import com.calbitica.app.Models.Habitica.HabiticaInfo;
+import com.calbitica.app.Models.Habitica.HabiticaProfileResponse;
+import com.calbitica.app.Models.Habitica.Stats;
 import com.calbitica.app.R;
 import com.calbitica.app.Util.CalbiticaAPI;
 import com.calbitica.app.Util.UserData;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import java.util.HashMap;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static java.lang.Math.round;
+
 public class ProfileFragment extends Fragment {
+    // All HabiticaProfileResponse Profile and Stats here...
+    TextView profileName;
+    TextView profileLevelType;
+
+    ProgressBar healthBar; TextView profileHP;
+    ProgressBar expBar; TextView profileExp;
+    ProgressBar manaBar; TextView profileMana;
+
+    // HabiticaProfileResponse Inn Status
+    Button innStatusBTN;
+
+    // HabiticaProfileResponse Quest Info
+    TextView questStatus; Button questAccept; Button questReject;
+
+    // Temporary data values
+    boolean isSleeping = false;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -34,48 +60,168 @@ public class ProfileFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        // All Habitica Profile and Stats here...
-        TextView profileName = getActivity().findViewById(R.id.profileName);
-        TextView profileLevelType = getActivity().findViewById(R.id.profileLevelType);
+        // All HabiticaProfileResponse Profile and Stats here...
+        profileName = getActivity().findViewById(R.id.profileName);
+        profileLevelType = getActivity().findViewById(R.id.profileLevelType);
 
-        ProgressBar healthBar = getActivity().findViewById(R.id.healthBar);
-        TextView profileHP = getActivity().findViewById(R.id.profileHP);
-        ProgressBar expBar = getActivity().findViewById(R.id.expBar);
-        TextView profileExp = getActivity().findViewById(R.id.profileExp);
-        ProgressBar manaBar = getActivity().findViewById(R.id.manaBar);
-        TextView profileMana = getActivity().findViewById(R.id.profileMana);
+        healthBar = getActivity().findViewById(R.id.healthBar);
+        profileHP = getActivity().findViewById(R.id.profileHP);
+        expBar = getActivity().findViewById(R.id.expBar);
+        profileExp = getActivity().findViewById(R.id.profileExp);
+        manaBar = getActivity().findViewById(R.id.manaBar);
+        profileMana = getActivity().findViewById(R.id.profileMana);
 
-        // Habitica Inn Status
-        Button innStatus = getActivity().findViewById(R.id.innStatus);
+        // HabiticaProfileResponse Inn Status
+        innStatusBTN = getActivity().findViewById(R.id.innStatus);
 
-        // Habitica Quest Info
-        TextView questStatus = getActivity().findViewById(R.id.questStatus);
-        Button questAccept = getActivity().findViewById(R.id.questAccept);
-        Button questReject = getActivity().findViewById(R.id.questReject);
+        // HabiticaProfileResponse Quest Info
+        questStatus = getActivity().findViewById(R.id.questStatus);
+        questAccept = getActivity().findViewById(R.id.questAccept);
+        questReject = getActivity().findViewById(R.id.questReject);
 
         // Retrieve the JWT
         String jwt = UserData.get("jwt", getContext());
 
         // Build the API Call
-        Call<Habitica> apiCall = CalbiticaAPI.getInstance(jwt).habitica().getHabiticaProfile();
+        Call<HabiticaProfileResponse> apiCall = CalbiticaAPI.getInstance(jwt).habitica().getHabiticaProfile();
         // Make the API Call
-        apiCall.enqueue(new Callback<Habitica>() {
+        apiCall.enqueue(new Callback<HabiticaProfileResponse>() {
             @Override
-            public void onResponse(Call<Habitica> call, Response<Habitica> response) {
+            public void onResponse(Call<HabiticaProfileResponse> call, Response<HabiticaProfileResponse> response) {
                 if (!response.isSuccessful()) {
-                    Log.d("Unsuccessful to get Habitica Profile: ", response.toString());
-                    return;
+                    try {
+
+                        Log.d("Unsuccessful to get HabiticaProfileResponse Profile: ", response.errorBody().string());
+                        return;
+                    } catch (Exception e) {
+
+                    }
                 }
+                Log.d("profile response!", response.toString());
+                HabiticaProfileResponse profileResponse = response.body();
+                try {
+                    if(profileResponse != null) {
+                        HabiticaInfo profileInfo = profileResponse.getData();
 
-                Habitica profile = response.body();
+                        // set data on the views
+                        profileName.setText(profileInfo.getProfile().getName());
 
-                profileName.setText(profile.getData().getProfile().getName());
-//                profileLevelType.setText(profile.getData());
+                        Stats profileStats = profileInfo.getStats();
+                        String levelStr = "Level " + String.format("%.0f", profileStats.getLvl())
+                                    + " • " + profileStats.getClassname();
+                        profileLevelType.setText(levelStr);
+
+                        float hp = profileStats.getHp() / profileStats.getMaxHealth();
+                        healthBar.setProgress(round(hp * 100), true);
+                        profileHP.setText(String.format("%.0f", profileStats.getHp()) + " / "
+                                        + String.format("%.0f", profileStats.getMaxHealth()));
+
+                        float exp = profileStats.getExp() / profileStats.getToNextLevel();
+                        expBar.setProgress(round(exp * 100), true);
+                        profileExp.setText(String.format("%.0f", profileStats.getExp()) + " / "
+                                        + String.format("%.0f", profileStats.getToNextLevel()));
+
+                        float mp = profileStats.getMp() / profileStats.getMaxMP();
+                        manaBar.setProgress(round(mp * 100), true);
+                        profileMana.setText(String.format("%.0f", profileStats.getMp()) + " / "
+                                        + String.format("%.0f", profileStats.getMaxMP()));
+
+                        // Set Sleep button state
+                        isSleeping = profileInfo.getPreferences().getSleep();
+                        updateFragments("sleep");
+
+                        // Quest stuff
+                    }
+                } catch(Exception e) {
+                    // usually is nullpointer
+
+                }
             }
 
             @Override
-            public void onFailure(Call<Habitica> call, Throwable t) {
+            public void onFailure(Call<HabiticaProfileResponse> call, Throwable t) {
                 Log.d("Fail to get habitica profile: ", t.getMessage());
+            }
+        });
+
+        // Button click listeners
+        innStatusBTN.setOnClickListener(v -> { onSleepBtnClicked(); });
+    }
+
+    public void updateFragments(String type) {
+        getActivity().runOnUiThread(() -> {
+            List<Fragment> allFragments = getActivity().getSupportFragmentManager().getFragments();
+            if (allFragments == null || allFragments.isEmpty())
+                return;
+            for (Fragment fragment : allFragments) {
+                if (fragment.isVisible()) {
+                    switch(type) {
+                        case "sleep":
+                            ((ProfileFragment) fragment).updateSleepBtn();
+                            break;
+                    }
+                }
+
+            }
+        });
+    }
+    public void updateSleepBtn() {
+        String innStatusTxt = isSleeping ? "Resume Damage" : "Pause Damage";
+        int indentifier = isSleeping ? R.color.red_3 : R.color.blue_3;
+        innStatusBTN.setText(innStatusTxt);
+        innStatusBTN.setBackgroundColor(getActivity().getResources().getColor(indentifier, null));
+    }
+
+    public void onSleepBtnClicked() {
+        // Retrieve the JWT
+        String oldJWT = UserData.get("jwt", getContext());
+        // Build the API Call
+        Call<HashMap<String, Object>> apiCall1 = CalbiticaAPI.getInstance(oldJWT)
+                            .habitica().toggleSleep();
+
+        // Make the API Call
+        apiCall1.enqueue(new Callback<HashMap<String, Object>>() {
+            @Override
+            public void onResponse(Call<HashMap<String, Object>> call,
+                                   Response<HashMap<String, Object>> response) {
+                if (!response.isSuccessful()) {
+                    Log.d("SLEEP CALL", response.toString());
+                    return;
+                }
+                try {
+                    HashMap<String, Object> data = response.body();
+                    // Handle new JWT returned, if any
+                    if (data.containsKey("jwt")) {
+                        String jwt = data.get("jwt").toString();
+
+                        // Handle JWT
+                        HashMap<String, String> user = new HashMap<>();
+                        user.put("jwt", jwt);
+
+                        UserData.save(user, getContext());
+                        Log.d("API JWT: ", jwt);
+
+                        String message = (data.containsKey("message"))
+                                ? data.get("message").toString()
+                                : "Something went wrong. Please try again.";
+                        Toast.makeText(getActivity(),message, Toast.LENGTH_LONG).show();
+                    }
+
+                    // Update the button! + toast
+                    if(data.containsKey("sleep") && data.containsKey("message")) {
+                        String msg = data.get("message").toString();
+                        isSleeping = (boolean) data.get("sleep");
+                        updateFragments("sleep");
+                    }
+                } catch (Exception e) {
+                    Log.d("API JWT FAILED", e.getLocalizedMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HashMap<String, Object>> call, Throwable t) {
+                Log.d("Save settings FAILED", call.toString());
+                Log.d("Save settings MORE DETAILS", t.getLocalizedMessage());
             }
         });
     }
