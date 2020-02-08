@@ -283,6 +283,7 @@ public class Firebase {
     // Get the schedule events from firebase, only render once(will be discard after that)
     public void getScheduleEventsFromFirebase(final List<CalendarEvent> eventList) {
         // Get the events from firebase, only render once(will be discard after that)
+        /*
         DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
         firebase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -344,6 +345,8 @@ public class Firebase {
                 System.out.println(databaseError.getCode());
             }
         });
+
+         */
     }
 
     // For the Schedule Calendar (Create, Edit, Delete) will be the same as the weekView Calendar...
