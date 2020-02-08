@@ -3,11 +3,14 @@ package com.calbitica.app.Week;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -16,21 +19,22 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
+import com.calbitica.app.Database.Database;
+import com.calbitica.app.Models.Calendars.Calendars;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.Agenda.AgendaFragment;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,15 +42,20 @@ import androidx.appcompat.widget.Toolbar;
 import com.calbitica.app.R;
 
 public class WeekEditEvent extends AppCompatActivity {
-    EditText eventTitle = null;                             // The iuput calendar title
-    JSONObject colorInfo = new JSONObject();                // To make it more information and more easier
-    Calendar startDateTime, endDateTime = null;             // The input calendar start and end datetime
-    WeekViewEvent event = null;                             // The events that will in Week Calendar
-    com.calbitica.app.Database.Firebase firebase;
+    EditText eventTitle = null;                                     // The iuput calendar title
+    JSONObject colorInfo = new JSONObject();                        // To make it more information and more easier
+    Calendar startDateTime, endDateTime, reminderDateTime = null;   // The input calendar start and end datetime
+    WeekViewEvent event = null;                                     // The events that will in Week Calendar
+    ArrayList<String> calendarArrayKey = new ArrayList<>();         // Using this to tally with the specific calendar value
+    Database database = null;                                       // Reference for tally with the database
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Get the _id from the database, as for valid checking
+        Database database = new Database(WeekEditEvent.this);
+        database.GetAllCalbit();
 
         // Using the same layout of the Event Create
         setContentView(R.layout.activity_week__create_event);
@@ -73,15 +82,20 @@ public class WeekEditEvent extends AppCompatActivity {
         String title = bundle.getString("title");
         String startDT = bundle.getString("startDateTime");
         String endDT = bundle.getString("endDateTime");
+        String reminderDT = bundle.getString("reminderDateTime");
         startDateTime = Calendar.getInstance();
         endDateTime = Calendar.getInstance();
-        final int color = bundle.getInt("color");
+        reminderDateTime = Calendar.getInstance();
 
         try{
             SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
             startDateTime.setTime(sdf.parse(startDT));
             endDateTime.setTime(sdf.parse(endDT));
-        } catch (java.text.ParseException e) {
+
+            if(reminderDT.length() != 0 || reminderDT != null) {
+                reminderDateTime.setTime(sdf.parse(reminderDT));
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -89,198 +103,35 @@ public class WeekEditEvent extends AppCompatActivity {
         eventTitle = findViewById(R.id.title);
         eventTitle.setText(title);
 
-        final Spinner eventColor = (Spinner) findViewById(R.id.selectCalendar);
+        final Spinner eventSync = (Spinner) findViewById(R.id.selectCalendar);
+        ArrayList<String> calendarArrayValue = new ArrayList<>();
 
-        // Get the colorPosition from the firebase, as selected on default
-        DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
-        firebase.addListenerForSingleValueEvent(new ValueEventListener() {
+        Database data = new Database(getBaseContext());
+        data.GetAllCalendars();
+
+        Toast.makeText(getBaseContext(), "Please wait for Google Account to render...", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    Map<String, String> eventData = (Map<String, String>) dataSnapshot.getValue();
-                    for (String key : eventData.keySet()) {
-                        Object data = eventData.get(key);
-
-                        try {
-                            HashMap<String, Object> eventObject = (HashMap<String, Object>) data;
-
-                            // Getting the JSON Object from colorInfo, based on key
-                            HashMap<String, Object> colorObject = (HashMap<String, Object>) eventObject.get("colorInfo");
-
-                            // Check and render the firebase with the existing data(Only 1 data will be found)
-                            String firebaseEvent = colorObject.get("color").toString();
-                            int firebaseColor = Integer.parseInt(firebaseEvent);
-                            if(firebaseColor == color) {
-                                String colorPosition = colorObject.get("colorPosition").toString();
-                                int position = Integer.parseInt(colorPosition);
-                                eventColor.setSelection(position);
-                            }
-                        } catch (ClassCastException cce) {
-                            // If the object can’t be casted into HashMap, it means that it is of type String.
-                            try {
-                                String mString = String.valueOf(eventData.get(key));
-                                System.out.println("data mString " + mString);
-                            } catch (ClassCastException cce2) {
-                                cce2.printStackTrace();
-                            }
-                        }
-                    }
+            public void run() {
+                for(int i = 0; i < data.GetAllCalendars().size(); i++) {
+                    calendarArrayKey.add(data.GetAllCalendars().get(i).getGoogleID());
+                    calendarArrayValue.add(data.GetAllCalendars().get(i).getSummary());
+                    ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, calendarArrayValue);
+                    arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    eventSync.setAdapter(arrayAdapter);
+                    eventSync.setBackgroundColor(getResources().getColor(R.color.c_teal_1));
                 }
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                System.out.println(databaseError.getCode());
-            }
-        });
+        }, 3000);
 
         // When selected the Spinner drop-down, the background color will change accordingly
         // Due to some libraries require specific version, it become deprecated, for now it will still work, but have to take note in future
-        eventColor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        eventSync.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                switch (position) {
-                    case 0:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_teal_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_teal_1));
-                            colorInfo.put("colorText", "Teal 1");
-                            colorInfo.put("colorPosition", 0);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 1:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_teal_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_teal_2));
-                            colorInfo.put("colorText", "Teal 2");
-                            colorInfo.put("colorPosition", 1);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 2:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_orange_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_orange_1));
-                            colorInfo.put("colorText", "Orange 1");
-                            colorInfo.put("colorPosition", 2);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 3:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_orange_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_orange_2));
-                            colorInfo.put("colorText", "Orange 2");
-                            colorInfo.put("colorPosition", 3);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 4:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_blue_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_blue_1));
-                            colorInfo.put("colorText", "Blue 1");
-                            colorInfo.put("colorPosition", 4);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 5:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_blue_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_blue_2));
-                            colorInfo.put("colorText", "Blue 2");
-                            colorInfo.put("colorPosition", 5);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 6:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_purple_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_purple_1));
-                            colorInfo.put("colorText", "Purple 1");
-                            colorInfo.put("colorPosition", 6);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 7:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_purple_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_purple_2));
-                            colorInfo.put("colorText", "Purple 2");
-                            colorInfo.put("colorPosition", 7);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 8:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_pink_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_pink_1));
-                            colorInfo.put("colorText", "Pink 1");
-                            colorInfo.put("colorPosition", 8);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 9:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_pink_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_pink_2));
-                            colorInfo.put("colorText", "Pink 2");
-                            colorInfo.put("colorPosition", 9);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 10:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_red_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_red_1));
-                            colorInfo.put("colorText", "Red 1");
-                            colorInfo.put("colorPosition", 10);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 11:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_red_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_red_2));
-                            colorInfo.put("colorText", "Red 2");
-                            colorInfo.put("colorPosition", 11);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 12:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_green_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_green_1));
-                            colorInfo.put("colorText", "Green 1");
-                            colorInfo.put("colorPosition", 12);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 13:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_green_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_green_2));
-                            colorInfo.put("colorText", "Green 2");
-                            colorInfo.put("colorPosition", 13);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                }
+                String tutorialsName = parent.getItemAtPosition(position).toString();
+                Toast.makeText(parent.getContext(), "Selected: " + tutorialsName, Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -408,6 +259,66 @@ public class WeekEditEvent extends AppCompatActivity {
                 endTime.setText(endDateTime.get(Calendar.HOUR_OF_DAY) + ":" + endDateTime.get(Calendar.MINUTE));
             }
         }
+
+        // Prompt the Reminder Date Picker to choose
+        final TextView reminderDate = (TextView) findViewById(R.id.reminderDate);
+        reminderDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar calendar = Calendar.getInstance();
+                int year = calendar.get(Calendar.YEAR);
+                int month = calendar.get(Calendar.MONTH);
+                int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+
+                DatePickerDialog datePickerDialog = new DatePickerDialog(WeekEditEvent.this, new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                        reminderDateTime.set(year, month, day);
+                        reminderDate.setText(day + "/" + (month + 1) + "/" + year);
+                    }
+                }, year, month, dayOfMonth);
+                datePickerDialog.show();
+            }
+        });
+
+        // Prompt the Reminder Time Picker to choose
+        final TextView reminderTime = (TextView) findViewById(R.id.reminderTime);
+        reminderTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar calendar = Calendar.getInstance();
+                int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
+                int minute = calendar.get(Calendar.MINUTE);
+
+                TimePickerDialog timePickerDialog = new TimePickerDialog(WeekEditEvent.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
+                        if(minute < 10) {
+                            reminderTime.setText(hourOfDay + ":" + "0" + minute);
+                        } else {
+                            reminderTime.setText(hourOfDay + ":" + minute);
+                        }
+
+                        reminderDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        reminderDateTime.set(Calendar.MINUTE, minute);
+                    }
+                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekEditEvent.this));
+                timePickerDialog.show();
+            }
+        });
+
+        // Default reminderDateTime will be automatically configure
+        int reminderMonth = reminderDateTime.get(Calendar.MONTH) + 1;
+
+        if(reminderDateTime.getTime() != null) {
+            reminderDate.setText(reminderDateTime.get(Calendar.DAY_OF_MONTH) + "/" + reminderMonth + "/" + reminderDateTime.get(Calendar.YEAR));
+
+            if(reminderDateTime.get(Calendar.MINUTE) < 10) {
+                reminderTime.setText(reminderDateTime.get(Calendar.HOUR_OF_DAY) + ":" + "0" + reminderDateTime.get(Calendar.MINUTE));
+            } else {
+                reminderTime.setText(reminderDateTime.get(Calendar.HOUR_OF_DAY) + ":" + reminderDateTime.get(Calendar.MINUTE));
+            }
+        }
     }
 
     // Right Menu Bar Creation
@@ -428,25 +339,19 @@ public class WeekEditEvent extends AppCompatActivity {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
                 Toast.makeText(WeekEditEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
             } else {
-                Bundle bundle = getIntent().getExtras();
-                Long id = bundle.getLong("id");
+                // Setting the valid mongoId for the reference with the database
+                int id = (int) event.getId();
 
                 if(NavigationBar.selectedPages == "nav_week") {
                     // Modify event with new data(Only 1 data will be found and modify)
                     for(WeekViewEvent event : WeekFragment.mNewEvents) {
-                        if(event.getId() == id) {
+                        if(database.GetAllCalbit().get(id) != null) {
                             event.setName(eventTitle.getText().toString());
                             event.setStartTime(startDateTime);
                             event.setEndTime(endDateTime);
-                            try {
-                                int colorText = (Integer) colorInfo.get("color");
-                                event.setColor(colorText);
 
-                                // Refresh the week view. onMonthChange will be called again.
-                                WeekFragment.weekView.notifyDatasetChanged();
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
+                            // Refresh the week view. onMonthChange will be called again.
+                            WeekFragment.weekView.notifyDatasetChanged();
                         }
                     }
                 } else if (NavigationBar.selectedPages == "nav_schedule") {
@@ -456,26 +361,31 @@ public class WeekEditEvent extends AppCompatActivity {
                         if(AgendaFragment.eventList.get(i).getId() == id) {
                             AgendaFragment.eventList.remove(i);   // remove only 1
 
-                            try {
-                                int colorText = (Integer) colorInfo.get("color");
+                            BaseCalendarEvent allEvent = new BaseCalendarEvent(eventTitle.getText().toString(), "", "", 0, startDateTime, endDateTime, false);
+                            allEvent.setId(id);
+                            AgendaFragment.eventList.add(allEvent);
 
-                                BaseCalendarEvent allEvent = new BaseCalendarEvent(eventTitle.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
-                                allEvent.setId(id);
-                                AgendaFragment.eventList.add(allEvent);
-
-                                // Schedule Calendar will also re-render the events as well
-                                AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
-                            } catch (JSONException e) {
-                                Toast.makeText(WeekEditEvent.this, "Something went wrong, Please Try Again!", Toast.LENGTH_SHORT).show();
-                                e.printStackTrace();
-                            }
+                            // Schedule Calendar will also re-render the events as well
+                            AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                         }
                     }
                 }
 
-                // Update in Firebase with the new data, in 2 calendar as well
-                firebase = new com.calbitica.app.Database.Firebase();
-                firebase.updateWeekEventInFirebase(id, eventTitle.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
+                Date start = null, end = null, reminder = null;
+
+                try{
+                    SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-DDTHH:mm:ssZ", Locale.ENGLISH);
+                    start = sdf.parse(startDateTime.getTime().toString());
+                    end = sdf.parse(endDateTime.getTime().toString());
+
+                    if(reminderDateTime.getTime() != null) {
+                        reminder = sdf.parse(reminderDateTime.getTime().toString());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+//                database.updateEventInCalbit(database.GetAllCalbit().get(id).get_id().toString(), eventTitle.getText().toString(), start, end, reminder);
 
                 finish();
                 Toast.makeText(WeekEditEvent.this,"Event successfully updated", Toast.LENGTH_SHORT).show();

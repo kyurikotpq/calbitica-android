@@ -1,38 +1,42 @@
 package com.calbitica.app.Database;
 
 import android.content.Context;
-import android.view.View;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.Toast;
 
-import androidx.drawerlayout.widget.DrawerLayout;
-
+import com.alamkanak.weekview.WeekViewEvent;
 import com.arasthel.asyncjob.AsyncJob;
+import com.calbitica.app.Models.Calbit.Calbit;
+import com.calbitica.app.Models.Calbit.Calbits;
+import com.calbitica.app.Models.Calbit.StartDateTime;
 import com.calbitica.app.Models.Calendars.Calendar;
 import com.calbitica.app.Models.Calendars.Calendars;
-import com.calbitica.app.Models.Calendars.SyncCalendar;
-import com.calbitica.app.NavigationBar.NavigationBar;
-import com.calbitica.app.R;
-import com.calbitica.app.SyncCalendars.SyncCalendarsFragment;
 import com.calbitica.app.Util.CalbiticaAPI;
 import com.calbitica.app.Util.UserData;
+
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import static com.calbitica.app.SyncCalendars.SyncCalendarsFragment.checkBox;
-import static com.calbitica.app.SyncCalendars.SyncCalendarsFragment.progressDialog;
-import static com.calbitica.app.SyncCalendars.SyncCalendarsFragment.syncCalendars;
-import static com.calbitica.app.SyncCalendars.SyncCalendarsFragment.message;
+import static com.calbitica.app.Week.WeekFragment.listOfCalbits;
+import static com.calbitica.app.Week.WeekFragment.mNewEvents;
+import static com.calbitica.app.Week.WeekFragment.weekView;
 
 public class Database {
     Context mcontext;
+    List<Calendar> allCalendarInfo;
+    List<Calbit> allCalbitInfo;
 
     public Database(Context context) {mcontext = context;}
 
-    public void GetAllCalendars() {
+    public List<Calendar> GetAllCalendars() {
         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
             @Override
             public Boolean doAsync() {
@@ -53,40 +57,7 @@ public class Database {
 
                         // Due to the allCalendars parent data require an array with a child method, so have to use loop here...
                         Calendars allCalendars = response.body();
-
-                        try {
-                            if (allCalendars.getData() != null) {
-                                // Assign the Max Length from the database
-                                checkBox = new CheckBox[allCalendars.getData().size()];
-
-                                for(int i = 0; i < allCalendars.getData().size(); i++) {
-                                    // Each time will create a new checkbox
-                                    checkBox[i] = new CheckBox(mcontext);
-
-                                    checkBox[i].setEnabled(false);
-
-                                    // Checking for the existing Sync Calendars and put a check on the checkbox
-                                    if(allCalendars.getData().get(i).getSync()) {
-                                        checkBox[i].setChecked(true);
-                                    }
-
-                                    checkBox[i].setText(allCalendars.getData().get(i).getSummary());
-                                    checkBox[i].setTextColor(mcontext.getResources().getColor(R.color.white));
-                                    checkBox[i].setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-
-                                    // Due to the id is "5e381be3e787f0e7afb51d2d", can't really convert it to int
-                                    // So put on setHint(String method) to store it...
-                                    checkBox[i].setHint(allCalendars.getData().get(i).get_id().toString());
-
-                                    // To display each of the checkbox on the layout
-                                    syncCalendars.addView(checkBox[i]);
-                                }
-                            } else {
-                                System.out.println("Ops, Server went wrong, Please try again!");
-                            }
-                        } catch (Exception e) {
-                            System.out.println("Ops the HTTP Request: " + e.getLocalizedMessage());
-                        }
+                        allCalendarInfo = allCalendars.getData();
                     }
 
                     @Override
@@ -100,77 +71,94 @@ public class Database {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
                 return true;
             }
         }).create().start();
+
+        return allCalendarInfo;
     }
 
-    public void UpdateCalendarSyncStatus() {
-        if (checkBox != null) {
-            // Check all the array that found, and do the sync upon checked...
-            for (int i = 0; i < checkBox.length; i++) {
-                // Enable back the control to the user
-                progressDialog.dismiss();
-                checkBox[i].setEnabled(true);
-                NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+    public List<Calbit> GetAllCalbit() {
+        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+            @Override
+            public Boolean doAsync() {
+                // Retrieve the JWT
+                String jwt = UserData.get("jwt", mcontext);
 
-                checkBox[i].setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                // Build the API Call
+                Call<Calbits> apiCall = CalbiticaAPI.getInstance(jwt).calbit().getAllCalbits();
+
+                // Make the API Call
+                apiCall.enqueue(new Callback<Calbits>() {
                     @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-                            @Override
-                            public Boolean doAsync() {
-                                // Retrieve the JWT
-                                String jwt = UserData.get("jwt", mcontext);
+                    public void onResponse(Call<Calbits> call, Response<Calbits> response) {
+                        if (!response.isSuccessful()) {
+                            System.out.println("Unsuccessful to get all calbits " + response.code());
+                            return;
+                        }
 
-                                // Build the API Call, and get the specific checkbox information
-                                Call<SyncCalendar> apiCall = CalbiticaAPI.getInstance(jwt).calendars().syncCalendar(buttonView.getHint().toString(), isChecked);
-
-                                // Make the API Call
-                                apiCall.enqueue(new Callback<SyncCalendar>() {
-                                    @Override
-                                    public void onResponse(Call<SyncCalendar> call, Response<SyncCalendar> response) {
-                                        if (!response.isSuccessful()) {
-                                            System.out.println("Unsuccessful to sync the Calendar: " + response.code());
-                                            return;
-                                        }
-
-                                        // No need loop, just a simple object and display according to the changes only
-                                        SyncCalendar syncCalendar = response.body();
-                                        message = syncCalendar.getData().getMessage();
-                                    }
-
-                                    @Override
-                                    public void onFailure(Call<SyncCalendar> call, Throwable t) {
-                                        System.out.println("Fail to sync the Calendar: " + t.getMessage());
-                                    }
-                                });
-
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-
-                                return true;
-                            }
-                        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                            @Override
-                            public void onResult(Boolean result) {
-                                Toast.makeText(mcontext, message, Toast.LENGTH_SHORT).show();
-                            }
-                        }).create().start();
+                        Calbits allCalbits = response.body();
+                        allCalbitInfo = allCalbits.getData();
                     }
 
+                    @Override
+                    public void onFailure(Call<Calbits> call, Throwable t) {
+                        System.out.println("Fail to get all calbits " + t.getMessage());
+                    }
                 });
-            }
-        } else {
-            // Enable back the control to the user
-            progressDialog.dismiss();
-            NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
-            Toast.makeText(mcontext, "There is no data in your database!", Toast.LENGTH_SHORT).show();
-        }
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        }).create().start();
+
+        return allCalbitInfo;
+    }
+
+    public void updateEventInCalbit(final String _id, final String summary, final Date start, final Date end, final Date reminders, String calendarID, String googleID, Boolean allDay) {
+        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+            @Override
+            public Boolean doAsync() {
+//                // Retrieve the JWT
+//                String jwt = UserData.get("jwt", mcontext);
+//
+//                StartDateTime startDateTime = new StartDateTime();
+//                startDateTime.set();
+//
+//                Calbit putBody = new Calbit(_id, summary, start, end, reminders, calendarID, googleID, allDay);
+//
+//                // Build the API Call
+//                Call<Calbit> apiCall = CalbiticaAPI.getInstance(jwt).calbit().editCalbit(_id, putBody);
+//
+//                // Make the API Call
+//                apiCall.enqueue(new Callback<Calbit>() {
+//                    @Override
+//                    public void onResponse(Call<Calbit> call, Response<Calbit> response) {
+//                        if (!response.isSuccessful()) {
+//                            System.out.println("Unsuccessful to get all calbits " + response.code());
+//                            return;
+//                        }
+//
+//                        Calbit allCalbits = response.body();
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Call<Calbit> call, Throwable t) {
+//                        System.out.println("Fail to get all calbits " + t.getMessage());
+//                    }
+//                });
+
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        }).create().start();
     }
 }

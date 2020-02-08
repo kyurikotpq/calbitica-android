@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -18,11 +19,13 @@ import com.alamkanak.weekview.MonthLoader;
 import com.alamkanak.weekview.WeekView;
 import com.alamkanak.weekview.WeekViewEvent;
 
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +37,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import com.arasthel.asyncjob.AsyncJob;
+import com.calbitica.app.Database.Database;
 import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.NavigationBar.NavigationBar;
@@ -46,6 +50,8 @@ public class WeekFragment extends Fragment {
     public static ArrayList<WeekViewEvent> mNewEvents;                  // Mostly used from NavigationBar refresh, etc...(Event in Week Calendar)
     public static boolean weekMonthCheck;                               // Ensure the weekView is loaded finished
     public static List<Calbit> listOfCalbits;                           // Temp storage of calbit list from API
+    private String mongoId = null;                                      // Particular events(Mainly for edit and delete)
+    private String mongoReminder = null;                                // Particular events(Pass the bundle to the edit event)
 
     public static WeekFragment newInstance(String selectedDate) {
         WeekFragment fragment = new WeekFragment();
@@ -73,21 +79,17 @@ public class WeekFragment extends Fragment {
                 weekView = getActivity().findViewById(R.id.weekView);
                 mNewEvents = new ArrayList<WeekViewEvent>();
 
-                try {
-                    // Get the information from the getCalendarMonths(required)
-                    weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
-                        @Override
-                        public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
-                            // Populate the week view with the events
-                            List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
-                            ArrayList<WeekViewEvent> newEvents = getCalendarMonths(newYear, newMonth);
-                            events.addAll(newEvents);
-                            return events;
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                // Get the information from the getCalendarMonths(required)
+                weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
+                    @Override
+                    public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
+                        // Populate the week view with the events
+                        List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
+                        ArrayList<WeekViewEvent> newEvents = getCalendarMonths(newYear, newMonth);
+                        events.addAll(newEvents);
+                        return events;
+                    }
+                });
 
                 // Set up a date time interpreter to interpret how the date and time will be formatted in
                 // the week view. This is optional.
@@ -96,17 +98,15 @@ public class WeekFragment extends Fragment {
                 // Get the event from database
                 getAllCalbits();
 
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
                 return true;
             }
         }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
             @Override
             public void onResult(Boolean  result) {
+                // Get the _id from the database, as for valid checking
+                Database database = new Database(getContext());
+                database.GetAllCalbit();
+
                 // When click on the empty event(Will be the creating event)
                 weekView.setEmptyViewClickListener(new WeekView.EmptyViewClickListener() {
                     @Override
@@ -160,6 +160,22 @@ public class WeekFragment extends Fragment {
                         final AlertDialog dialog = builder.create();
                         dialog.show();
 
+                        // Setting the valid mongoId for the reference with the database
+                        int id = (int) event.getId();
+
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mongoId = database.GetAllCalbit().get(id).get_id().toString();
+
+                                if(database.GetAllCalbit().get(id).getReminders().size() != 0) {
+                                    mongoReminder = database.GetAllCalbit().get(id).getReminders().get(0).toString();
+                                } else {
+                                    mongoReminder = "";
+                                }
+                            }
+                        }, 3000);
+
                         check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                             @Override
                             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { if(isChecked) {
@@ -174,11 +190,12 @@ public class WeekFragment extends Fragment {
                                 Intent intent = new Intent(getContext(), WeekEditEvent.class);
 
                                 Bundle data = new Bundle();
-                                data.putLong("id", event.getId());
+
+                                data.putString("id", mongoId);
                                 data.putString("title", event.getName());
                                 data.putString("startDateTime", event.getStartTime().getTime().toString());
                                 data.putString("endDateTime", event.getEndTime().getTime().toString());
-                                data.putInt("color", event.getColor());
+                                data.putString("reminderDateTime", mongoReminder);
                                 intent.putExtras(data);
 
                                 startActivity(intent);

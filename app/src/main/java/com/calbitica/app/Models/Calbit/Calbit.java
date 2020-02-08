@@ -1,6 +1,7 @@
 package com.calbitica.app.Models.Calbit;
 
 import java.sql.Array;
+import java.util.Date;
 import java.util.List;
 
 // Models ONE calbit
@@ -151,18 +152,14 @@ public class Calbit {
         this.allDay = allDay;
     }
 
-    public Calbit(Object _id, List<Array> reminders, String summary, StartDateTime start, EndDateTime end, Boolean isDump, String googleID, String calendarID, TaskCompleted completed, String description, Boolean legitAllDay, Boolean allDay) {
+    public Calbit(Object _id, String summary, StartDateTime start, EndDateTime end, List<Array> reminders, String calendarID, String googleID, Boolean allDay) {
         this._id = _id;
-        this.reminders = reminders;
         this.summary = summary;
         this.start = start;
         this.end = end;
-        this.isDump = isDump;
-        this.googleID = googleID;
+        this.reminders = reminders;
         this.calendarID = calendarID;
-        this.completed = completed;
-        this.description = description;
-        this.legitAllDay = legitAllDay;
+        this.googleID = googleID;
         this.allDay = allDay;
     }
 }
