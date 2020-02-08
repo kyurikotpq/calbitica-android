@@ -30,6 +30,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -97,25 +98,12 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         ImageView googlePhoto = headerView.findViewById(R.id.googlePhoto);
         TextView googleName = headerView.findViewById(R.id.googleName);
 
-        // Configure sign-in to request the user's ID and basic profile, which are included in DEFAULT_SIGN_IN
-        // In Short it will get the res(generated) -> values.xml of the default_web_client_id
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder((GoogleSignInOptions.DEFAULT_SIGN_IN))
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
+        // Set thumbnail and name into the view
+        String thumbnail = UserData.get("thumbnail", this.getApplicationContext());
+        Uri acctPhoto = Uri.parse(thumbnail);
+        Glide.with(getApplicationContext()).load(acctPhoto).into(googlePhoto);
 
-        // Build a GoogleSignInClient with the options specified by gso
-        mGoogleSignInClient = GoogleSignIn.getClient(getApplicationContext(), gso);
-
-        GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
-        if (acct != null) {
-            Uri acctPhoto = acct.getPhotoUrl();
-            acctName = acct.getDisplayName();
-
-            Glide.with(getApplicationContext()).load(acctPhoto).into(googlePhoto);
-            googleName.setText(acctName);
-            Toast.makeText(NavigationBar.this, "Welcome, " + acctName, Toast.LENGTH_SHORT).show();
-        }
+        googleName.setText(UserData.get("displayName", this.getApplicationContext()));
 
         // Setting the Calendar title as the current month, and function of arrow from the layout
         calendar = Calendar.getInstance();
@@ -413,9 +401,9 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         public Boolean doAsync() {
                             WeekFragment.mNewEvents = new ArrayList<>();
 
-                            // Get the event from firebase
-                            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-                            firebase.getWeekEventsFromFirebase();
+//                            // Get the event from firebase
+//                            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
+//                            firebase.getWeekEventsFromFirebase();
 
                             try {
                                 Thread.sleep(1000);
@@ -443,8 +431,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                             AgendaFragment.eventList = new ArrayList<>();
 
                             // Get the event from firebase
-                            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-                            firebase.getScheduleEventsFromFirebase(AgendaFragment.eventList);
+//                            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
+//                            firebase.getScheduleEventsFromFirebase(AgendaFragment.eventList);
 
                             try {
                                 Thread.sleep(1000);

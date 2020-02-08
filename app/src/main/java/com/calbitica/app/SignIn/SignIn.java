@@ -111,8 +111,8 @@ public class SignIn extends AppCompatActivity implements ConnectivityReceiver.Co
                             // Handle JWT
                             HashMap<String, String> user = new HashMap<>();
                             user.put("jwt", jwt);
-                            data.put("displayName", displayName);
-                            data.put("thumbnail", thumbnail);
+                            user.put("displayName", displayName);
+                            user.put("thumbnail", thumbnail);
 
                             UserData.save(user, getApplicationContext());
                             Log.d("API JWT: ", jwt);

@@ -34,6 +34,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import com.arasthel.asyncjob.AsyncJob;
+import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
@@ -44,7 +45,7 @@ public class WeekFragment extends Fragment {
     public static WeekView weekView;                                    // Mostly used from NavigationBar refresh, etc...(Week Calender)
     public static ArrayList<WeekViewEvent> mNewEvents;                  // Mostly used from NavigationBar refresh, etc...(Event in Week Calendar)
     public static boolean weekMonthCheck;                               // Ensure the weekView is loaded finished
-    public static HashMap<Integer, Object>[] mongoId;                   // Use it for the check with the database
+    public static List<Calbit> listOfCalbits;                           // Temp storage of calbit list from API
 
     public static WeekFragment newInstance(String selectedDate) {
         WeekFragment fragment = new WeekFragment();
@@ -135,7 +136,7 @@ public class WeekFragment extends Fragment {
                         // Convert to our respective  datetime format of start and end DateTime
                         Timestamp startTimeStamp = new Timestamp(event.getStartTime().getTimeInMillis());
                         Timestamp endTimeStamp = new Timestamp(event.getEndTime().getTimeInMillis());
-                        SimpleDateFormat sdf = new SimpleDateFormat("MMM D, YYYY HH:mm", Locale.ENGLISH);
+                        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, YYYY HH:mm", Locale.ENGLISH);
                         String start = sdf.format(startTimeStamp);
                         String end = sdf.format(endTimeStamp);
 
@@ -151,8 +152,7 @@ public class WeekFragment extends Fragment {
 
                         check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                             @Override
-                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                if(isChecked) {
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { if(isChecked) {
                                     Toast.makeText(getActivity(), "Completed the task and earn the exp points", Toast.LENGTH_LONG).show();
                                 }
                             }
@@ -342,52 +342,53 @@ public class WeekFragment extends Fragment {
                         Calbits allCalbits = response.body();
 
                         if(allCalbits.getData() != null) {
-                            mongoId = new HashMap[allCalbits.getData().size()];
+                            // Get the fresh list of calbits
+                            listOfCalbits = allCalbits.getData();
 
-                            for(int i = 0; i < allCalbits.getData().size(); i++) {
-                                mongoId[i] = new HashMap<>();
+                            // save each calbit as a new WeekViewEvent
+                            for(int i = 0; i < listOfCalbits.size(); i++) {
+                                Calbit currentCalbit = listOfCalbits.get(i);
 
                                 // Declare the necessary fields into Week View Calendar
                                 Calendar startDateTime = Calendar.getInstance();
                                 Calendar endDateTime = Calendar.getInstance();
 
-                                if(allCalbits.getData().get(i).getStart().getDate() != null) {
+                                if(currentCalbit.getStart().getDate() != null) {
                                     try {
                                         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                        startDateTime.setTime(sdf.parse(allCalbits.getData().get(i).getStart().getDate().toString()));
+                                        startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDate().toString()));
                                     } catch (java.text.ParseException e) {
                                         e.printStackTrace();
                                     }
-                                } else if (allCalbits.getData().get(i).getStart().getDateTime() != null) {
+                                } else if (currentCalbit.getStart().getDateTime() != null) {
                                     try {
                                         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                        startDateTime.setTime(sdf.parse(allCalbits.getData().get(i).getStart().getDateTime().toString()));
+                                        startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDateTime().toString()));
                                     } catch (java.text.ParseException e) {
                                         e.printStackTrace();
                                     }
                                 }
 
-                                if(allCalbits.getData().get(i).getEnd().getDate() != null) {
+                                if(currentCalbit.getEnd().getDate() != null) {
                                     try {
                                         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                        endDateTime.setTime(sdf.parse(allCalbits.getData().get(i).getEnd().getDate().toString()));
+                                        endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDate().toString()));
                                     } catch (java.text.ParseException e) {
                                         e.printStackTrace();
                                     }
 
-                                } else if (allCalbits.getData().get(i).getEnd().getDateTime() != null) {
+                                } else if (currentCalbit.getEnd().getDateTime() != null) {
                                     try {
                                         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                        endDateTime.setTime(sdf.parse(allCalbits.getData().get(i).getEnd().getDateTime().toString()));
+                                        endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDateTime().toString()));
                                     } catch (java.text.ParseException e) {
                                         e.printStackTrace();
                                     }
                                 }
 
                                 // Render all the data into WeekView Calendar
-                                mongoId[i].put(i, allCalbits.getData().get(i).get_id());        // Assign as reference with the database
-                                WeekViewEvent weekEvents = new WeekViewEvent (i, allCalbits.getData().get(i).getSummary(), startDateTime, endDateTime);
-                                weekEvents.setAllDay(allCalbits.getData().get(i).getAllDay());
+                                WeekViewEvent weekEvents = new WeekViewEvent (i, currentCalbit.getSummary(), startDateTime, endDateTime);
+                                weekEvents.setAllDay(currentCalbit.getAllDay());
                                 mNewEvents.add(weekEvents);
 
                                 // Refresh the Week Calendar
