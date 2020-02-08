@@ -34,7 +34,7 @@ import static java.lang.Integer.parseInt;
 public class SyncCalendarsFragment extends Fragment {
 
     public LinearLayout syncCalendars;          // To show the user the checkbox changes
-    public CheckBox[] checkBox;                 // To plot and add number of checkbox according to the database
+    public CheckBox[] checkBoxes;                 // To plot and add number of checkbox according to the database
     public String message;                      // To display the sync message status
     public ProgressDialog progressDialog;       // A fancy loading screen, but it not based the task finish length(Extra Stuff, for fun!)
 
@@ -101,29 +101,29 @@ public class SyncCalendarsFragment extends Fragment {
                             try {
                                 if (allCalendars.getData() != null) {
                                     // Assign the Max Length from the database
-                                    checkBox = new CheckBox[allCalendars.getData().size()];
+                                    checkBoxes = new CheckBox[allCalendars.getData().size()];
 
                                     for(int i = 0; i < allCalendars.getData().size(); i++) {
                                         // Each time will create a new checkbox
-                                        checkBox[i] = new CheckBox(getContext());
+                                        checkBoxes[i] = new CheckBox(getContext());
 
-                                        checkBox[i].setEnabled(false);
+                                        checkBoxes[i].setEnabled(false);
 
                                         // Checking for the existing Sync Calendars and put a check on the checkbox
                                         if(allCalendars.getData().get(i).getSync()) {
-                                            checkBox[i].setChecked(true);
+                                            checkBoxes[i].setChecked(true);
                                         }
 
-                                        checkBox[i].setText(allCalendars.getData().get(i).getSummary());
-                                        checkBox[i].setTextColor(getContext().getResources().getColor(R.color.white));
-                                        checkBox[i].setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                                        checkBoxes[i].setText(allCalendars.getData().get(i).getSummary());
+                                        checkBoxes[i].setTextColor(getContext().getResources().getColor(R.color.white));
+                                        checkBoxes[i].setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
                                         // Due to the id is "5e381be3e787f0e7afb51d2d", can't really convert it to int
                                         // So put on setHint(String method) to store it...
-                                        checkBox[i].setHint(allCalendars.getData().get(i).get_id().toString());
+                                        checkBoxes[i].setHint(allCalendars.getData().get(i).get_id().toString());
 
                                         // To display each of the checkbox on the layout
-                                        syncCalendars.addView(checkBox[i]);
+                                        syncCalendars.addView(checkBoxes[i]);
                                     }
                                 } else {
                                     System.out.println("Ops, Server went wrong, Please try again!");
@@ -170,15 +170,15 @@ public class SyncCalendarsFragment extends Fragment {
         protected void onPostExecute(Integer integer) {
             super.onPostExecute(integer);
 
-            if (checkBox != null) {
+            if (checkBoxes != null) {
                 // Check all the array that found, and do the sync upon checked...
-                for (int i = 0; i < checkBox.length; i++) {
+                for (int i = 0; i < checkBoxes.length; i++) {
                     // Enable back the control to the user
                     progressDialog.dismiss();
-                    checkBox[i].setEnabled(true);
+                    checkBoxes[i].setEnabled(true);
                     NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
-                    checkBox[i].setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    checkBoxes[i].setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                         @Override
                         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                             new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {

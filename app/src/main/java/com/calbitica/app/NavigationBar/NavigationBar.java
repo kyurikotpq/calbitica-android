@@ -12,6 +12,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.alamkanak.weekview.WeekViewEvent;
 import com.arasthel.asyncjob.AsyncJob;
 import com.bumptech.glide.Glide;
+import com.calbitica.app.Database.Database;
 import com.calbitica.app.Profile.ProfileFragment;
 import com.calbitica.app.SyncCalendars.SyncCalendarsFragment;
 import com.calbitica.app.About.AboutFragment;
@@ -30,7 +31,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -41,10 +41,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.calbitica.app.Week.WeekCreateEvent;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.navigation.NavigationView;
 
 import java.text.DateFormat;
@@ -60,7 +56,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     public static ImageView arrow;                                  // Middle NavigationBar
     public static String selectedPages;                             // Tell which fragment you are in
     ArrayList<String> selectedList = new ArrayList<>();             // Mainly for the sync, when click on back button stuff
-    public static Calendar calendar;                                // Mainly for Week, Schedule Calendar, etc...
+    public static Calendar calendar;                                // Mainly for Week, Agenda Calendar, etc...
 
     public static NotificationManagerCompat notificationManager;    // Notification to alert when events date is today
     public static ArrayList<WeekViewEvent> eventSize;               // The Notification Input for showing
@@ -68,7 +64,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     private NavigationView navigationView;                          // To indicate the selection of navigation pages
     public static MenuItem nav_today, nav_refresh, nav_add;         // To use for respective pages(show/not show)
 
-    GoogleSignInClient mGoogleSignInClient;
+    CalendarView calendarView;                                      // To hide or show for display of nav small calendar
     public static String acctName;                                  // To pass into database for each different account
 
     @Override
@@ -124,7 +120,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         }, 2500);
 
         arrow = (ImageView) findViewById(R.id.arrow);
-        final CalendarView calendarView = (CalendarView) findViewById(R.id.calendarView);
+        calendarView = (CalendarView) findViewById(R.id.calendarView);
         calendarView.setVisibility(View.GONE);
 
         arrow.setOnClickListener(new View.OnClickListener() {
@@ -223,6 +219,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                         // Setting the necessary items for each respective pages
                         arrow.setVisibility(View.VISIBLE);
+                        calendarView.setVisibility(View.GONE);
                         nav_today.setVisible(true);
                         nav_refresh.setVisible(true);
                         nav_add.setVisible(true);
@@ -242,10 +239,11 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 }
 
                 break;
-            case R.id.nav_schedule:
+            case R.id.nav_agenda:
                 if (!menuItem.isChecked()) {
                     // Setting the necessary items for each respective pages
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(true);
                     nav_add.setVisible(true);
@@ -256,8 +254,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                     // addToBackStack(null) -> Allow to go previous page, rather than exit the app
                     getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new AgendaFragment()).addToBackStack(null).commit();
-                    selectedPages = "nav_schedule";
-                    selectedList.add("nav_schedule");
+                    selectedPages = "nav_agenda";
+                    selectedList.add("nav_agenda");
                 }
 
                 break;
@@ -266,6 +264,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Sync Calendars");
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
@@ -282,6 +281,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Profile");
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
@@ -298,6 +298,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Settings");
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
@@ -314,6 +315,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("About");
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
@@ -364,32 +366,20 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 // Set the Week Fragment List as empty then, render from database again, also prevent to spam the button as well
                 nav_today.setEnabled(false);
 
-                new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-                    @Override
-                    public Boolean doAsync() {
-                        Calendar today = Calendar.getInstance();
+                Calendar today = Calendar.getInstance();
 
-                        // Assign to the same calendar to have a link relationship of the Navigation Bar and Today
-                        calendar.setTime(today.getTime());
+                // Assign to the same calendar to have a link relationship of the Navigation Bar and Today
+                calendar.setTime(today.getTime());
 
-                        // Title change as well
-                        SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
-                        String selectedMonth = month_date.format(calendar.getTime());
-                        title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
+                // Title change as well
+                SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
+                String selectedMonth = month_date.format(calendar.getTime());
+                title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
 
-                        // As then also pass the data into WeekFragment
-                        WeekFragment fragment = WeekFragment.newInstance(calendar.getTime().toString());
-                        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
+                // As then also pass the data into WeekFragment
+                WeekFragment fragment = WeekFragment.newInstance(calendar.getTime().toString());
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
 
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-
-                        return true;
-                    }
-                }).create().start();
                 break;
             case R.id.calendar_refresh:
                 if (selectedPages == "nav_week") {
@@ -399,58 +389,60 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                         @Override
                         public Boolean doAsync() {
+                            // Always clear the whole of the event list upon click
                             WeekFragment.mNewEvents = new ArrayList<>();
 
-//                            // Get the event from firebase
-//                            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-//                            firebase.getWeekEventsFromFirebase();
+                            // Get the event from Calbitica
+                            Database database = new Database(NavigationBar.this);
+                            database.getAllCalbitAndRenderOnWeek();
 
                             try {
-                                Thread.sleep(1000);
+                                Thread.sleep(3000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                             return true;
                         }
                     })
-                            .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                                @Override
-                                public void onResult(Boolean result) {
-                                    WeekFragment.weekView.notifyDatasetChanged();
-                                    nav_refresh.setEnabled(true);
-                                }
-                            }).create().start();
-                } else if (selectedPages == "nav_schedule") {
-                    // Set the Schedule Fragment List as empty then, render from database again, also prevent to spam the button as well
+                    .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                        @Override
+                        public void onResult(Boolean result) {
+                            WeekFragment.weekView.notifyDatasetChanged();
+                            nav_refresh.setEnabled(true);
+                        }
+                    }).create().start();
+                } else if (selectedPages == "nav_agenda") {
+                    // Set the Agenda Fragment List as empty then, render from database again, also prevent to spam the button as well
                     nav_refresh.setEnabled(false);
 
                     new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                         @Override
                         public Boolean doAsync() {
-                            // Set the Schedule Fragment list as empty again
+                            // Always clear the whole of the event list upon click
                             AgendaFragment.eventList = new ArrayList<>();
 
-                            // Get the event from firebase
-//                            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-//                            firebase.getScheduleEventsFromFirebase(AgendaFragment.eventList);
+                            // Get the event from Calbitica
+                            // Based on the Agenda Calendar format, and return back the list
+                            Database database = new Database(NavigationBar.this);
+                            database.getAllCalbitAndRenderOnAgenda(AgendaFragment.eventList);
 
                             try {
-                                Thread.sleep(1000);
+                                Thread.sleep(3000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                             return true;
                         }
                     })
-                            .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                                @Override
-                                public void onResult(Boolean result) {
-                                    // Reload the schedule calendar
-                                    AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate,
-                                            Locale.getDefault(), AgendaFragment.calendarPickerController);
-                                    nav_refresh.setEnabled(true);
-                                }
-                            }).create().start();
+                    .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                        @Override
+                        public void onResult(Boolean result) {
+                            // Reload the agenda calendar
+                            AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate,
+                                    Locale.getDefault(), AgendaFragment.calendarPickerController);
+                            nav_refresh.setEnabled(true);
+                        }
+                    }).create().start();
                 }
                 break;
             case R.id.calendar_add:
@@ -503,6 +495,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                 // Setting the necessary items for each respective pages
                 arrow.setVisibility(View.VISIBLE);
+                calendarView.setVisibility(View.GONE);
                 nav_today.setVisible(true);
                 nav_refresh.setVisible(true);
                 nav_add.setVisible(true);
@@ -523,6 +516,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 if(selectedPages.equals("nav_week")) {
                     // Setting the necessary items for each respective pages
                     arrow.setVisibility(View.VISIBLE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(true);
                     nav_refresh.setVisible(true);
                     nav_add.setVisible(true);
@@ -532,9 +526,10 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
 
                     navigationView.setCheckedItem(R.id.nav_week);
-                } else if(selectedPages.equals("nav_schedule")) {
+                } else if(selectedPages.equals("nav_agenda")) {
                     // Setting the necessary items for each respective pages
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(true);
                     nav_add.setVisible(true);
@@ -543,11 +538,12 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     String selectedMonth = month_date.format(calendar.getTime());
                     title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
 
-                    navigationView.setCheckedItem(R.id.nav_schedule);
+                    navigationView.setCheckedItem(R.id.nav_agenda);
                 } else if (selectedPages.equals("sync_calendars")) {
                     // Setting the necessary items for each respective pages
                     title.setText("Sync Calendars");
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
@@ -557,6 +553,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Profile");
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
@@ -567,6 +564,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Settings");
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);
@@ -576,6 +574,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("About");
                     arrow.setVisibility(View.GONE);
+                    calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
                     nav_add.setVisible(false);

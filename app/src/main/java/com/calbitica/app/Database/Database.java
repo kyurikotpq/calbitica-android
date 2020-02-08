@@ -1,6 +1,7 @@
 package com.calbitica.app.Database;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.widget.CheckBox;
 import android.widget.Toast;
 
@@ -11,8 +12,11 @@ import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.Models.Calbit.StartDateTime;
 import com.calbitica.app.Models.Calendars.Calendar;
 import com.calbitica.app.Models.Calendars.Calendars;
+import com.calbitica.app.R;
 import com.calbitica.app.Util.CalbiticaAPI;
 import com.calbitica.app.Util.UserData;
+import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
+import com.github.tibolte.agendacalendarview.models.CalendarEvent;
 
 import org.json.JSONObject;
 
@@ -36,7 +40,7 @@ public class Database {
 
     public Database(Context context) {mcontext = context;}
 
-    public List<Calendar> GetAllCalendars() {
+    public List<Calendar> getAllCalendars() {
         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
             @Override
             public Boolean doAsync() {
@@ -78,7 +82,207 @@ public class Database {
         return allCalendarInfo;
     }
 
-    public List<Calbit> GetAllCalbit() {
+    public void getAllCalbitAndRenderOnWeek() {
+        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+            @Override
+            public Boolean doAsync() {
+                // Retrieve the JWT
+                String jwt = UserData.get("jwt", mcontext);
+
+                // Build the API Call
+                Call<Calbits> apiCall = CalbiticaAPI.getInstance(jwt).calbit().getAllCalbits();
+
+                // Make the API Call
+                apiCall.enqueue(new Callback<Calbits>() {
+                    @Override
+                    public void onResponse(Call<Calbits> call, Response<Calbits> response) {
+                        if (!response.isSuccessful()) {
+                            System.out.println("Unsuccessful to get all calbits " + response.code());
+                            return;
+                        }
+
+                        Calbits allCalbits = response.body();
+
+                        if(allCalbits.getData() != null) {
+                            // Get the fresh list of calbits
+                            listOfCalbits = allCalbits.getData();
+
+                            // save each calbit as a new WeekViewEvent
+                            for(int i = 0; i < listOfCalbits.size(); i++) {
+                                Calbit currentCalbit = listOfCalbits.get(i);
+
+                                // Declare the necessary fields into Week View Calendar
+                                java.util.Calendar startDateTime = java.util.Calendar.getInstance();
+                                java.util.Calendar endDateTime = java.util.Calendar.getInstance();
+
+                                if(currentCalbit.getStart().getDate() != null) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                        startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDate().toString()));
+                                    } catch (java.text.ParseException e) {
+                                        e.printStackTrace();
+                                    }
+                                } else if (currentCalbit.getStart().getDateTime() != null) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                        startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDateTime().toString()));
+                                    } catch (java.text.ParseException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                if(currentCalbit.getEnd().getDate() != null) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                        endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDate().toString()));
+                                    } catch (java.text.ParseException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                } else if (currentCalbit.getEnd().getDateTime() != null) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                        endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDateTime().toString()));
+                                    } catch (java.text.ParseException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                // Render all the data into WeekView Calendar
+                                WeekViewEvent weekEvents = new WeekViewEvent (i, currentCalbit.getSummary(), startDateTime, endDateTime);
+                                weekEvents.setAllDay(currentCalbit.getAllDay());
+                                weekEvents.setColor(Color.rgb(100, 200, 220));
+                                mNewEvents.add(weekEvents);
+
+                                // Refresh the Week Calendar
+                                weekView.notifyDatasetChanged();
+                            }
+                        } else {
+                            Toast.makeText(mcontext, "There is no data found in database", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Calbits> call, Throwable t) {
+                        System.out.println("Fail to get all calbits " + t.getMessage());
+                    }
+                });
+
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        })
+        .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+            @Override
+            public void onResult(Boolean result) {
+
+            }
+        }).create().start();
+    }
+
+    public void getAllCalbitAndRenderOnAgenda(final List<CalendarEvent> eventList) {
+        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+            @Override
+            public Boolean doAsync() {
+                // Retrieve the JWT
+                String jwt = UserData.get("jwt", mcontext);
+
+                // Build the API Call
+                Call<Calbits> apiCall = CalbiticaAPI.getInstance(jwt).calbit().getAllCalbits();
+
+                // Make the API Call
+                apiCall.enqueue(new Callback<Calbits>() {
+                    @Override
+                    public void onResponse(Call<Calbits> call, Response<Calbits> response) {
+                        if (!response.isSuccessful()) {
+                            System.out.println("Unsuccessful to get all calbits " + response.code());
+                            return;
+                        }
+
+                        Calbits allCalbits = response.body();
+
+                        if(allCalbits.getData() != null) {
+                            // Get the fresh list of calbits
+                            listOfCalbits = allCalbits.getData();
+
+                            // save each calbit as a new WeekViewEvent
+                            for(int i = 0; i < listOfCalbits.size(); i++) {
+                                Calbit currentCalbit = listOfCalbits.get(i);
+
+                                // Declare the necessary fields into Week View Calendar
+                                java.util.Calendar startDateTime = java.util.Calendar.getInstance();
+                                java.util.Calendar endDateTime = java.util.Calendar.getInstance();
+
+                                if(currentCalbit.getStart().getDate() != null) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                        startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDate().toString()));
+                                    } catch (java.text.ParseException e) {
+                                        e.printStackTrace();
+                                    }
+                                } else if (currentCalbit.getStart().getDateTime() != null) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                        startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDateTime().toString()));
+                                    } catch (java.text.ParseException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                if(currentCalbit.getEnd().getDate() != null) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                        endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDate().toString()));
+                                    } catch (java.text.ParseException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                } else if (currentCalbit.getEnd().getDateTime() != null) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                        endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDateTime().toString()));
+                                    } catch (java.text.ParseException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                // Based on the Agenda Calendar format, and return back the list
+                                BaseCalendarEvent allEvent = new BaseCalendarEvent(currentCalbit.getSummary(), "", "", Color.rgb(100, 200, 220), startDateTime, endDateTime, false);
+                                allEvent.setId(i);
+                                eventList.add(allEvent);
+                            }
+                        } else {
+                            Toast.makeText(mcontext, "There is no data found in database", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Calbits> call, Throwable t) {
+                        System.out.println("Fail to get all calbits " + t.getMessage());
+                    }
+                });
+
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        })
+                .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                    @Override
+                    public void onResult(Boolean result) {
+
+                    }
+                }).create().start();
+    }
+
+    public List<Calbit> getAllCalbit() {
         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
             @Override
             public Boolean doAsync() {
@@ -139,7 +343,7 @@ public class Database {
 //                    @Override
 //                    public void onResponse(Call<Calbit> call, Response<Calbit> response) {
 //                        if (!response.isSuccessful()) {
-//                            System.out.println("Unsuccessful to get all calbits " + response.code());
+//                            System.out.println("Unsuccessful to update event in calbits " + response.code());
 //                            return;
 //                        }
 //
@@ -148,9 +352,87 @@ public class Database {
 //
 //                    @Override
 //                    public void onFailure(Call<Calbit> call, Throwable t) {
-//                        System.out.println("Fail to get all calbits " + t.getMessage());
+//                        System.out.println("Fail to update event in calbits " + t.getMessage());
 //                    }
 //                });
+
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        }).create().start();
+    }
+
+    public void deleteEventInCalbit(final String _id) {
+        new AsyncJob.AsyncJobBuilder<Boolean>()
+        .doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+            @Override
+            public Boolean doAsync() {
+                // Retrieve the JWT
+                String jwt = UserData.get("jwt", mcontext);
+
+                // Build the API Call
+                Call<Void> apiCall = CalbiticaAPI.getInstance(jwt).calbit().deleteCalbit(_id);
+
+                // Make the API Call
+                apiCall.enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        if (!response.isSuccessful()) {
+                            System.out.println("Unsuccessful to delete event in calbits " + response.code());
+                            return;
+                        }
+
+                        System.out.println("Calbitica Database deleted is: " + response.isSuccessful());
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        System.out.println("Fail to delete in calbits " + t.getMessage());
+                    }
+                });
+
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        }).create().start();
+    }
+
+    public void updateEventStatusInCalbit(final String _id, final Boolean status) {
+        new AsyncJob.AsyncJobBuilder<Boolean>()
+        .doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+            @Override
+            public Boolean doAsync() {
+                // Retrieve the JWT
+                String jwt = UserData.get("jwt", mcontext);
+
+                // Build the API Call
+                Call<Boolean> apiCall = CalbiticaAPI.getInstance(jwt).calbit().updateCalbitStatus(_id, status);
+
+                // Make the API Call
+                apiCall.enqueue(new Callback<Boolean>() {
+                    @Override
+                    public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                        if (!response.isSuccessful()) {
+                            System.out.println("Unsuccessful to update event status in calbits " + response.raw());
+                            return;
+                        }
+
+                        System.out.println("Calbitica successfully update status: " + response.isSuccessful());
+                    }
+
+                    @Override
+                    public void onFailure(Call<Boolean> call, Throwable t) {
+                        System.out.println("Fail tto update event status in calbits " + t.getMessage());
+                    }
+                });
 
                 try {
                     Thread.sleep(3000);

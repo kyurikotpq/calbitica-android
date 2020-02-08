@@ -20,6 +20,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
+import com.calbitica.app.Database.Database;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import com.calbitica.app.Week.WeekEditEvent;
@@ -29,29 +30,25 @@ import com.github.tibolte.agendacalendarview.AgendaCalendarView;
 import com.github.tibolte.agendacalendarview.CalendarPickerController;
 import com.github.tibolte.agendacalendarview.models.CalendarEvent;
 import com.github.tibolte.agendacalendarview.models.DayItem;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class AgendaFragment extends Fragment{
-    public static AgendaCalendarView scheduleView;                      // Mainly modify from the Refresh, etc
-    public static List<CalendarEvent> eventList;                        // The events based on Schedule Calendar,
+    public static AgendaCalendarView agendaView;                        // Mainly modify from the Refresh, etc
+    public static List<CalendarEvent> eventList;                        // The events based on Agenda Calendar,
                                                                         // but 1 more phrase on BaseCalendarEvent as a child (From firebase guide)
-    public static Calendar minDate, maxDate;                            // Set the necessary fields for the Schedule Fragment
+    public static Calendar minDate, maxDate;                            // Set the necessary fields for the Agenda Fragment
     public static CalendarPickerController calendarPickerController;    // Have to call from here, re-use the same one, rather than keep creating(like a loop)
     private ProgressDialog progressDialog;                              // A fancy loading screen, but it not based the task finish length(Extra Stuff, for fun!)
+    private Database database = null;                                   // Reference for tally with the database
+    private String mongoId = null;                                      // Particular events(Mainly for edit and delete)
+    private String mongoReminder = null;                                // Particular events(Pass the bundle to the edit event)
 
     @Nullable
     @Override
@@ -95,7 +92,7 @@ public class AgendaFragment extends Fragment{
         // (Required)Perform a computation on a background thread, not allow to have UI components(View & void function, etc...)
         @Override
         protected Integer doInBackground(Void... params) {
-            scheduleView = getActivity().findViewById(R.id.scheduleView);
+            agendaView = getActivity().findViewById(R.id.agendaView);
 
             eventList = new ArrayList<>();
 
@@ -110,9 +107,9 @@ public class AgendaFragment extends Fragment{
             maxDate.set(Calendar.MONTH, 1);
             maxDate.set(Calendar.DAY_OF_MONTH, 1);
 
-            // Get the event from firebase
-            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-            firebase.getScheduleEventsFromFirebase(eventList);
+            // Get the event from Calbitica
+            Database database = new Database(getContext());
+            database.getAllCalbitAndRenderOnAgenda(eventList);
 
             // This will populate the progressDialog
             for (int count = 0; count < 6; count++) {
@@ -135,6 +132,10 @@ public class AgendaFragment extends Fragment{
         @Override
         protected void onPostExecute(Integer result) {
             super.onPostExecute(result);
+            // Get the _id from the database, as for valid checking
+            database = new Database(getContext());
+            database.getAllCalbit();
+
             // Here is another async...
             job.doOnBackground();
         }
@@ -144,8 +145,8 @@ public class AgendaFragment extends Fragment{
         @Override
         public void doOnBackground() {
             // Due to doInBackground not allow UI components(View), instead doing here then...
-            // scheduleView.init -> take quite some time to load, implement loading screen to tell that is not hang/freeze...
-            scheduleView.init(eventList, minDate, maxDate, Locale.getDefault(), calendarPickerController = new CalendarPickerController() {
+            // agendaView.init -> take quite some time to load, implement loading screen to tell that is not hang/freeze...
+            agendaView.init(eventList, minDate, maxDate, Locale.getDefault(), calendarPickerController = new CalendarPickerController() {
                 @Override
                 public void onDaySelected(DayItem dayItem) {
                     // When same date pressed, will not be using...
@@ -196,111 +197,108 @@ public class AgendaFragment extends Fragment{
                         // Render the Modal, must be in the last of the code
                         builder.setView(mView);
                         final AlertDialog dialog = builder.create();
-                        dialog.show();
 
-                        check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                        try {
+                            dialog.show();
+                        } catch (Exception e) {
+                           e.printStackTrace();
+                        }
+
+                        new AsyncJob.AsyncJobBuilder<Boolean>()
+                        .doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                             @Override
-                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                if(isChecked) {
-                                    Toast.makeText(getActivity(), "Completed the task and earn the exp points", Toast.LENGTH_LONG).show();
+                            public Boolean doAsync() {
+                                // Setting the valid mongoId for the reference with the database
+                                int id = (int) event.getId();
+
+                                if (database.getAllCalbit().get(id).get_id() != null) {
+                                    mongoId = database.getAllCalbit().get(id).get_id().toString();
                                 }
-                            }
-                        });
 
-                        editing.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                // Using back the same design as the WeekEditEvent
-                                Intent intent = new Intent(getContext(), WeekEditEvent.class);
+                                if(database.getAllCalbit().get(id).getReminders() != null) {
+                                    mongoReminder = database.getAllCalbit().get(id).getReminders().toString();
+                                } else {
+                                    mongoReminder = "";
+                                }
 
-                                Bundle calendarData = new Bundle();
-                                calendarData.putLong("id", event.getId());
-                                calendarData.putString("title", event.getTitle());
-                                calendarData.putString("startDateTime", event.getStartTime().getTime().toString());
-                                calendarData.putString("endDateTime", event.getEndTime().getTime().toString());
-
-                                // Schedule Calendar did not provide the color here, so have to get the color from database instead...
-                                DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
-                                firebase.addListenerForSingleValueEvent(new ValueEventListener() {
+                                // To allow to run Toast in the async method...
+                                getActivity().runOnUiThread(new Runnable() {
                                     @Override
-                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                        if (dataSnapshot.exists()) {
-                                            Map<String, String> eventData = (Map<String, String>) dataSnapshot.getValue();
-                                            for (String key : eventData.keySet()) {
-                                                Object data = eventData.get(key);
+                                    public void run() {
+                                        Toast.makeText(getContext(), "Please wait...", Toast.LENGTH_LONG).show();
+                                    }
+                                });
 
-                                                try {
-                                                    HashMap<String, Object> eventObject = (HashMap<String, Object>) data;
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
-                                                    // Making use of calendarID to do the checking(Unique id also)
-                                                    long eventID = (long) eventObject.get("calendarID");
+                                return true;
+                            }
+                        })
+                        .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                            @Override
+                            public void onResult(Boolean result) {
+                                Toast.makeText(getContext(), "Done!", Toast.LENGTH_SHORT).show();
 
-                                                    // Check and render the firebase with the existing data(Only 1 data will be found)
-                                                    if (eventID == event.getId()) {
-                                                        // Getting the JSON Object from colorInfo, based on key
-                                                        HashMap<String, Object> colorObject = (HashMap<String, Object>) eventObject.get("colorInfo");
-
-                                                        // Check and render the firebase with the existing data(Only 1 data will be found)
-                                                        String firebaseEvent = colorObject.get("color").toString();
-                                                        int firebaseColor = Integer.parseInt(firebaseEvent);
-
-                                                        calendarData.putInt("color", firebaseColor);
-                                                        intent.putExtras(calendarData);
-
-                                                        startActivity(intent);
-                                                        dialog.dismiss();
-                                                    }
-                                                } catch (ClassCastException cce) {
-                                                    // If the object can’t be casted into HashMap, it means that it is of type String.
-                                                    try {
-                                                        String mString = String.valueOf(eventData.get(key));
-                                                        System.out.println("data mString " + mString);
-                                                    } catch (ClassCastException cce2) {
-                                                        cce2.printStackTrace();
-                                                    }
-                                                }
-                                            }
+                                check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                                    @Override
+                                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                        if(isChecked) {
+                                            Toast.makeText(getActivity(), "Completed the task and earn the exp points", Toast.LENGTH_LONG).show();
                                         }
                                     }
+                                });
 
+                                editing.setOnClickListener(new View.OnClickListener() {
                                     @Override
-                                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                                        System.out.println(databaseError.getCode());
+                                    public void onClick(View v) {
+                                        // Using back the same design as the WeekEditEvent
+                                        Intent intent = new Intent(getContext(), WeekEditEvent.class);
+
+                                        Bundle calendarData = new Bundle();
+                                        calendarData.putString("id", mongoId);
+                                        calendarData.putString("title", event.getTitle());
+                                        calendarData.putString("startDateTime", event.getStartTime().getTime().toString());
+                                        calendarData.putString("endDateTime", event.getEndTime().getTime().toString());
+                                        calendarData.putString("reminderDateTime", mongoReminder);
+                                        intent.putExtras(calendarData);
+
+                                        startActivity(intent);
+                                        dialog.dismiss();
+                                    }
+                                });
+
+                                deleting.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        // Delete from Calbitica with the existing data
+                                        database.deleteEventInCalbit(mongoId);
+
+                                        // Delete event with existing data
+                                        for (int i = 0; i < eventList.size(); i++) {
+                                            if(eventList.get(i).getId() == event.getId()) {
+                                                eventList.remove(i);   // remove only 1
+                                            }
+                                        }
+
+                                        // Refresh the agenda calendar view
+                                        agendaView.init(eventList, minDate, maxDate, Locale.getDefault(), calendarPickerController);
+                                        Toast.makeText(getActivity(),"Event successfully deleted", Toast.LENGTH_SHORT).show();
+                                        dialog.dismiss();
+                                    }
+                                });
+
+                                close.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        dialog.dismiss();
                                     }
                                 });
                             }
-                        });
-
-                        deleting.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                // Delete from Firebase with the existing data
-                                com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-                                firebase.deleteWeekEventFromFirebase(event.getId());
-
-                                // Delete event with existing data
-                                for (int i = 0; i < eventList.size(); i++) {
-                                    if(eventList.get(i).getId() == event.getId()) {
-                                        AgendaFragment.eventList.remove(i);   // remove only 1
-
-                                        // Schedule Calendar will also re-render the events as well
-                                        AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
-                                    }
-                                }
-
-                                // Schedule Calendar will also re-render the events as well
-                                scheduleView.init(eventList, minDate, maxDate, Locale.getDefault(), calendarPickerController);
-                                Toast.makeText(getActivity(),"Event successfully deleted", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                            }
-                        });
-
-                        close.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                            }
-                        });
+                        }).create().start();
                     }
                 }
 

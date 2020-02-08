@@ -4,7 +4,6 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -20,19 +19,14 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
 import com.calbitica.app.Database.Database;
-import com.calbitica.app.Models.Calendars.Calendars;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.Agenda.AgendaFragment;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
@@ -42,23 +36,21 @@ import androidx.appcompat.widget.Toolbar;
 import com.calbitica.app.R;
 
 public class WeekEditEvent extends AppCompatActivity {
-    EditText eventTitle = null;                                     // The iuput calendar title
-    JSONObject colorInfo = new JSONObject();                        // To make it more information and more easier
-    Calendar startDateTime, endDateTime, reminderDateTime = null;   // The input calendar start and end datetime
-    WeekViewEvent event = null;                                     // The events that will in Week Calendar
-    ArrayList<String> calendarArrayKey = new ArrayList<>();         // Using this to tally with the specific calendar value
-    Database database = null;                                       // Reference for tally with the database
+    private EditText eventTitle = null;                                     // The iuput calendar title
+    private Calendar startDateTime, endDateTime, reminderDateTime = null;   // The input calendar start and end datetime
+    private WeekViewEvent event = null;                                     // The events that will in Week Calendar
+    private Database database = null;                                       // Reference for tally with the database
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Get the _id from the database, as for valid checking
-        Database database = new Database(WeekEditEvent.this);
-        database.GetAllCalbit();
-
         // Using the same layout of the Event Create
         setContentView(R.layout.activity_week__create_event);
+
+        // Get the _id from the database, as for valid checking
+        Database database = new Database(WeekEditEvent.this);
+        database.getAllCalbit();
 
         // Default the text will be Calbitica Android, by setting as empty for custom TextView to be shown instead
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -105,18 +97,19 @@ public class WeekEditEvent extends AppCompatActivity {
 
         final Spinner eventSync = (Spinner) findViewById(R.id.selectCalendar);
         ArrayList<String> calendarArrayValue = new ArrayList<>();
+        ArrayList<String> calendarArrayKey = new ArrayList<>();         // Using this to tally with the specific calendar value
 
         Database data = new Database(getBaseContext());
-        data.GetAllCalendars();
+        data.getAllCalendars();
 
         Toast.makeText(getBaseContext(), "Please wait for Google Account to render...", Toast.LENGTH_SHORT).show();
 
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                for(int i = 0; i < data.GetAllCalendars().size(); i++) {
-                    calendarArrayKey.add(data.GetAllCalendars().get(i).getGoogleID());
-                    calendarArrayValue.add(data.GetAllCalendars().get(i).getSummary());
+                for(int i = 0; i < data.getAllCalendars().size(); i++) {
+                    calendarArrayKey.add(data.getAllCalendars().get(i).getGoogleID());
+                    calendarArrayValue.add(data.getAllCalendars().get(i).getSummary());
                     ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, calendarArrayValue);
                     arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     eventSync.setAdapter(arrayAdapter);
@@ -345,7 +338,7 @@ public class WeekEditEvent extends AppCompatActivity {
                 if(NavigationBar.selectedPages == "nav_week") {
                     // Modify event with new data(Only 1 data will be found and modify)
                     for(WeekViewEvent event : WeekFragment.mNewEvents) {
-                        if(database.GetAllCalbit().get(id) != null) {
+                        if(database.getAllCalbit().get(id) != null) {
                             event.setName(eventTitle.getText().toString());
                             event.setStartTime(startDateTime);
                             event.setEndTime(endDateTime);
@@ -354,8 +347,8 @@ public class WeekEditEvent extends AppCompatActivity {
                             WeekFragment.weekView.notifyDatasetChanged();
                         }
                     }
-                } else if (NavigationBar.selectedPages == "nav_schedule") {
-                    // First, I delete the Schedule Calendar selected event(Only 1), due to BaseCalendarEvent options is inside CalendarEvent(only color is not in the list, so...)
+                } else if (NavigationBar.selectedPages == "nav_agenda") {
+                    // First, I delete the Agenda Calendar selected event(Only 1), due to BaseCalendarEvent options is inside CalendarEvent(only color is not in the list, so...)
                     // Secondly, then I add again with the updated values, so will still serve as the edit portion...
                     for(int i = 0; i < AgendaFragment.eventList.size(); i++) {
                         if(AgendaFragment.eventList.get(i).getId() == id) {
@@ -365,8 +358,8 @@ public class WeekEditEvent extends AppCompatActivity {
                             allEvent.setId(id);
                             AgendaFragment.eventList.add(allEvent);
 
-                            // Schedule Calendar will also re-render the events as well
-                            AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
+                            // Agenda Calendar will also re-render the events as well
+                            AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                         }
                     }
                 }
@@ -385,7 +378,7 @@ public class WeekEditEvent extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-//                database.updateEventInCalbit(database.GetAllCalbit().get(id).get_id().toString(), eventTitle.getText().toString(), start, end, reminder);
+//                database.updateEventInCalbit(database.getAllCalbit().get(id).get_id().toString(), eventTitle.getText().toString(), start, end, reminder);
 
                 finish();
                 Toast.makeText(WeekEditEvent.this,"Event successfully updated", Toast.LENGTH_SHORT).show();

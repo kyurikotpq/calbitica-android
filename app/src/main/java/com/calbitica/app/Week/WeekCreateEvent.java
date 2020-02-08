@@ -4,16 +4,20 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.calbitica.app.Database.Database;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -25,9 +29,8 @@ import com.alamkanak.weekview.WeekViewEvent;
 import com.calbitica.app.Agenda.AgendaFragment;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.UUID;
@@ -35,35 +38,20 @@ import java.util.UUID;
 public class WeekCreateEvent extends AppCompatActivity {
     EditText title = null;                                  // Input Calendar Title
     TextView startDate, startTime, endDate, endTime;        // This is just the display from the layout
-    JSONObject colorInfo = new JSONObject();                // To make it more information and more easier
     Calendar startDateTime, endDateTime;                    // This is the one that goes database
     WeekViewEvent event = null;                             // The events that will in Week Calendar
-    com.calbitica.app.Database.Firebase firebase;
+    private Database database = null;                       // Reference for tally with the database
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_week__create_event);
 
+        // Get the _id from the database, as for valid checking
+        Database database = new Database(WeekCreateEvent.this);
+        database.getAllCalbit();
+
         title = findViewById(R.id.title);
-
-        // Get info from WeekFragment
-        Bundle bundle = getIntent().getExtras();
-        String startDT = bundle.getString("startDateTime");
-        String endDT = bundle.getString("endDateTime");
-        startDateTime = Calendar.getInstance();
-        endDateTime = Calendar.getInstance();
-
-        // From the plus icon from NavigationBar
-        if(!startDT.equals("") || !endDT.equals("")) {
-            try{
-                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                startDateTime.setTime(sdf.parse(startDT));
-                endDateTime.setTime(sdf.parse(endDT));
-            } catch (java.text.ParseException e) {
-                e.printStackTrace();
-            }
-        }
 
         // Default the text will be Calbitica Android, by setting as empty for custom TextView to be shown instead
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -79,154 +67,52 @@ public class WeekCreateEvent extends AppCompatActivity {
             }
         });
 
-        // When selected the Spinner drop-down, the background color will change accordingly
-        // Due to some libraries require specific version, it become deprecated, for now it will still work, but have to take note in future
-        Spinner color = (Spinner) findViewById(R.id.selectCalendar);
-        color.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        // Get info from WeekFragment
+        Bundle bundle = getIntent().getExtras();
+        String startDT = bundle.getString("startDateTime");
+        String endDT = bundle.getString("endDateTime");
+        startDateTime = Calendar.getInstance();
+        endDateTime = Calendar.getInstance();
+
+        // From the plus icon from NavigationBar
+        if(!startDT.equals("") && !endDT.equals("")) {
+            try{
+                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                startDateTime.setTime(sdf.parse(startDT));
+                endDateTime.setTime(sdf.parse(endDT));
+            } catch (java.text.ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        final Spinner eventSync = (Spinner) findViewById(R.id.selectCalendar);
+        ArrayList<String> calendarArrayValue = new ArrayList<>();
+        ArrayList<String> calendarArrayKey = new ArrayList<>();         // Using this to tally with the specific calendar value
+
+        Database data = new Database(getBaseContext());
+        data.getAllCalendars();
+
+        Toast.makeText(getBaseContext(), "Please wait for Google Account to render...", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                for(int i = 0; i < data.getAllCalendars().size(); i++) {
+                    calendarArrayKey.add(data.getAllCalendars().get(i).getGoogleID());
+                    calendarArrayValue.add(data.getAllCalendars().get(i).getSummary());
+                    ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, calendarArrayValue);
+                    arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    eventSync.setAdapter(arrayAdapter);
+                    eventSync.setBackgroundColor(getResources().getColor(R.color.c_teal_1));
+                }
+            }
+        }, 3000);
+
+        eventSync.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                switch (position) {
-                    case 0:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_teal_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_teal_1));
-                            colorInfo.put("colorText", "Teal 1");
-                            colorInfo.put("colorPosition", 0);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 1:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_teal_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_teal_2));
-                            colorInfo.put("colorText", "Teal 2");
-                            colorInfo.put("colorPosition", 1);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 2:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_orange_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_orange_1));
-                            colorInfo.put("colorText", "Orange 1");
-                            colorInfo.put("colorPosition", 2);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 3:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_orange_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_orange_2));
-                            colorInfo.put("colorText", "Orange 2");
-                            colorInfo.put("colorPosition", 3);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 4:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_blue_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_blue_1));
-                            colorInfo.put("colorText", "Blue 1");
-                            colorInfo.put("colorPosition", 4);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 5:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_blue_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_blue_2));
-                            colorInfo.put("colorText", "Blue 2");
-                            colorInfo.put("colorPosition", 5);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 6:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_purple_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_purple_1));
-                            colorInfo.put("colorText", "Purple 1");
-                            colorInfo.put("colorPosition", 6);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 7:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_purple_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_purple_2));
-                            colorInfo.put("colorText", "Purple 2");
-                            colorInfo.put("colorPosition", 7);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 8:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_pink_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_pink_1));
-                            colorInfo.put("colorText", "Pink 1");
-                            colorInfo.put("colorPosition", 8);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 9:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_pink_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_pink_2));
-                            colorInfo.put("colorText", "Pink 2");
-                            colorInfo.put("colorPosition", 9);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 10:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_red_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_red_1));
-                            colorInfo.put("colorText", "Red 1");
-                            colorInfo.put("colorPosition", 10);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 11:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_red_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_red_2));
-                            colorInfo.put("colorText", "Red 2");
-                            colorInfo.put("colorPosition", 11);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 12:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_green_1));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_green_1));
-                            colorInfo.put("colorText", "Green 1");
-                            colorInfo.put("colorPosition", 12);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case 13:
-                        parent.getChildAt(0).setBackgroundColor(getResources().getColor(R.color.c_green_2));
-                        try {
-                            colorInfo.put("color", getResources().getColor(R.color.c_green_2));
-                            colorInfo.put("colorText", "Green 2");
-                            colorInfo.put("colorPosition", 13);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                }
+                String tutorialsName = parent.getItemAtPosition(position).toString();
+                Toast.makeText(parent.getContext(), "Selected: " + tutorialsName, Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -366,7 +252,7 @@ public class WeekCreateEvent extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.ok) {
-            // Due to Schedule Calendar "No events" is a empty view as default
+            // Due to Agenda Calendar "No events" is a empty view as default
             if(title.getText().toString().equals("") || title.getText().toString().equals("No events") ||
                startDate.getText().toString().equals("") || startTime.getText().toString().equals("") ||
                endDate.getText().toString().equals("") || endTime.getText().toString().equals("")) {
@@ -381,35 +267,24 @@ public class WeekCreateEvent extends AppCompatActivity {
                 if(NavigationBar.selectedPages == "nav_week") {
                     // Create a new event for Week Calendar
                     event = new WeekViewEvent(calendarID, title.getText().toString(), startDateTime, endDateTime);
-                    try {
-                        int colorText = (Integer) colorInfo.get("color");
-                        event.setColor(colorText);
-                        WeekFragment.mNewEvents.add(event);
+                    event.setColor(Color.rgb(100, 200, 220));
+                    WeekFragment.mNewEvents.add(event);
 
-                        // Refresh the week view. onMonthChange will be called again.
-                        WeekFragment.weekView.notifyDatasetChanged();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                } else if (NavigationBar.selectedPages == "nav_schedule") {
-                    // Create a new event for Schedule Calendar
-                    try {
-                        int colorText = (Integer) colorInfo.get("color");
+                    // Refresh the week view. onMonthChange will be called again.
+                    WeekFragment.weekView.notifyDatasetChanged();
+                } else if (NavigationBar.selectedPages == "nav_agenda") {
+                    // Create a new event for Agenda Calendar
+                    BaseCalendarEvent allEvent = new BaseCalendarEvent(title.getText().toString(), "", "", Color.rgb(100, 200, 220), startDateTime, endDateTime, false);
+                    allEvent.setId(calendarID);
+                    AgendaFragment.eventList.add(allEvent);
 
-                        BaseCalendarEvent allEvent = new BaseCalendarEvent(title.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
-                        allEvent.setId(calendarID);
-                        AgendaFragment.eventList.add(allEvent);
-
-                        // Schedule Calendar will also re-render the events as well
-                        AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                    // Agenda Calendar re-render the events and refresh the calendar
+                    AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                 }
 
                 // Save in Firebase, this will saved both calendar
-                firebase = new com.calbitica.app.Database.Firebase();
-                firebase.saveWeekEventInFirebase(calendarID, title.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
+//                firebase = new com.calbitica.app.Database.Firebase();
+//                firebase.saveWeekEventInFirebase(calendarID, title.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
 
                 finish();
                 Toast.makeText(WeekCreateEvent.this,"Event successfully created", Toast.LENGTH_SHORT).show();
