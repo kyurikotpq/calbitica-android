@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
@@ -55,7 +56,7 @@ public class AgendaFragment extends Fragment{
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_schedule_calendar, container, false);
+        return inflater.inflate(R.layout.fragment_agenda, container, false);
     }
 
     @Override
@@ -86,6 +87,9 @@ public class AgendaFragment extends Fragment{
             // Prevent the user to press anything
             progressDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+            NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            NavigationBar.nav_refresh.setEnabled(false);
+            NavigationBar.nav_add.setEnabled(false);
         }
 
         // (Required)Perform a computation on a background thread, not allow to have UI components(View & void function, etc...)
@@ -317,7 +321,11 @@ public class AgendaFragment extends Fragment{
             AsyncJob.doOnMainThread(new AsyncJob.OnMainThreadJob() {
                 @Override
                 public void doInUIThread() {
+                    // Enable back the control to the user
                     progressDialog.dismiss();
+                    NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                    NavigationBar.nav_refresh.setEnabled(true);
+                    NavigationBar.nav_add.setEnabled(true);
                 }
             });
         }

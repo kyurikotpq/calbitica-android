@@ -1,9 +1,10 @@
-package com.calbitica.app.Models;
+package com.calbitica.app.Models.Calbit;
 
 import java.util.Date;
 
-public class StartDateTime {
+public class EndDateTime {
     private Date dateTime, date;
+    private String timeZone;
 
     public Date getDateTime() {
         return dateTime;
@@ -21,8 +22,17 @@ public class StartDateTime {
         this.date = date;
     }
 
-    public StartDateTime(Date dateTime, Date date) {
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    public EndDateTime(Date dateTime, Date date, String timeZone) {
         this.dateTime = dateTime;
         this.date = date;
+        this.timeZone = timeZone;
     }
 }

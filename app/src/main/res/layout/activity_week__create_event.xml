@@ -7,6 +7,8 @@
     android:orientation="vertical"
     tools:context=".Week.WeekCreateEvent">
 
+    <!--Sharing with the Edit Events, just few changes on;y-->
+
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -113,15 +115,48 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_gravity="center"
                     android:textSize="16sp"
-                    android:text="Color" />
+                    android:text="Reminders" />
 
-                <Spinner
-                    android:id="@+id/color"
+                <TextView
+                    android:id="@+id/reminderDate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:entries="@array/color"
+                    android:textSize="16sp"
+                    android:textAlignment="center"
+                    android:hint="set Reminder Date" />
+
+                <TextView
+                    android:id="@+id/reminderTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="16sp"
+                    android:textAlignment="center"
+                    android:hint="set Reminder Time" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="20dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:textSize="16sp"
+                    android:text="Select Your Google Account to add:" />
+
+                <Spinner
+                    android:id="@+id/selectCalendar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:textSize="16sp" />
             </LinearLayout>
         </LinearLayout>

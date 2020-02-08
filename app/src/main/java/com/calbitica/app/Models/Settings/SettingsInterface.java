@@ -1,4 +1,4 @@
-package com.calbitica.app.Settings;
+package com.calbitica.app.Models.Settings;
 
 import java.util.HashMap;
 

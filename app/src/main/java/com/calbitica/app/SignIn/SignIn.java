@@ -1,4 +1,4 @@
-package com.calbitica.app.Auth;
+package com.calbitica.app.SignIn;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -8,51 +8,37 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.calbitica.app.Database.MongoDB;
 import com.calbitica.app.Internet.CheckInternetConnection;
 import com.calbitica.app.Internet.ConnectivityReceiver;
+import com.calbitica.app.Models.Auth.GoogleAuth;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import com.calbitica.app.Util.CalbiticaAPI;
-import com.calbitica.app.Util.JSONUtil;
 import com.calbitica.app.Util.UserData;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.gson.JsonElement;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.json.JSONObject;
-
 import java.util.HashMap;
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class SignInActivity extends AppCompatActivity implements ConnectivityReceiver.ConnectivityReceiverListener {
+public class SignIn extends AppCompatActivity implements ConnectivityReceiver.ConnectivityReceiverListener {
     private SignInButton btn_signinGoogle;
     private int RC_SIGN_IN = 1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_google_account_signin);
+        setContentView(R.layout.activity_signin);
 
         btn_signinGoogle = findViewById(R.id.btn_signinGoogle);
 
@@ -87,7 +73,7 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
         try {
             // Get the google account
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            Toast.makeText(SignInActivity.this, "Signing you in...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(SignIn.this, "Signing you in...", Toast.LENGTH_SHORT).show();
 
             // Retrieve the authCode and send to Calbitica server
             // Then store the JWT in sharedPreferences
@@ -148,7 +134,7 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
             // The ApiException status code indicates the detailed failure reason
             // Refer to GoogleSignInStatusCodes to know out more info
             Toast.makeText(
-                    SignInActivity.this,
+                    SignIn.this,
                     "Signing in failed. Check your\nconnection and try again.",
                     Toast.LENGTH_SHORT
             ).show();
@@ -163,7 +149,7 @@ public class SignInActivity extends AppCompatActivity implements ConnectivityRec
 
         if (acct != null && jwt != null) {
             // Signed in successfully, show authenticated UI at NavigationBar
-            startActivity(new Intent(SignInActivity.this, NavigationBar.class));
+            startActivity(new Intent(SignIn.this, NavigationBar.class));
             finish();
         }
     }

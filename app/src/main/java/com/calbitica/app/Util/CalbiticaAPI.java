@@ -2,11 +2,11 @@ package com.calbitica.app.Util;
 
 import android.util.Log;
 
-import com.calbitica.app.Auth.AuthInterface;
-import com.calbitica.app.Models.CalbitInterface;
-import com.calbitica.app.Profile.HabiticaInterface;
-import com.calbitica.app.Settings.SettingsInterface;
-import com.calbitica.app.SyncCalendars.CalendarsInterface;
+import com.calbitica.app.Models.Auth.AuthInterface;
+import com.calbitica.app.Models.Calbit.CalbitInterface;
+import com.calbitica.app.Models.Habitica.HabiticaInterface;
+import com.calbitica.app.Models.Settings.SettingsInterface;
+import com.calbitica.app.Models.Calendars.CalendarsInterface;
 
 import java.io.IOException;
 

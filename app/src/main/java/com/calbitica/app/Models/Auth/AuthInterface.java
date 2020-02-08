@@ -1,4 +1,4 @@
-package com.calbitica.app.Auth;
+package com.calbitica.app.Models.Auth;
 
 
 import java.util.HashMap;

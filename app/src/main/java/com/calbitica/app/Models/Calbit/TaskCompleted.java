@@ -1,4 +1,4 @@
-package com.calbitica.app.Models;
+package com.calbitica.app.Models.Calbit;
 
 public class TaskCompleted {
     private Boolean status;

@@ -1,10 +1,13 @@
-package com.calbitica.app.SyncCalendars;
+package com.calbitica.app.Models.Calendars;
 
 import java.util.List;
 
 public class Calendar {
 //    {
-//        data: [
+//        data: {
+//            message: "string"                   // This is for Update Calendar's sync status field
+//        },
+//        [
 //            {
 //                _id: "objectid",
 //                userID: "string",
@@ -17,11 +20,12 @@ public class Calendar {
 //                        minutes: "integer"
 //                    }
 //                ],
-//                sync: "boolean"
+//                sync: "boolean",
 //            }
 //        ]
 //    }
 
+    private String message;
     private Object _id;
     private String userID;
     private String googleID;
@@ -29,6 +33,14 @@ public class Calendar {
     private String description;
     private Boolean sync;
     private List<Reminder> defaultReminders;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
     public Object get_id() {
         return _id;
@@ -83,16 +95,6 @@ public class Calendar {
     }
 
     public void setDefaultReminders(List<Reminder> reminders) {
-        this.defaultReminders = reminders;
-    }
-
-    public Calendar(Object _id, String userID, String googleID, String summary, String description, Boolean sync, List<Reminder> reminders) {
-        this._id = _id;
-        this.userID = userID;
-        this.googleID = googleID;
-        this.summary = summary;
-        this.description = description;
-        this.sync = sync;
         this.defaultReminders = reminders;
     }
 }

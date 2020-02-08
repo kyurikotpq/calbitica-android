@@ -1,4 +1,4 @@
-package com.calbitica.app.Profile;
+package com.calbitica.app.Models.Habitica;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

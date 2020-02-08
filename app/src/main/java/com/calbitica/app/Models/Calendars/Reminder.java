@@ -1,4 +1,4 @@
-package com.calbitica.app.SyncCalendars;
+package com.calbitica.app.Models.Calendars;
 
 public class Reminder {
     private String method;

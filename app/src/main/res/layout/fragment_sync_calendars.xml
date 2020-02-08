@@ -3,16 +3,10 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp">
+    android:background="@color/gray_1"
+    android:id="@+id/sync_calendars_layout"
+    android:layout_gravity="center">
 
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-    <TextView
-        android:id="@+id/text_viewResult"
-        android:textColor="@color/cardview_dark_background"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-    </androidx.core.widget.NestedScrollView>
+    <!-- Create a dynamically checkbox here, but using layout to do it-->
+    <!-- Render Checkbox in Code-->
 </LinearLayout>

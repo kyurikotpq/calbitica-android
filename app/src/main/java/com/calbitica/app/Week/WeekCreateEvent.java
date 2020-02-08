@@ -81,7 +81,7 @@ public class WeekCreateEvent extends AppCompatActivity {
 
         // When selected the Spinner drop-down, the background color will change accordingly
         // Due to some libraries require specific version, it become deprecated, for now it will still work, but have to take note in future
-        Spinner color = (Spinner) findViewById(R.id.color);
+        Spinner color = (Spinner) findViewById(R.id.selectCalendar);
         color.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {

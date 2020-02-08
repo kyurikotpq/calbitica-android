@@ -30,7 +30,7 @@
             </intent-filter>
         </activity>
         <!-- Login Google Account Page-->
-        <activity android:name="com.calbitica.app.Auth.SignInActivity" />
+        <activity android:name="com.calbitica.app.SignIn.SignIn" />
         <!-- Fixed Main Page of Navigation Bar -->
         <activity android:name="com.calbitica.app.NavigationBar.NavigationBar" />
         <!-- WeekFragment CreateEvent Page-->

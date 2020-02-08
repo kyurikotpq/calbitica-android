@@ -89,7 +89,7 @@ public class WeekEditEvent extends AppCompatActivity {
         eventTitle = findViewById(R.id.title);
         eventTitle.setText(title);
 
-        final Spinner eventColor = (Spinner) findViewById(R.id.color);
+        final Spinner eventColor = (Spinner) findViewById(R.id.selectCalendar);
 
         // Get the colorPosition from the firebase, as selected on default
         DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
