@@ -32,15 +32,16 @@ import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.UUID;
 
 public class WeekCreateEvent extends AppCompatActivity {
-    EditText title = null;                                  // Input Calendar Title
-    TextView startDate, startTime, endDate, endTime;        // This is just the display from the layout
-    Calendar startDateTime, endDateTime;                    // This is the one that goes database
-    WeekViewEvent event = null;                             // The events that will in Week Calendar
-    private Database database = null;                       // Reference for tally with the database
+    EditText title = null;                                      // Input Calendar Title
+    TextView startDate, startTime, endDate, endTime;            // This is just the display from the layout
+    Calendar startDateTime, endDateTime, reminderDateTime;      // This is the one that goes database
+    WeekViewEvent event = null;                                 // The events that will in Week Calendar
+    private Database database = null;                           // Reference for tally with the database
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +74,7 @@ public class WeekCreateEvent extends AppCompatActivity {
         String endDT = bundle.getString("endDateTime");
         startDateTime = Calendar.getInstance();
         endDateTime = Calendar.getInstance();
+        reminderDateTime = null;
 
         // From the plus icon from NavigationBar
         if(!startDT.equals("") && !endDT.equals("")) {
@@ -238,6 +240,73 @@ public class WeekCreateEvent extends AppCompatActivity {
                 endTime.setText(endDateTime.get(Calendar.HOUR_OF_DAY) + ":" + endDateTime.get(Calendar.MINUTE));
             }
         }
+
+        // Prompt the Reminder Date Picker to choose
+        final TextView reminderDate = (TextView) findViewById(R.id.reminderDate);
+        reminderDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar calendar = Calendar.getInstance();
+                int year = calendar.get(Calendar.YEAR);
+                int month = calendar.get(Calendar.MONTH);
+                int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+
+                DatePickerDialog datePickerDialog = new DatePickerDialog(WeekCreateEvent.this, new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                        if(reminderDate.getText() != null) {
+                            reminderDateTime = Calendar.getInstance();
+
+                            reminderDateTime.set(year, month, day);
+                            reminderDate.setText(day + "/" + (month + 1) + "/" + year);
+                        }
+                    }
+                }, year, month, dayOfMonth);
+                datePickerDialog.show();
+            }
+        });
+
+        // Prompt the Reminder Time Picker to choose
+        final TextView reminderTime = (TextView) findViewById(R.id.reminderTime);
+        reminderTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar calendar = Calendar.getInstance();
+                int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
+                int minute = calendar.get(Calendar.MINUTE);
+
+                TimePickerDialog timePickerDialog = new TimePickerDialog(WeekCreateEvent.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
+                        if(reminderTime.getText() != null) {
+                            reminderDateTime = Calendar.getInstance();
+
+                            if(minute < 10) {
+                                reminderTime.setText(hourOfDay + ":" + "0" + minute);
+                            } else {
+                                reminderTime.setText(hourOfDay + ":" + minute);
+                            }
+
+                            reminderDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                            reminderDateTime.set(Calendar.MINUTE, minute);
+                        }
+                    }
+                }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekCreateEvent.this));
+                timePickerDialog.show();
+            }
+        });
+
+        // Default reminderDateTime will be automatically configure
+        if(reminderDateTime != null) {
+            int reminderMonth = reminderDateTime.get(Calendar.MONTH) + 1;
+            reminderDate.setText(reminderDateTime.get(Calendar.DAY_OF_MONTH) + "/" + reminderMonth + "/" + reminderDateTime.get(Calendar.YEAR));
+
+            if(reminderDateTime.get(Calendar.MINUTE) < 10) {
+                reminderTime.setText(reminderDateTime.get(Calendar.HOUR_OF_DAY) + ":" + "0" + reminderDateTime.get(Calendar.MINUTE));
+            } else {
+                reminderTime.setText(reminderDateTime.get(Calendar.HOUR_OF_DAY) + ":" + reminderDateTime.get(Calendar.MINUTE));
+            }
+        }
     }
 
     // Right Menu Bar Creation
@@ -261,12 +330,12 @@ public class WeekCreateEvent extends AppCompatActivity {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
                 Toast.makeText(WeekCreateEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
             } else {
-                // calendarID -> random generate long id(unique), to represent the specific unique events
-                long calendarID = (UUID.randomUUID().getMostSignificantBits());
+                // Setting the valid mongoId for the reference with the database
+                int id = (int) event.getId();
 
                 if(NavigationBar.selectedPages == "nav_week") {
                     // Create a new event for Week Calendar
-                    event = new WeekViewEvent(calendarID, title.getText().toString(), startDateTime, endDateTime);
+                    event = new WeekViewEvent(id, title.getText().toString(), startDateTime, endDateTime);
                     event.setColor(Color.rgb(100, 200, 220));
                     WeekFragment.mNewEvents.add(event);
 
@@ -275,7 +344,7 @@ public class WeekCreateEvent extends AppCompatActivity {
                 } else if (NavigationBar.selectedPages == "nav_agenda") {
                     // Create a new event for Agenda Calendar
                     BaseCalendarEvent allEvent = new BaseCalendarEvent(title.getText().toString(), "", "", Color.rgb(100, 200, 220), startDateTime, endDateTime, false);
-                    allEvent.setId(calendarID);
+                    allEvent.setId(id);
                     AgendaFragment.eventList.add(allEvent);
 
                     // Agenda Calendar re-render the events and refresh the calendar

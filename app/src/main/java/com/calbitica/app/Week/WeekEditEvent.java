@@ -37,7 +37,7 @@ import com.calbitica.app.R;
 
 public class WeekEditEvent extends AppCompatActivity {
     private EditText eventTitle = null;                                     // The iuput calendar title
-    private Calendar startDateTime, endDateTime, reminderDateTime = null;   // The input calendar start and end datetime
+    private Calendar startDateTime, endDateTime, reminderDateTime;          // The input calendar start and end datetime
     private WeekViewEvent event = null;                                     // The events that will in Week Calendar
     private Database database = null;                                       // Reference for tally with the database
 
@@ -97,7 +97,6 @@ public class WeekEditEvent extends AppCompatActivity {
 
         final Spinner eventSync = (Spinner) findViewById(R.id.selectCalendar);
         ArrayList<String> calendarArrayValue = new ArrayList<>();
-        ArrayList<String> calendarArrayKey = new ArrayList<>();         // Using this to tally with the specific calendar value
 
         Database data = new Database(getBaseContext());
         data.getAllCalendars();
@@ -108,7 +107,6 @@ public class WeekEditEvent extends AppCompatActivity {
             @Override
             public void run() {
                 for(int i = 0; i < data.getAllCalendars().size(); i++) {
-                    calendarArrayKey.add(data.getAllCalendars().get(i).getGoogleID());
                     calendarArrayValue.add(data.getAllCalendars().get(i).getSummary());
                     ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, calendarArrayValue);
                     arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -119,7 +117,6 @@ public class WeekEditEvent extends AppCompatActivity {
         }, 3000);
 
         // When selected the Spinner drop-down, the background color will change accordingly
-        // Due to some libraries require specific version, it become deprecated, for now it will still work, but have to take note in future
         eventSync.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -129,7 +126,7 @@ public class WeekEditEvent extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // When no selected, it will be default color
+                // When no selected, it will default
             }
         });
 
