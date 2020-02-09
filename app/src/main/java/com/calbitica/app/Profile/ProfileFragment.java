@@ -1,5 +1,6 @@
 package com.calbitica.app.Profile;
 
+import android.net.http.SslCertificate;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import android.widget.Toast;
 
 import com.calbitica.app.Models.Habitica.HabiticaInfo;
 import com.calbitica.app.Models.Habitica.HabiticaProfileResponse;
+import com.calbitica.app.Models.Habitica.HabiticaQuestResponse;
 import com.calbitica.app.Models.Habitica.HabiticaToggleSleepResponse;
 import com.calbitica.app.Models.Habitica.Stats;
 import com.calbitica.app.R;
@@ -49,6 +51,9 @@ public class ProfileFragment extends Fragment {
 
     // Temporary data values
     boolean isSleeping = false;
+
+    // To pass the partyID to the groupID
+    String groupId = "";
 
     @Nullable
     @Override
@@ -132,6 +137,22 @@ public class ProfileFragment extends Fragment {
                         updateFragments("sleep");
 
                         // Quest stuff
+                        groupId = profileInfo.getParty().get_id();
+
+                        if(profileInfo.getParty().getQuest().getRSVPNeeded()) {
+                            questStatus.setText("You have not responded to the quest.");
+                            questAccept.setVisibility(View.VISIBLE);
+                            questReject.setVisibility(View.VISIBLE);
+                        } else {
+                            questAccept.setVisibility(View.GONE);
+                            questReject.setVisibility(View.GONE);
+
+                            if(profileInfo.getParty().getQuest().getKey() != null) {
+                                questStatus.setText("You have accepted the quest invitation.");
+                            } else {
+                                questStatus.setText("You have rejected the quest invitation.");
+                            }
+                        }
                     }
                 } catch(Exception e) {
                     // usually is nullpointer
@@ -147,6 +168,8 @@ public class ProfileFragment extends Fragment {
 
         // Button click listeners
         innStatusBTN.setOnClickListener(v -> onSleepBtnClicked());
+        questAccept.setOnClickListener(v -> onAcceptBtnClicked());
+        questReject.setOnClickListener(v -> onnRejectBtnClicked());
     }
 
     public void updateFragments(String type) {
@@ -191,6 +214,9 @@ public class ProfileFragment extends Fragment {
                 }
                 try {
                     HabiticaToggleSleepResponse responseData = response.body();
+
+                    Toast.makeText(getContext() ,responseData.getData().get("message").toString(), Toast.LENGTH_SHORT).show();
+
                     // Handle new JWT returned, if any
                     if (responseData.getJwt() != null
                     && !responseData.getJwt().equals("")) {
@@ -219,6 +245,70 @@ public class ProfileFragment extends Fragment {
             public void onFailure(Call<HabiticaToggleSleepResponse> call, Throwable t) {
                 Log.d("Save settings FAILED", call.toString());
                 Log.d("Save settings MORE DETAILS", t.getLocalizedMessage());
+            }
+        });
+    }
+
+    public void onAcceptBtnClicked() {
+        questAccept.setVisibility(View.GONE);
+        questReject.setVisibility(View.GONE);
+        questStatus.setText("You have accepted the quest invitation.");
+
+        // Retrieve the JWT
+        String oldJWT = UserData.get("jwt", getContext());
+        // Build the API Call
+        Call<HabiticaQuestResponse> apiCall = CalbiticaAPI.getInstance(oldJWT)
+                .habitica().inviteQuest(true, groupId);
+
+        // Make the API Call
+        apiCall.enqueue(new Callback<HabiticaQuestResponse>() {
+            @Override
+            public void onResponse(Call<HabiticaQuestResponse> call,
+                                   Response<HabiticaQuestResponse> response) {
+                if (!response.isSuccessful()) {
+                    Log.d("Quest Call: ", response.toString());
+                    return;
+                }
+
+                System.out.println(("Quest Response: " + response.message()));
+            }
+
+            @Override
+            public void onFailure(Call<HabiticaQuestResponse> call, Throwable t) {
+                Log.d("Save settings FAILED", call.toString());
+                Log.d("Save settings MORE DETAILS", t.getLocalizedMessage());
+            }
+        });
+    }
+
+    public void onnRejectBtnClicked() {
+        questAccept.setVisibility(View.GONE);
+        questReject.setVisibility(View.GONE);
+        questStatus.setText("You have rejected the quest invitation.");
+
+        // Retrieve the JWT
+        String oldJWT = UserData.get("jwt", getContext());
+        // Build the API Call
+        Call<HabiticaQuestResponse> apiCall = CalbiticaAPI.getInstance(oldJWT)
+                .habitica().inviteQuest(false, groupId);
+
+        // Make the API Call
+        apiCall.enqueue(new Callback<HabiticaQuestResponse>() {
+            @Override
+            public void onResponse(Call<HabiticaQuestResponse> call,
+                                   Response<HabiticaQuestResponse> response) {
+                if (!response.isSuccessful()) {
+                    Log.d("Quest Call: ", response.toString());
+                    return;
+                }
+
+                System.out.println(("Quest Response: " + response.message()));
+            }
+
+            @Override
+            public void onFailure(Call<HabiticaQuestResponse> call, Throwable t) {
+                Log.d("Quest FAILED", call.toString());
+                Log.d("Quest MORE DETAILS", t.getLocalizedMessage());
             }
         });
     }

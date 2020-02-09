@@ -35,7 +35,7 @@ public class Calbit {
 //    }
 
     private Object _id;
-    private List<Array> reminders;
+    private List<Date> reminders;
     private String summary;
     private StartDateTime start;
     private EndDateTime end;
@@ -57,11 +57,11 @@ public class Calbit {
         this._id = _id;
     }
 
-    public List<Array> getReminders() {
+    public List<Date> getReminders() {
         return reminders;
     }
 
-    public void setReminders(List<Array> reminders) {
+    public void setReminders(List<Date> reminders) {
         this.reminders = reminders;
     }
 
@@ -157,7 +157,7 @@ public class Calbit {
 
     public void setStatus(Boolean status) { this.status = status; }     // For the TaskCompleted necessary setter
 
-    public Calbit(Object _id, String summary, StartDateTime start, EndDateTime end, List<Array> reminders, String calendarID, String googleID, Boolean allDay) {
+    public Calbit(Object _id, String summary, StartDateTime start, EndDateTime end, List<Date> reminders, String calendarID, String googleID, Boolean allDay) {
         this._id = _id;
         this.summary = summary;
         this.start = start;

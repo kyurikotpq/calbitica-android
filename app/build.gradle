@@ -7,7 +7,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.calbitica.app"
-        minSdkVersion 24    // -> For firebase getOrDefault function(Able to retrieve the key of the checking values(Important)), previously is 16
+        minSdkVersion 24 // -> For getOrDefault function(Able to retrieve the key of the checking values(Important)), previously is version 16
         targetSdkVersion 27 // -> For the week calendar to work, previously is 29
         versionCode 1
         versionName "1.0"
@@ -57,11 +57,6 @@ dependencies {
     // Added Glide Libraries(Mainly for Google Photo)
     implementation 'com.github.bumptech.glide:glide:4.8.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.8.0'
-
-    // Added Firebase libraries
-    implementation 'com.google.firebase:firebase-database:17.0.0'
-    implementation 'com.google.firebase:firebase-auth:17.0.0'
-    implementation 'com.google.firebase:firebase-core:17.0.0'
 
     // Added JSON format for firebase
     implementation 'com.google.code.gson:gson:2.8.6'

@@ -34,6 +34,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
+import com.calbitica.app.Database.Database;
+import com.calbitica.app.Models.Calbit.Calbits;
+import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Models.Calbit.TaskCompleted;
 import com.calbitica.app.NavigationBar.NavigationBar;
@@ -194,6 +197,13 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
 //                                        Toast.makeText(getContext(), "Please wait...", Toast.LENGTH_LONG).show();
 //                                    }
 //                                });
+
+                                close.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        dialog.dismiss();
+                                    }
+                                });
 
                                 // To allow to run Toast in the async method...
                                 /*
