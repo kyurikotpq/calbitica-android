@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import com.calbitica.app.Models.Habitica.HabiticaInfo;
 import com.calbitica.app.Models.Habitica.HabiticaProfileResponse;
+import com.calbitica.app.Models.Habitica.HabiticaToggleSleepResponse;
 import com.calbitica.app.Models.Habitica.Stats;
 import com.calbitica.app.R;
 import com.calbitica.app.Util.CalbiticaAPI;
@@ -145,7 +146,7 @@ public class ProfileFragment extends Fragment {
         });
 
         // Button click listeners
-        innStatusBTN.setOnClickListener(v -> { onSleepBtnClicked(); });
+        innStatusBTN.setOnClickListener(v -> onSleepBtnClicked());
     }
 
     public void updateFragments(String type) {
@@ -176,41 +177,37 @@ public class ProfileFragment extends Fragment {
         // Retrieve the JWT
         String oldJWT = UserData.get("jwt", getContext());
         // Build the API Call
-        Call<HashMap<String, Object>> apiCall1 = CalbiticaAPI.getInstance(oldJWT)
+        Call<HabiticaToggleSleepResponse> apiCall = CalbiticaAPI.getInstance(oldJWT)
                             .habitica().toggleSleep();
 
         // Make the API Call
-        apiCall1.enqueue(new Callback<HashMap<String, Object>>() {
+        apiCall.enqueue(new Callback<HabiticaToggleSleepResponse>() {
             @Override
-            public void onResponse(Call<HashMap<String, Object>> call,
-                                   Response<HashMap<String, Object>> response) {
+            public void onResponse(Call<HabiticaToggleSleepResponse> call,
+                                   Response<HabiticaToggleSleepResponse> response) {
                 if (!response.isSuccessful()) {
                     Log.d("SLEEP CALL", response.toString());
                     return;
                 }
                 try {
-                    HashMap<String, Object> data = response.body();
+                    HabiticaToggleSleepResponse responseData = response.body();
                     // Handle new JWT returned, if any
-                    if (data.containsKey("jwt")) {
-                        String jwt = data.get("jwt").toString();
-
+                    if (responseData.getJwt() != null
+                    && !responseData.getJwt().equals("")) {
                         // Handle JWT
                         HashMap<String, String> user = new HashMap<>();
-                        user.put("jwt", jwt);
+                        user.put("jwt", responseData.getJwt());
 
                         UserData.save(user, getContext());
-                        Log.d("API JWT: ", jwt);
-
-                        String message = (data.containsKey("message"))
-                                ? data.get("message").toString()
-                                : "Something went wrong. Please try again.";
-                        Toast.makeText(getActivity(),message, Toast.LENGTH_LONG).show();
+                        Log.d("API JWT: ", responseData.getJwt());
                     }
 
                     // Update the button! + toast
-                    if(data.containsKey("sleep") && data.containsKey("message")) {
-                        String msg = data.get("message").toString();
-                        isSleeping = (boolean) data.get("sleep");
+                    if(responseData.getData().containsKey("sleep")) {
+                        System.out.println("WE GOT SLEEP");
+                        HashMap<String, Object> dataHM = responseData.getData();
+                        String msg = dataHM.get("message").toString();
+                        isSleeping = (boolean) dataHM.get("sleep");
                         updateFragments("sleep");
                     }
                 } catch (Exception e) {
@@ -219,7 +216,7 @@ public class ProfileFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<HashMap<String, Object>> call, Throwable t) {
+            public void onFailure(Call<HabiticaToggleSleepResponse> call, Throwable t) {
                 Log.d("Save settings FAILED", call.toString());
                 Log.d("Save settings MORE DETAILS", t.getLocalizedMessage());
             }

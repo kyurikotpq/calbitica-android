@@ -1,5 +1,7 @@
 package com.calbitica.app.Models.Calbit;
 
+import java.util.HashMap;
+
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -14,7 +16,9 @@ public interface CalbitInterface {
 
     // Create the Event to Calbitica
     @POST("calbit")
-    Call<Calbits> createCalbit();
+    Call<HashMap<String, Object>> createCalbit(
+            @Body HashMap<String, String> calbit
+    );
 
     // Edit the Event to Calbitica
     @PUT("calbit/{id}")

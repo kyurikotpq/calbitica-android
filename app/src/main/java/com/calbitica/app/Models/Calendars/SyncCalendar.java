@@ -3,13 +3,13 @@ package com.calbitica.app.Models.Calendars;
 public class SyncCalendar {
     // Create a list will become array
     // But, we want objects here, so will be just the another class
-    private Calendar data;
+    private CalbiticaCalendar data;
 
-    public Calendar getData() {
+    public CalbiticaCalendar getData() {
         return data;
     }
 
-    public void setData(Calendar data) {
+    public void setData(CalbiticaCalendar data) {
         this.data = data;
     }
 }

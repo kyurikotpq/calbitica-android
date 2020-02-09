@@ -12,5 +12,5 @@ public interface HabiticaInterface {
 
     // Toggle sleep status
     @GET("sleep")
-    Call<HashMap<String, Object>> toggleSleep();
+    Call<HabiticaToggleSleepResponse> toggleSleep();
 }

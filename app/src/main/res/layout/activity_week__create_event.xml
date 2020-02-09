@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/gray_6"
     android:orientation="vertical"
     tools:context=".Week.WeekCreateEvent">
 
@@ -23,16 +24,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="30dp"
-            android:src="@drawable/close"/>
+            android:src="@drawable/close" />
 
         <TextView
             android:id="@+id/nav_Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
+            android:text="Create Event"
             android:textColor="@color/white"
             android:textSize="18sp"
-            android:text="Create Event"/>
+            android:textStyle="bold" />
     </androidx.appcompat.widget.Toolbar>
 
     <ScrollView
@@ -52,57 +53,96 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
-                android:textSize="20sp"
-                android:hint="Enter title"/>
+                android:hint="Event Title"
+                android:textSize="20sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginBottom="20dp"
                 android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="All Day"
+                    android:textAlignment="textStart"
+                    android:textSize="16sp" />
+
+                <Switch
+                    android:id="@+id/allDaySwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:width="80dp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="20dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Starts"
+                    android:textAlignment="textStart"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/startDate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="16sp"
-                    android:textAlignment="center"
-                    android:hint="startDate" />
+                    android:hint="Start Date"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/startTime"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="16sp"
-                    android:textAlignment="center"
-                    android:hint="startTime" />
+                    android:hint="Start Time"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="25dp"
                 android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Ends"
+                    android:textAlignment="textStart"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/endDate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="16sp"
-                    android:textAlignment="center"
-                    android:hint="endDate" />
+                    android:hint="End Date"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/endTime"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="16sp"
-                    android:textAlignment="center"
-                    android:hint="endTime" />
+                    android:hint="End Time"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -114,45 +154,10 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="2.7"
                     android:layout_gravity="center"
-                    android:textSize="16sp"
-                    android:text="Reminder(Optional)" />
-
-                <TextView
-                    android:id="@+id/reminderDate"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="2"
-                    android:layout_gravity="center"
-                    android:textAlignment="center"
-                    android:textSize="16sp"
-                    android:hint="Set Reminder Date" />
-
-                <TextView
-                    android:id="@+id/reminderTime"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="2"
-                    android:layout_gravity="center"
-                    android:textAlignment="center"
-                    android:textSize="16sp"
-                    android:hint="Set Reminder Time" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="20dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:layout_weight="3"
-                    android:layout_gravity="center"
-                    android:textSize="16sp"
-                    android:text="Select Your Google Account to add:" />
+                    android:text="Calendar"
+                    android:textSize="16sp" />
 
                 <Spinner
                     android:id="@+id/selectCalendar"
@@ -162,6 +167,42 @@
                     android:layout_weight="1"
                     android:textSize="16sp" />
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="25dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="2.7"
+                    android:text="Reminder"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/reminderDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="2"
+                    android:hint="Reminder Date"
+                    android:textAlignment="center"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/reminderTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="2"
+                    android:hint="Reminder Time"
+                    android:textAlignment="center"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

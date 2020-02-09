@@ -4,41 +4,67 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.calbitica.app.Models.Calendars.CalbiticaCalendar;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
 import com.calbitica.app.Agenda.AgendaFragment;
+import com.calbitica.app.Util.CAWrapper;
+import com.calbitica.app.Util.CalbiticaAPI;
+import com.calbitica.app.Util.DateUtil;
+import com.calbitica.app.Util.UserData;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
 
-public class WeekCreateEvent extends AppCompatActivity {
-    EditText title = null;                                  // Input Calendar Title
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class WeekCreateEvent extends AppCompatActivity implements CalListResultInterface {
+    EditText title = null;                                  // Input CalbiticaCalendar Title
     TextView startDate, startTime, endDate, endTime;        // This is just the display from the layout
+    Spinner calendarSpinner;                                // For selecting the calendar
+    Switch allDaySwitch;
     JSONObject colorInfo = new JSONObject();                // To make it more information and more easier
-    Calendar startDateTime, endDateTime;                    // This is the one that goes database
-    WeekViewEvent event = null;                             // The events that will in Week Calendar
-    com.calbitica.app.Database.Firebase firebase;
+    Calendar startDateTime, endDateTime;                    // This is the one that goes CAWrapper
+    WeekViewEvent event = null;                             // The events that will in Week CalbiticaCalendar
+
+    // Helps us format our dates later
+    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+
+    // Helps with dynamic spinners
+    ArrayAdapter<String> calendarSpinnerAdapter;
+    List<String> calbiticaCalendarSummaries = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +72,8 @@ public class WeekCreateEvent extends AppCompatActivity {
         setContentView(R.layout.activity_week__create_event);
 
         title = findViewById(R.id.title);
+        calendarSpinner = findViewById(R.id.selectCalendar);
+        allDaySwitch = findViewById(R.id.allDaySwitch);
 
         // Get info from WeekFragment
         Bundle bundle = getIntent().getExtras();
@@ -55,15 +83,29 @@ public class WeekCreateEvent extends AppCompatActivity {
         endDateTime = Calendar.getInstance();
 
         // From the plus icon from NavigationBar
-        if(!startDT.equals("") || !endDT.equals("")) {
             try{
-                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                startDateTime.setTime(sdf.parse(startDT));
-                endDateTime.setTime(sdf.parse(endDT));
+                Date startDTDate = (startDT.equals(""))
+                        ? new Date()
+                        : sdf.parse(startDT);
+                Date endDTDate = (endDT.equals(""))
+                        ? new Date()
+                        : sdf.parse(endDT);
+
+                    startDateTime.setTime(startDTDate);
+                    endDateTime.setTime(endDTDate);
+
+                    // high key think this is gonna fail cos its async
+                // should delegate to a ui thread
+                CAWrapper.getAllCalendars(this, WeekCreateEvent.this);
+                calendarSpinnerAdapter = new ArrayAdapter<String>(
+                        WeekCreateEvent.this, R.layout.spinner_item, calbiticaCalendarSummaries);
+
+                calendarSpinnerAdapter.setDropDownViewResource(R.layout.spinner_item);
+                calendarSpinner.setAdapter(calendarSpinnerAdapter);
+
             } catch (java.text.ParseException e) {
                 e.printStackTrace();
             }
-        }
 
         // Default the text will be Calbitica Android, by setting as empty for custom TextView to be shown instead
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -81,6 +123,7 @@ public class WeekCreateEvent extends AppCompatActivity {
 
         // When selected the Spinner drop-down, the background color will change accordingly
         // Due to some libraries require specific version, it become deprecated, for now it will still work, but have to take note in future
+        /*
         Spinner color = (Spinner) findViewById(R.id.selectCalendar);
         color.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -234,6 +277,7 @@ public class WeekCreateEvent extends AppCompatActivity {
                 // When no selected, it will be default color
             }
         });
+        */
 
         // Prompt the Start Date Picker to choose
         startDate = (TextView) findViewById(R.id.startDate);
@@ -354,7 +398,7 @@ public class WeekCreateEvent extends AppCompatActivity {
         }
     }
 
-    // Right Menu Bar Creation
+    // Right Menu Bar Item: Create the 'container'/space
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -362,37 +406,37 @@ public class WeekCreateEvent extends AppCompatActivity {
         return true;
     }
 
-    // Right Menu Bar Selected, which is the Tick Image
+    // When the Right Menu Bar Item (Tick Image) is Selected
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.ok) {
-            // Due to Schedule Calendar "No events" is a empty view as default
+            // Due to Schedule CalbiticaCalendar "No events" is a empty view as default
             if(title.getText().toString().equals("") || title.getText().toString().equals("No events") ||
                startDate.getText().toString().equals("") || startTime.getText().toString().equals("") ||
                endDate.getText().toString().equals("") || endTime.getText().toString().equals("")) {
                 Toast.makeText(WeekCreateEvent.this,"Please fill in all the fields", Toast.LENGTH_SHORT).show();
             } else if (startDateTime.getTime().getTime() >= endDateTime.getTime().getTime()) {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
-                Toast.makeText(WeekCreateEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
+                Toast.makeText(WeekCreateEvent.this,"Start date and time must be before end date and time", Toast.LENGTH_SHORT).show();
             } else {
                 // calendarID -> random generate long id(unique), to represent the specific unique events
                 long calendarID = (UUID.randomUUID().getMostSignificantBits());
 
                 if(NavigationBar.selectedPages == "nav_week") {
-                    // Create a new event for Week Calendar
+                    // Create a new event for Week CalbiticaCalendar
                     event = new WeekViewEvent(calendarID, title.getText().toString(), startDateTime, endDateTime);
                     try {
-                        int colorText = (Integer) colorInfo.get("color");
-                        event.setColor(colorText);
+//                        int colorText = (Integer) colorInfo.get("color");
+//                        event.setColor(colorText);
                         WeekFragment.mNewEvents.add(event);
 
                         // Refresh the week view. onMonthChange will be called again.
                         WeekFragment.weekView.notifyDatasetChanged();
-                    } catch (JSONException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 } else if (NavigationBar.selectedPages == "nav_schedule") {
-                    // Create a new event for Schedule Calendar
+                    // Create a new event for Schedule CalbiticaCalendar
                     try {
                         int colorText = (Integer) colorInfo.get("color");
 
@@ -400,22 +444,89 @@ public class WeekCreateEvent extends AppCompatActivity {
                         allEvent.setId(calendarID);
                         AgendaFragment.eventList.add(allEvent);
 
-                        // Schedule Calendar will also re-render the events as well
+                        // Schedule CalbiticaCalendar will also re-render the events as well
                         AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
 
-                // Save in Firebase, this will saved both calendar
-                firebase = new com.calbitica.app.Database.Firebase();
-                firebase.saveWeekEventInFirebase(calendarID, title.getText().toString(), startDateTime.getTime().toString(), endDateTime.getTime().toString(), colorInfo);
+                // Make Post Request to Calbitica API
+                HashMap<String, String> calbit = new HashMap<>();
+                String startDateStr = DateUtil.localToUTC(startDateTime.getTime());
+                String endDateStr = DateUtil.localToUTC(endDateTime.getTime());
+                calbit.put("start", startDateStr);
+                calbit.put("end", endDateStr);
+                calbit.put("allDay", "" + allDaySwitch.isChecked()); // TODO: don't hardcode this please
+                calbit.put("calendarID", calendarSpinner.getSelectedItem().toString()); // TODO: don't hardcode this please
+                calbit.put("display", "true");
+                calbit.put("isDump", "false");
+                calbit.put("title", title.getText().toString());
 
-                finish();
-                Toast.makeText(WeekCreateEvent.this,"Event successfully created", Toast.LENGTH_SHORT).show();
+                // TODO: Save reminders
+                // TODO: Add location
+
+                createCalbit(calbit);
             }
         }
 
         return super.onOptionsItemSelected(item);
+    }
+    // dynamic spinner
+    public void onCalendarListResult(List<CalbiticaCalendar> calbiticaCalendars) {
+        calbiticaCalendarSummaries.clear();
+
+        for(CalbiticaCalendar c : calbiticaCalendars)
+            calbiticaCalendarSummaries.add(c.getSummary());
+
+        calendarSpinnerAdapter.notifyDataSetChanged();
+    }
+
+    // API calls
+    public void createCalbit(HashMap<String, String> calbit) {
+        // Retrieve the JWT
+        String oldJWT = UserData.get("jwt", WeekCreateEvent.this);
+
+        // Build the API Call
+        Call<HashMap<String, Object>> apiCall = CalbiticaAPI.getInstance(oldJWT)
+                                .calbit().createCalbit(calbit);
+
+        // Make the API Call
+        apiCall.enqueue(new Callback<HashMap<String, Object>>() {
+            @Override
+            public void onResponse(Call<HashMap<String, Object>> call,
+                                   Response<HashMap<String, Object>> response) {
+                if (!response.isSuccessful()) {
+                    Log.d("SLEEP CALL", response.toString());
+                    return;
+                }
+                try {
+
+                    HashMap<String, Object> responseData = response.body();
+                    // Handle new JWT returned, if any
+                    if (responseData.containsKey("jwt")) {
+                        // Handle JWT
+                        HashMap<String, String> user = new HashMap<>();
+                        user.put("jwt", responseData.get("jwt").toString());
+
+                        UserData.save(user, WeekCreateEvent.this);
+                    }
+
+                    // Close this activity!
+
+                    System.out.println("EVENT CREATED " + response.body().toString());
+                    Toast.makeText(WeekCreateEvent.this,"Event created", Toast.LENGTH_SHORT).show();
+                    finish();
+                } catch (Exception e) {
+                    Log.d("API JWT FAILED", e.getLocalizedMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<HashMap<String, Object>> call, Throwable t) {
+                Log.d("Create event FAILED", call.toString());
+                Log.d("Create event MORE DETAILS", t.getLocalizedMessage());
+            }
+        });
     }
 }

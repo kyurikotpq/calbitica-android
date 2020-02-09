@@ -8,7 +8,6 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -19,14 +18,11 @@ import com.alamkanak.weekview.MonthLoader;
 import com.alamkanak.weekview.WeekView;
 import com.alamkanak.weekview.WeekViewEvent;
 
-import java.sql.Array;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import androidx.annotation.NonNull;
@@ -37,7 +33,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import com.arasthel.asyncjob.AsyncJob;
-import com.calbitica.app.Database.Database;
+import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.NavigationBar.NavigationBar;
@@ -47,7 +43,7 @@ import com.calbitica.app.Util.UserData;
 
 public class WeekFragment extends Fragment {
     public static WeekView weekView;                                    // Mostly used from NavigationBar refresh, etc...(Week Calender)
-    public static ArrayList<WeekViewEvent> mNewEvents;                  // Mostly used from NavigationBar refresh, etc...(Event in Week Calendar)
+    public static ArrayList<WeekViewEvent> mNewEvents;                  // Mostly used from NavigationBar refresh, etc...(Event in Week CalbiticaCalendar)
     public static boolean weekMonthCheck;                               // Ensure the weekView is loaded finished
     public static List<Calbit> listOfCalbits;                           // Temp storage of calbit list from API
     private String mongoId = null;                                      // Particular events(Mainly for edit and delete)
@@ -95,7 +91,7 @@ public class WeekFragment extends Fragment {
                 // the week view. This is optional.
                 setupDateTimeInterpreter(true);
 
-                // Get the event from database
+                // Get the event from CAWrapper
                 getAllCalbits();
 
                 return true;
@@ -103,11 +99,10 @@ public class WeekFragment extends Fragment {
         }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
             @Override
             public void onResult(Boolean  result) {
-                // Get the _id from the database, as for valid checking
-                Database database = new Database(getContext());
-                database.GetAllCalbit();
+                // Get the _id from the CAWrapper, as for valid checking
+//                CAWrapper.getAllCalbit(getContext());
 
-                // When click on the empty event(Will be the creating event)
+                // When click on the empty cell -> create event
                 weekView.setEmptyViewClickListener(new WeekView.EmptyViewClickListener() {
                     @Override
                     public void onEmptyViewClicked(Calendar startDateTime) {
@@ -131,7 +126,7 @@ public class WeekFragment extends Fragment {
                 weekView.setOnEventClickListener(new WeekView.EventClickListener() {
                     @Override
                     public void onEventClick(final WeekViewEvent event, RectF eventRect) {
-                        // Get the layout and render from the Calendar Modal
+                        // Get the layout and render from the CalbiticaCalendar Modal
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
 
@@ -160,19 +155,19 @@ public class WeekFragment extends Fragment {
                         final AlertDialog dialog = builder.create();
                         dialog.show();
 
-                        // Setting the valid mongoId for the reference with the database
+                        // Setting the valid mongoId for the reference with the CAWrapper
                         int id = (int) event.getId();
 
                         new Handler().postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                mongoId = database.GetAllCalbit().get(id).get_id().toString();
-
-                                if(database.GetAllCalbit().get(id).getReminders().size() != 0) {
-                                    mongoReminder = database.GetAllCalbit().get(id).getReminders().get(0).toString();
-                                } else {
-                                    mongoReminder = "";
-                                }
+//                                mongoId = CAWrapper.getAllCalbit().get(id).get_id().toString();
+//
+//                                if(CAWrapper.getAllCalbit().get(id).getReminders().size() != 0) {
+//                                    mongoReminder = CAWrapper.getAllCalbit().get(id).getReminders().get(0).toString();
+//                                } else {
+//                                    mongoReminder = "";
+//                                }
                             }
                         }, 3000);
 
@@ -241,13 +236,13 @@ public class WeekFragment extends Fragment {
                     }
                 });
 
-                // When scrolling horizontally under the Week Calendar date
+                // When scrolling horizontally under the Week CalbiticaCalendar date
                 weekView.setScrollListener(new WeekView.ScrollListener() {
                     @Override
                     public void onFirstVisibleDayChanged(Calendar newFirstVisibleDay, Calendar oldFirstVisibleDay) {
                         // When it scroll then...
                         if(oldFirstVisibleDay != null) {
-                            // Setting the Calendar title as the scrolled Calendar
+                            // Setting the CalbiticaCalendar title as the scrolled CalbiticaCalendar
                             String currentMonth = DateFormat.getDateInstance(DateFormat.LONG).format(newFirstVisibleDay.getTime());
                             NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " "  + newFirstVisibleDay.get(Calendar.YEAR));
                         }
@@ -376,7 +371,7 @@ public class WeekFragment extends Fragment {
                             for(int i = 0; i < listOfCalbits.size(); i++) {
                                 Calbit currentCalbit = listOfCalbits.get(i);
 
-                                // Declare the necessary fields into Week View Calendar
+                                // Declare the necessary fields into Week View CalbiticaCalendar
                                 Calendar startDateTime = Calendar.getInstance();
                                 Calendar endDateTime = Calendar.getInstance();
 
@@ -413,16 +408,17 @@ public class WeekFragment extends Fragment {
                                     }
                                 }
 
-                                // Render all the data into WeekView Calendar
+                                // Render all the data into WeekView CalbiticaCalendar
                                 WeekViewEvent weekEvents = new WeekViewEvent (i, currentCalbit.getSummary(), startDateTime, endDateTime);
                                 weekEvents.setAllDay(currentCalbit.getAllDay());
                                 mNewEvents.add(weekEvents);
 
-                                // Refresh the Week Calendar
-                                weekView.notifyDatasetChanged();
                             }
+
+                            // Refresh the Week CalbiticaCalendar
+                            weekView.notifyDatasetChanged();
                         } else {
-                            Toast.makeText(getContext(), "There is no data found in database", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "There is no data found in CAWrapper", Toast.LENGTH_SHORT).show();
                         }
                     }
 

@@ -2,10 +2,10 @@ package com.calbitica.app.Models.Calendars;
 
 import java.util.List;
 
-public class Calendar {
+public class CalbiticaCalendar {
 //    {
 //        data: {
-//            message: "string"                   // This is for Update Calendar's sync status field
+//            message: "string"                   // This is for Update CalbiticaCalendar's sync status field
 //        },
 //        [
 //            {

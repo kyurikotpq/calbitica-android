@@ -22,7 +22,7 @@ public class Calbit {
 //                },
 //                isDump: boolean,                        // true if brain dump or not assigned date time yet
 //                googleID: string,                       // Google Event ID, can be null - only exists on HabiticaProfileResponse [not supported yet]
-//                calendarID: string,                     // MongoDB Calendar ID
+//                calendarID: string,                     // MongoDB CalbiticaCalendar ID
 //                completed: {
 //                      status: boolean
 //                },

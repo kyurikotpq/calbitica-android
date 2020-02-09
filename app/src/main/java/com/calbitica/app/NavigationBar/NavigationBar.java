@@ -60,7 +60,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     public static ImageView arrow;                                  // Middle NavigationBar
     public static String selectedPages;                             // Tell which fragment you are in
     ArrayList<String> selectedList = new ArrayList<>();             // Mainly for the sync, when click on back button stuff
-    public static Calendar calendar;                                // Mainly for Week, Schedule Calendar, etc...
+    public static Calendar calendar;                                // Mainly for Week, Schedule CalbiticaCalendar, etc...
 
     public static NotificationManagerCompat notificationManager;    // Notification to alert when events date is today
     public static ArrayList<WeekViewEvent> eventSize;               // The Notification Input for showing
@@ -105,7 +105,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
         googleName.setText(UserData.get("displayName", this.getApplicationContext()));
 
-        // Setting the Calendar title as the current month, and function of arrow from the layout
+        // Setting the CalbiticaCalendar title as the current month, and function of arrow from the layout
         calendar = Calendar.getInstance();
         String currentMonth = DateFormat.getDateInstance(DateFormat.LONG).format(calendar.getTime());
         title = findViewById(R.id.title);
@@ -237,7 +237,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         selectedList.add("nav_week");
                     } else {
                         menuItem.setCheckable(false);
-                        Toast.makeText(NavigationBar.this, "Week Calendar still loading, Please Wait...", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(NavigationBar.this, "Week CalbiticaCalendar still loading, Please Wait...", Toast.LENGTH_SHORT).show();
                     }
                 }
 
@@ -402,7 +402,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                             WeekFragment.mNewEvents = new ArrayList<>();
 
 //                            // Get the event from firebase
-//                            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
+//                            com.calbitica.app.CAWrapper.Firebase firebase = new com.calbitica.app.CAWrapper.Firebase();
 //                            firebase.getWeekEventsFromFirebase();
 
                             try {
@@ -431,7 +431,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                             AgendaFragment.eventList = new ArrayList<>();
 
                             // Get the event from firebase
-//                            com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
+//                            com.calbitica.app.CAWrapper.Firebase firebase = new com.calbitica.app.CAWrapper.Firebase();
 //                            firebase.getScheduleEventsFromFirebase(AgendaFragment.eventList);
 
                             try {
@@ -478,7 +478,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
             // To get the previous page, delete the current page
             selectedList.remove(selectedList.size() - 1);
 
-            // When the previous page is the last page, just render the WeekView Calendar(Dashboard/Main Page)
+            // When the previous page is the last page, just render the WeekView CalbiticaCalendar(Dashboard/Main Page)
             if(selectedList.size() <= 0) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(NavigationBar.this);
 

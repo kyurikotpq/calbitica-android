@@ -47,7 +47,7 @@ import java.util.Map;
 
 public class AgendaFragment extends Fragment{
     public static AgendaCalendarView scheduleView;                      // Mainly modify from the Refresh, etc
-    public static List<CalendarEvent> eventList;                        // The events based on Schedule Calendar,
+    public static List<CalendarEvent> eventList;                        // The events based on Schedule CalbiticaCalendar,
                                                                         // but 1 more phrase on BaseCalendarEvent as a child (From firebase guide)
     public static Calendar minDate, maxDate;                            // Set the necessary fields for the Schedule Fragment
     public static CalendarPickerController calendarPickerController;    // Have to call from here, re-use the same one, rather than keep creating(like a loop)
@@ -154,7 +154,7 @@ public class AgendaFragment extends Fragment{
                 @Override
                 public void onEventSelected(CalendarEvent event) {
                     if (event.getTitle().equals("No events")) {
-                        // Re-use the same design & code as the Week Calendar Create Page
+                        // Re-use the same design & code as the Week CalbiticaCalendar Create Page
                         Intent intent = new Intent(getContext(), WeekCreateEvent.class);
                         Toast.makeText(getActivity(), "No events selected: " + WeekFragment.getEventTitle(event.getInstanceDay()), Toast.LENGTH_SHORT).show();
 
@@ -169,7 +169,7 @@ public class AgendaFragment extends Fragment{
 
                         startActivity(intent);
                     } else {
-                        // Get the layout and render from the Calendar Modal
+                        // Get the layout and render from the CalbiticaCalendar Modal
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
 
@@ -219,8 +219,8 @@ public class AgendaFragment extends Fragment{
                                 calendarData.putString("startDateTime", event.getStartTime().getTime().toString());
                                 calendarData.putString("endDateTime", event.getEndTime().getTime().toString());
 
-                                // Schedule Calendar did not provide the color here, so have to get the color from database instead...
-                                DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("Calendar");
+                                // Schedule CalbiticaCalendar did not provide the color here, so have to get the color from database instead...
+                                DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("CalbiticaCalendar");
                                 firebase.addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -283,12 +283,12 @@ public class AgendaFragment extends Fragment{
                                     if(eventList.get(i).getId() == event.getId()) {
                                         AgendaFragment.eventList.remove(i);   // remove only 1
 
-                                        // Schedule Calendar will also re-render the events as well
+                                        // Schedule CalbiticaCalendar will also re-render the events as well
                                         AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                                     }
                                 }
 
-                                // Schedule Calendar will also re-render the events as well
+                                // Schedule CalbiticaCalendar will also re-render the events as well
                                 scheduleView.init(eventList, minDate, maxDate, Locale.getDefault(), calendarPickerController);
                                 Toast.makeText(getActivity(),"Event successfully deleted", Toast.LENGTH_SHORT).show();
                                 dialog.dismiss();

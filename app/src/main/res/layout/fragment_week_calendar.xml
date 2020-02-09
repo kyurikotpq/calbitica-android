@@ -3,24 +3,35 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/gray_1">
 
     <com.alamkanak.weekview.WeekView
         android:id="@+id/weekView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:eventTextColor="@color/blue_1"
+
+        app:todayHeaderTextColor="@color/blue_3"
+        app:todayBackgroundColor="@color/gray_2"
+        app:showNowLine="true"
+        app:nowLineColor="@color/blue_3"
+
+        app:futureBackgroundColor="@color/blue_3"
+        app:pastBackgroundColor="@color/blue_3"
+
+        app:eventTextColor="@color/black"
         app:textSize="12sp"
-        app:hourHeight="60dp"
-        app:headerColumnPadding="8dp"
-        app:headerColumnTextColor="@color/teal_1"
+        app:hourHeight="40dp"
+        app:headerColumnPadding="4dp"
+        app:headerColumnTextColor="@color/white"
         app:headerRowPadding="12dp"
-        app:columnGap="8dp"
+        app:columnGap="1dp"
         app:firstDayOfWeek="sunday"
         app:showFirstDayOfWeekFirst="true"
         app:noOfVisibleDays="7"
-        app:todayHeaderTextColor="@color/red_1"
-        app:headerRowBackgroundColor="@color/white"
-        app:dayBackgroundColor="@color/cardview_dark_background"
-        app:todayBackgroundColor="#ebeb34"/>
+
+        app:headerRowBackgroundColor="@color/gray_1"
+        app:headerColumnBackground="@color/gray_1"
+        app:dayBackgroundColor="@color/black"
+        />
 </LinearLayout>
