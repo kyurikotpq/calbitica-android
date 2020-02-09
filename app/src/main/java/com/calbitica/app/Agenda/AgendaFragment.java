@@ -3,11 +3,8 @@ package com.calbitica.app.Agenda;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -233,6 +230,13 @@ public class AgendaFragment extends Fragment{
                                     }
                                 }
 
+                                close.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        dialog.dismiss();
+                                    }
+                                });
+
                                 // To allow to run Toast in the async method...
                                 getActivity().runOnUiThread(new Runnable() {
                                     @Override
@@ -311,13 +315,6 @@ public class AgendaFragment extends Fragment{
                                         // Refresh the agenda calendar view
                                         agendaView.init(eventList, minDate, maxDate, Locale.getDefault(), calendarPickerController);
                                         Toast.makeText(getActivity(),"Event successfully deleted", Toast.LENGTH_SHORT).show();
-                                        dialog.dismiss();
-                                    }
-                                });
-
-                                close.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
                                         dialog.dismiss();
                                     }
                                 });

@@ -1,49 +1,48 @@
 package com.calbitica.app.Notification;
 
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
+
+import com.calbitica.app.Models.Calbit.EndDateTime;
+import com.calbitica.app.Models.Calbit.StartDateTime;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
-// Due to Manifest only allow 1 application element only, merge with the Internet.CheckInternetConnection
-public class Notification extends com.calbitica.app.Internet.CheckInternetConnection {
-    public static final String CHANNEL_ID = "Calbitica";
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
+import static com.calbitica.app.NavigationBar.NavigationBar.eventEnd;
+import static com.calbitica.app.NavigationBar.NavigationBar.eventName;
+import static com.calbitica.app.NavigationBar.NavigationBar.eventStart;
+
+public class Notification extends BroadcastReceiver {
+    // Live Notification upon app open
     @Override
-    public void onCreate() {
-        super.onCreate();
+    public void onReceive(Context context, Intent intent) {
+        String eventDateTime = "";
 
-        createNotificationChannels();
-    }
-
-    // Check the SDK_INT version to run only on Android 8.0 (API level 26) and higher,
-    // Because the notification channels APIs are not available in the support library
-    private void createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = new NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_ID,
-                NotificationManager.IMPORTANCE_DEFAULT
-            );
-
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(notificationChannel);
+        if(eventStart.getDate() != null && eventEnd.getDate() != null) {
+            eventDateTime = eventStart.getDate() + " - " + eventEnd.getDate();
+        } else if (eventStart.getDateTime() != null && eventEnd.getDateTime() != null){
+            eventDateTime = eventStart.getDateTime() + " - " + eventEnd.getDateTime();
         }
-    }
 
-    // Populate the notification here
-    public static void getNotification() {
-        android.app.Notification notification = new NotificationCompat.Builder(getInstance(), CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Calbitica")
                 .setSmallIcon(R.drawable.favicon)
                 .setContentTitle(NavigationBar.acctName)
-                .setContentText("Today, You have " + NavigationBar.eventSize.size() + " events")
-                .setOnlyAlertOnce(true)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .build();
+                .setContentText("Today Event: " + eventName + "\n" + eventDateTime)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-        NavigationBar.notificationManager.notify(1, notification);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        notificationManager.notify(200, builder.build());
     }
 }

@@ -5,14 +5,14 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.alamkanak.weekview.WeekViewEvent;
 import com.arasthel.asyncjob.AsyncJob;
 import com.bumptech.glide.Glide;
 import com.calbitica.app.Database.Database;
+import com.calbitica.app.Models.Calbit.EndDateTime;
+import com.calbitica.app.Models.Calbit.StartDateTime;
 import com.calbitica.app.Profile.ProfileFragment;
 import com.calbitica.app.SyncCalendars.SyncCalendarsFragment;
 import com.calbitica.app.About.AboutFragment;
@@ -25,9 +25,14 @@ import com.calbitica.app.Settings.SettingsFragment;
 import com.calbitica.app.Util.UserData;
 import com.calbitica.app.Week.WeekFragment;
 
+import android.app.AlarmManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -51,32 +56,33 @@ import java.util.Locale;
 
 public class NavigationBar extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     public static DrawerLayout drawerLayout;                        // Relate to all the NavigationBar stuff
-    boolean arrowTrigger = false;                                   // When pressed the Middle NavigationBar arrow
+    private boolean arrowTrigger = false;                           // When pressed the Middle NavigationBar arrow
     public static TextView title;                                   // Middle NavigationBar
     public static ImageView arrow;                                  // Middle NavigationBar
     public static String selectedPages;                             // Tell which fragment you are in
-    ArrayList<String> selectedList = new ArrayList<>();             // Mainly for the sync, when click on back button stuff
+
+    private ArrayList<String> selectedList = new ArrayList<>();     // Mainly for the sync, when click on back button stuff
     public static Calendar calendar;                                // Mainly for Week, Agenda Calendar, etc...
-
-    public static NotificationManagerCompat notificationManager;    // Notification to alert when events date is today
-    public static ArrayList<WeekViewEvent> eventSize;               // The Notification Input for showing
-
     private NavigationView navigationView;                          // To indicate the selection of navigation pages
-    public static MenuItem nav_today, nav_refresh, nav_add;         // To use for respective pages(show/not show)
 
-    CalendarView calendarView;                                      // To hide or show for display of nav small calendar
+    public static MenuItem nav_today, nav_refresh, nav_add;         // To use for respective pages(show/not show)
+    private CalendarView calendarView;                              // To hide or show for display of nav small calendar
     public static String acctName;                                  // To pass into database for each different account
+    private Database database;                                      // To check the event list with our database (notification)
+    public static String eventName;                                 // To display info to the notification alert
+    public static StartDateTime eventStart;                         // To display info to the notification alert
+    public static EndDateTime eventEnd;                             // To display info to the notification alert
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation_bar);
 
+        createNotificationChannels();
+
         drawerLayout = findViewById(R.id.drawerLayout);
         navigationView = findViewById(R.id.nav_leftview);
         navigationView.setNavigationItemSelectedListener(this);
-        notificationManager = NotificationManagerCompat.from(this);
-        eventSize = new ArrayList();
 
         // Navigation Bar Stuff here...
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -189,17 +195,29 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     public void run() {
                         // To check the current calendar is today, then populate the notification
                         Calendar current = Calendar.getInstance();
-                        int dataCurrentMonth = current.get(Calendar.MONTH) + 1;
 
-                        for (WeekViewEvent event : WeekFragment.mNewEvents) {
-                            int startDate = event.getStartTime().get(Calendar.MONTH) + 1;
+                        if(database.getAllCalbit() != null) {
+                            for(int i = 0; i < database.getAllCalbit().size(); i++) {
+                                if (database.getAllCalbit().get(i).getReminders() != null) {
+                                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
+                                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
 
-                            if (current.get(Calendar.YEAR) == event.getStartTime().get(Calendar.YEAR)
-                                    && dataCurrentMonth == startDate
-                                    && current.get(Calendar.DAY_OF_MONTH) == event.getStartTime().get(Calendar.DAY_OF_MONTH)) {
+                                        // Using timestamp to check the notification, 100% accurate
+                                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
+                                            eventName = database.getAllCalbit().get(i).getSummary();
+                                            eventStart = database.getAllCalbit().get(i).getStart();
+                                            eventEnd = database.getAllCalbit().get(i).getEnd();
 
-                                eventSize.add(event);
-                                Notification.getNotification();
+                                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                                            Intent intent = new Intent(NavigationBar.this, Notification.class);
+                                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
+
+                                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -219,6 +237,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                         // Setting the necessary items for each respective pages
                         arrow.setVisibility(View.VISIBLE);
+                        arrowTrigger = false;
+                        arrow.setImageResource(R.drawable.down_arrow);
                         calendarView.setVisibility(View.GONE);
                         nav_today.setVisible(true);
                         nav_refresh.setVisible(true);
@@ -243,6 +263,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 if (!menuItem.isChecked()) {
                     // Setting the necessary items for each respective pages
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(true);
@@ -264,6 +286,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Sync Calendars");
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
@@ -281,6 +305,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Profile");
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
@@ -298,6 +324,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Settings");
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
@@ -315,6 +343,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("About");
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
@@ -495,6 +525,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                 // Setting the necessary items for each respective pages
                 arrow.setVisibility(View.VISIBLE);
+                arrowTrigger = false;
+                arrow.setImageResource(R.drawable.down_arrow);
                 calendarView.setVisibility(View.GONE);
                 nav_today.setVisible(true);
                 nav_refresh.setVisible(true);
@@ -516,6 +548,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 if(selectedPages.equals("nav_week")) {
                     // Setting the necessary items for each respective pages
                     arrow.setVisibility(View.VISIBLE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(true);
                     nav_refresh.setVisible(true);
@@ -529,6 +563,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 } else if(selectedPages.equals("nav_agenda")) {
                     // Setting the necessary items for each respective pages
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(true);
@@ -543,6 +579,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Sync Calendars");
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
@@ -553,6 +591,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Profile");
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
@@ -564,6 +604,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("Settings");
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
@@ -574,6 +616,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Setting the necessary items for each respective pages
                     title.setText("About");
                     arrow.setVisibility(View.GONE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
                     calendarView.setVisibility(View.GONE);
                     nav_today.setVisible(false);
                     nav_refresh.setVisible(false);
@@ -582,6 +626,137 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     navigationView.setCheckedItem(R.id.nav_about);
                 }
             }
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        database = new Database(NavigationBar.this);
+        database.getAllCalbit();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if(database.getAllCalbit() == null) {
+                    Toast.makeText(NavigationBar.this, "Your JWT have expired, Please logout, login and close the app", Toast.LENGTH_LONG).show();
+                }
+            }
+        }, 3000);
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        // To check the current calendar is today, then populate the notification
+        Calendar current = Calendar.getInstance();
+
+        if(database.getAllCalbit() != null) {
+            for(int i = 0; i < database.getAllCalbit().size(); i++) {
+                if (database.getAllCalbit().get(i).getReminders() != null) {
+                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
+                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                        // Using timestamp to check the notification, 100% accurate
+                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
+                            eventName = database.getAllCalbit().get(i).getSummary();
+                            eventStart = database.getAllCalbit().get(i).getStart();
+                            eventEnd = database.getAllCalbit().get(i).getEnd();
+
+                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                            Intent intent = new Intent(NavigationBar.this, Notification.class);
+                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
+
+                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // To check the current calendar is today, then populate the notification
+        Calendar current = Calendar.getInstance();
+
+        if(database.getAllCalbit() != null) {
+            for(int i = 0; i < database.getAllCalbit().size(); i++) {
+                if (database.getAllCalbit().get(i).getReminders() != null) {
+                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
+                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                        // Using timestamp to check the notification, 100% accurate
+                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
+                            eventName = database.getAllCalbit().get(i).getSummary();
+                            eventStart = database.getAllCalbit().get(i).getStart();
+                            eventEnd = database.getAllCalbit().get(i).getEnd();
+
+                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                            Intent intent = new Intent(NavigationBar.this, Notification.class);
+                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
+
+                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // To check the current calendar is today, then populate the notification
+        Calendar current = Calendar.getInstance();
+
+        if(database.getAllCalbit() != null) {
+            for(int i = 0; i < database.getAllCalbit().size(); i++) {
+                if (database.getAllCalbit().get(i).getReminders() != null) {
+                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
+                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                        // Using timestamp to check the notification, 100% accurate
+                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
+                            eventName = database.getAllCalbit().get(i).getSummary();
+                            eventStart = database.getAllCalbit().get(i).getStart();
+                            eventEnd = database.getAllCalbit().get(i).getEnd();
+
+                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                            Intent intent = new Intent(NavigationBar.this, Notification.class);
+                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
+
+                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Check the SDK_INT version to run only on Android 8.0 (API level 26) and higher,
+    // Because the notification channels APIs are not available in the support library
+    private void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = new NotificationChannel(
+                    "Calbitica",
+                    "Calbitica",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(notificationChannel);
         }
     }
 }

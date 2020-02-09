@@ -181,6 +181,13 @@ public class WeekFragment extends Fragment {
                                     }
                                 }
 
+                                close.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        dialog.dismiss();
+                                    }
+                                });
+
                                 // To allow to run Toast in the async method...
                                 getActivity().runOnUiThread(new Runnable() {
                                     @Override
@@ -258,13 +265,6 @@ public class WeekFragment extends Fragment {
                                         // Refresh the week calendar view.
                                         weekView.notifyDatasetChanged();
                                         Toast.makeText(getActivity(),"Event successfully deleted", Toast.LENGTH_SHORT).show();
-                                        dialog.dismiss();
-                                    }
-                                });
-
-                                close.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
                                         dialog.dismiss();
                                     }
                                 });

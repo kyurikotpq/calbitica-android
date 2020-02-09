@@ -8,10 +8,13 @@
     <!-- Allow to call for the About Page(MUST)-->
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.SET_ALARM" />
+
 <!--    For application android:name -> When there more than 1 MVC in android, it will call the Notification first, then to CheckInternetConnection,-->
 <!--    back again to Application-->
     <application
-        android:name=".Notification.Notification"
+        android:name=".Internet.CheckInternetConnection"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -37,5 +40,7 @@
         <activity android:name="com.calbitica.app.Week.WeekCreateEvent" />
         <!-- WeekFragment EditEvent Page-->
         <activity android:name="com.calbitica.app.Week.WeekEditEvent" />
+        
+        <receiver android:name=".Notification.Notification"/>
     </application>
 </manifest>
