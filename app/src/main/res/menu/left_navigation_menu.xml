@@ -7,9 +7,9 @@
                 <item android:id="@+id/nav_week"
                     android:icon="@drawable/week"
                     android:title="Week"/>
-                <item android:id="@+id/nav_schedule"
-                    android:icon="@drawable/schedule"
-                    android:title="Schedule" />
+                <item android:id="@+id/nav_agenda"
+                    android:icon="@drawable/agenda"
+                    android:title="Agenda" />
                 <item android:id="@+id/sync_calendars"
                     android:icon="@drawable/sync"
                     android:title="Sync Calendars"/>

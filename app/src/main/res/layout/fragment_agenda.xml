@@ -6,7 +6,7 @@
     android:orientation="vertical">
 
     <com.github.tibolte.agendacalendarview.AgendaCalendarView
-        android:id="@+id/scheduleView"
+        android:id="@+id/agendaView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         agendaCalendar:agendaCurrentDayTextColor="@color/theme_primary"

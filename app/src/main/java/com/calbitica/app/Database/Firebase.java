@@ -280,8 +280,8 @@ public class Firebase {
         });
     }
 
-    // Get the schedule events from firebase, only render once(will be discard after that)
-    public void getScheduleEventsFromFirebase(final List<CalendarEvent> eventList) {
+    // Get the agenda events from firebase, only render once(will be discard after that)
+    public void getAgendaEventsFromFirebase(final List<CalendarEvent> eventList) {
         // Get the events from firebase, only render once(will be discard after that)
         DatabaseReference firebase = FirebaseDatabase.getInstance().getReference().child(NavigationBar.acctName).child("Calbitica").child("CalbiticaCalendar");
         firebase.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -318,7 +318,7 @@ public class Firebase {
                             String colorText = colorObject.get("color").toString();
                             int color = Integer.parseInt(colorText);
 
-                            // Based on the Schedule CalbiticaCalendar format, and return back the list
+                            // Based on the Agenda Calendar format, and return back the list
                             BaseCalendarEvent allEvent = new BaseCalendarEvent(title, "", "", color, startDateTime, endDateTime, false);
                             allEvent.setId(calendarID);
                             eventList.add(allEvent);
@@ -346,5 +346,5 @@ public class Firebase {
         });
     }
 
-    // For the Schedule CalbiticaCalendar (Create, Edit, Delete) will be the same as the weekView CalbiticaCalendar...
+    // For the Agenda Calendar (Create, Edit, Delete) will be the same as the weekView Calendar...
 }

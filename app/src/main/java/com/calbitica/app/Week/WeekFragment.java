@@ -2,6 +2,7 @@ package com.calbitica.app.Week;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,6 +14,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.alamkanak.weekview.DateTimeInterpreter;
 import com.alamkanak.weekview.MonthLoader;
 import com.alamkanak.weekview.WeekView;
@@ -25,21 +27,23 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 import com.arasthel.asyncjob.AsyncJob;
+import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.Models.Calbit.Calbit;
-import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import com.calbitica.app.Util.CalbiticaAPI;
 import com.calbitica.app.Util.UserData;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class WeekFragment extends Fragment {
     public static WeekView weekView;                                    // Mostly used from NavigationBar refresh, etc...(Week Calender)
@@ -98,7 +102,7 @@ public class WeekFragment extends Fragment {
             }
         }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
             @Override
-            public void onResult(Boolean  result) {
+            public void onResult(Boolean result) {
                 // Get the _id from the CAWrapper, as for valid checking
 //                CAWrapper.getAllCalbit(getContext());
 
@@ -152,15 +156,20 @@ public class WeekFragment extends Fragment {
 
                         // Render the Modal, must be in the last of the code
                         builder.setView(mView);
-                        final AlertDialog dialog = builder.create();
-                        dialog.show();
+                        AlertDialog dialog = builder.create();
+
+                        try {
+                            dialog.show();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
 
                         // Setting the valid mongoId for the reference with the CAWrapper
                         int id = (int) event.getId();
 
-                        new Handler().postDelayed(new Runnable() {
+                        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                             @Override
-                            public void run() {
+                            public Boolean doAsync() {
 //                                mongoId = CAWrapper.getAllCalbit().get(id).get_id().toString();
 //
 //                                if(CAWrapper.getAllCalbit().get(id).getReminders().size() != 0) {
@@ -168,63 +177,103 @@ public class WeekFragment extends Fragment {
 //                                } else {
 //                                    mongoReminder = "";
 //                                }
-                            }
-                        }, 3000);
 
-                        check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                            @Override
-                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { if(isChecked) {
-                                    Toast.makeText(getActivity(), "Completed the task and earn the exp points", Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        });
+//                                if (database.getAllCalbit().get(id).getCompleted() != null) {
+//                                    if (database.getAllCalbit().get(id).getCompleted().getStatus()) {
+//                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
+//                                    } else {
+//                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
+//                                    }
+//                                }
 
-                        editing.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Intent intent = new Intent(getContext(), WeekEditEvent.class);
-
-                                Bundle data = new Bundle();
-
-                                data.putString("id", mongoId);
-                                data.putString("title", event.getName());
-                                data.putString("startDateTime", event.getStartTime().getTime().toString());
-                                data.putString("endDateTime", event.getEndTime().getTime().toString());
-                                data.putString("reminderDateTime", mongoReminder);
-                                intent.putExtras(data);
-
-                                startActivity(intent);
-                                dialog.dismiss();
-                            }
-                        });
-
-                        deleting.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                // Delete from Firebase with the existing data
-                                com.calbitica.app.Database.Firebase firebase = new com.calbitica.app.Database.Firebase();
-                                firebase.deleteWeekEventFromFirebase(event.getId());
-
-                                // Delete event with existing data(Only 1 data will be found and delete)
-                                for(int i = 0; i < mNewEvents.size(); i++) {
-                                    if(mNewEvents.get(i).getId() == event.getId()) {
-                                        mNewEvents.remove(event);
+                                // To allow to run Toast in the async method...
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        check.setEnabled(false);
+                                        Toast.makeText(getContext(), "Please wait...", Toast.LENGTH_LONG).show();
                                     }
+                                });
+
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
                                 }
 
-                                // Refresh the week view. onMonthChange will be called again.
-                                weekView.notifyDatasetChanged();
-                                Toast.makeText(getActivity(),"Event successfully deleted", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
+                                return true;
                             }
-                        });
-
-                        close.setOnClickListener(new View.OnClickListener() {
+                        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
                             @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
+                            public void onResult(Boolean result) {
+                                Toast.makeText(getContext(), "Done!", Toast.LENGTH_SHORT).show();
+                                check.setEnabled(true);
+
+                                check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                                    @Override
+                                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                        if (isChecked) {
+//                                            database.updateEventStatusInCalbit(mongoId, isChecked);
+                                            event.setColor(Color.rgb(200, 200, 200));
+
+                                            // Refresh the Week Calendar to make any changes
+                                            weekView.notifyDatasetChanged();
+                                        } else {
+//                                            database.updateEventStatusInCalbit(mongoId, isChecked);
+                                            event.setColor(Color.rgb(100, 200, 220));
+
+                                            // Refresh the Week Calendar to make any changes
+                                            weekView.notifyDatasetChanged();
+                                        }
+                                    }
+                                });
+
+                                editing.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        Intent intent = new Intent(getContext(), WeekEditEvent.class);
+
+                                        Bundle data = new Bundle();
+                                        data.putString("id", mongoId);
+                                        data.putString("title", event.getName());
+                                        data.putString("startDateTime", event.getStartTime().getTime().toString());
+                                        data.putString("endDateTime", event.getEndTime().getTime().toString());
+                                        data.putString("reminderDateTime", mongoReminder);
+                                        intent.putExtras(data);
+
+                                        startActivity(intent);
+                                        dialog.dismiss();
+                                    }
+                                });
+
+                                deleting.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        // Delete from Calbitica with the existing data
+//                                        database.deleteEventInCalbit(mongoId);
+
+                                        // Delete event with existing data(Only 1 data will be found and delete)
+                                        for (int i = 0; i < mNewEvents.size(); i++) {
+                                            if (mNewEvents.get(i).getId() == event.getId()) {
+                                                mNewEvents.remove(event);
+                                            }
+                                        }
+
+                                        // Refresh the week calendar view.
+                                        weekView.notifyDatasetChanged();
+                                        Toast.makeText(getActivity(), "Event successfully deleted", Toast.LENGTH_SHORT).show();
+                                        dialog.dismiss();
+                                    }
+                                });
+
+                                close.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        dialog.dismiss();
+                                    }
+                                });
                             }
-                        });
+                        }).create().start();
                     }
                 });
 
@@ -241,10 +290,10 @@ public class WeekFragment extends Fragment {
                     @Override
                     public void onFirstVisibleDayChanged(Calendar newFirstVisibleDay, Calendar oldFirstVisibleDay) {
                         // When it scroll then...
-                        if(oldFirstVisibleDay != null) {
+                        if (oldFirstVisibleDay != null) {
                             // Setting the CalbiticaCalendar title as the scrolled CalbiticaCalendar
                             String currentMonth = DateFormat.getDateInstance(DateFormat.LONG).format(newFirstVisibleDay.getTime());
-                            NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " "  + newFirstVisibleDay.get(Calendar.YEAR));
+                            NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " " + newFirstVisibleDay.get(Calendar.YEAR));
                         }
                     }
                 });
@@ -253,7 +302,7 @@ public class WeekFragment extends Fragment {
                 if (getArguments() != null) {
                     String selectedDate = getArguments().getString("selectedDate");
 
-                    try{
+                    try {
                         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
 
                         // Assign to the same calendar to have a link relationship of the Navigation Bar and Today
@@ -363,19 +412,19 @@ public class WeekFragment extends Fragment {
 
                         Calbits allCalbits = response.body();
 
-                        if(allCalbits.getData() != null) {
+                        if (allCalbits.getData() != null) {
                             // Get the fresh list of calbits
                             listOfCalbits = allCalbits.getData();
 
                             // save each calbit as a new WeekViewEvent
-                            for(int i = 0; i < listOfCalbits.size(); i++) {
+                            for (int i = 0; i < listOfCalbits.size(); i++) {
                                 Calbit currentCalbit = listOfCalbits.get(i);
 
                                 // Declare the necessary fields into Week View CalbiticaCalendar
                                 Calendar startDateTime = Calendar.getInstance();
                                 Calendar endDateTime = Calendar.getInstance();
 
-                                if(currentCalbit.getStart().getDate() != null) {
+                                if (currentCalbit.getStart().getDate() != null) {
                                     try {
                                         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
                                         startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDate().toString()));
@@ -391,7 +440,7 @@ public class WeekFragment extends Fragment {
                                     }
                                 }
 
-                                if(currentCalbit.getEnd().getDate() != null) {
+                                if (currentCalbit.getEnd().getDate() != null) {
                                     try {
                                         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
                                         endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDate().toString()));
@@ -409,7 +458,7 @@ public class WeekFragment extends Fragment {
                                 }
 
                                 // Render all the data into WeekView CalbiticaCalendar
-                                WeekViewEvent weekEvents = new WeekViewEvent (i, currentCalbit.getSummary(), startDateTime, endDateTime);
+                                WeekViewEvent weekEvents = new WeekViewEvent(i, currentCalbit.getSummary(), startDateTime, endDateTime);
                                 weekEvents.setAllDay(currentCalbit.getAllDay());
                                 mNewEvents.add(weekEvents);
 
@@ -436,12 +485,12 @@ public class WeekFragment extends Fragment {
                 return true;
             }
         })
-        .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-            @Override
-            public void onResult(Boolean result) {
+                .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                    @Override
+                    public void onResult(Boolean result) {
 
-            }
-        }).create().start();
+                    }
+                }).create().start();
 
     }
 }

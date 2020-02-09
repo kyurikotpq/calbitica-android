@@ -16,9 +16,9 @@
 <!--                app:showAsAction="ifRoom" />-->
 
 <!--            <item-->
-<!--                android:id="@+id/nav_schedule"-->
-<!--                android:icon="@drawable/schedule"-->
-<!--                android:title="Schedule"-->
+<!--                android:id="@+id/nav_agenda"-->
+<!--                android:icon="@drawable/agenda"-->
+<!--                android:title="Agenda"-->
 <!--                app:showAsAction="ifRoom" />-->
 <!--        </menu>-->
 <!--    </item>-->

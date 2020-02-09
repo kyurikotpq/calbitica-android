@@ -55,6 +55,10 @@ public class WeekEditEvent extends AppCompatActivity {
         // Using the same layout of the Event Create
         setContentView(R.layout.activity_week__create_event);
 
+        // Get the _id from the database, as for valid checking
+        Database database = new Database(WeekEditEvent.this);
+        database.getAllCalbit();
+
         // Default the text will be Calbitica Android, by setting as empty for custom TextView to be shown instead
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -121,7 +125,6 @@ public class WeekEditEvent extends AppCompatActivity {
         }, 3000);
 
         // When selected the Spinner drop-down, the background color will change accordingly
-        // Due to some libraries require specific version, it become deprecated, for now it will still work, but have to take note in future
         eventSync.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -131,7 +134,7 @@ public class WeekEditEvent extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // When no selected, it will be default color
+                // When no selected, it will default
             }
         });
 
@@ -351,8 +354,13 @@ public class WeekEditEvent extends AppCompatActivity {
                             WeekFragment.weekView.notifyDatasetChanged();
                         }
                     }
+<<<<<<< HEAD
                 } else if (NavigationBar.selectedPages == "nav_schedule") {
                     // First, I delete the Schedule CalbiticaCalendar selected event(Only 1), due to BaseCalendarEvent options is inside CalendarEvent(only color is not in the list, so...)
+=======
+                } else if (NavigationBar.selectedPages == "nav_agenda") {
+                    // First, I delete the Agenda Calendar selected event(Only 1), due to BaseCalendarEvent options is inside CalendarEvent(only color is not in the list, so...)
+>>>>>>> 211b6f1a3ca827fcf296fc4ace53dc290e53fb72
                     // Secondly, then I add again with the updated values, so will still serve as the edit portion...
                     for(int i = 0; i < AgendaFragment.eventList.size(); i++) {
                         if(AgendaFragment.eventList.get(i).getId() == id) {

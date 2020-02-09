@@ -47,6 +47,7 @@ public class Calbit {
     private String description;
     private Boolean legitAllDay;
     private Boolean allDay;
+    private Boolean status;         // This is for TaskCompleted, by create this to make it available for the API Call
 
     public Object get_id() {
         return _id;
@@ -152,6 +153,10 @@ public class Calbit {
         this.allDay = allDay;
     }
 
+    public Boolean getStatus() { return status; }                       // For the TaskCompleted necessary getter
+
+    public void setStatus(Boolean status) { this.status = status; }     // For the TaskCompleted necessary setter
+
     public Calbit(Object _id, String summary, StartDateTime start, EndDateTime end, List<Array> reminders, String calendarID, String googleID, Boolean allDay) {
         this._id = _id;
         this.summary = summary;
@@ -161,5 +166,10 @@ public class Calbit {
         this.calendarID = calendarID;
         this.googleID = googleID;
         this.allDay = allDay;
+    }
+
+    // This is for TaskCompleted column to save the status field part
+    public Calbit(Boolean status) {
+        this.status = status;
     }
 }
