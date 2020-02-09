@@ -29,7 +29,7 @@ public interface CalbitInterface {
 
     // Update Calbit's Completion Status
     @PUT("calbit/{id}/complete")
-    Call<Boolean> updateCalbitStatus(
+    Call<Calbit> updateCalbitStatus(
             @Path("id") String id,
-            @Body Boolean status);
+            @Body Calbit status);     // Declare the body same with the Call, then add-in necessary field for API into Calbit Class
 }

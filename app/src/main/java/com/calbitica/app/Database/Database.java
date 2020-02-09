@@ -151,7 +151,18 @@ public class Database {
                                 // Render all the data into WeekView Calendar
                                 WeekViewEvent weekEvents = new WeekViewEvent (i, currentCalbit.getSummary(), startDateTime, endDateTime);
                                 weekEvents.setAllDay(currentCalbit.getAllDay());
-                                weekEvents.setColor(Color.rgb(100, 200, 220));
+
+                                // Auto-configure the task completion of color and checked according to calbitica
+                                // Can't do the checkbox here accordingly, due to this functions should not indirect any
+                                // of the components in the WeekFragment, have to check separately
+                                if(currentCalbit.getCompleted() != null) {
+                                    if(currentCalbit.getCompleted().getStatus()) {
+                                        weekEvents.setColor(Color.rgb(200, 200, 200));
+                                    } else {
+                                        weekEvents.setColor(Color.rgb(100, 200, 220));
+                                    }
+                                }
+
                                 mNewEvents.add(weekEvents);
 
                                 // Refresh the Week Calendar
@@ -174,12 +185,6 @@ public class Database {
                     e.printStackTrace();
                 }
                 return true;
-            }
-        })
-        .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-            @Override
-            public void onResult(Boolean result) {
-
             }
         }).create().start();
     }
@@ -251,8 +256,21 @@ public class Database {
                                 }
 
                                 // Based on the Agenda Calendar format, and return back the list
-                                BaseCalendarEvent allEvent = new BaseCalendarEvent(currentCalbit.getSummary(), "", "", Color.rgb(100, 200, 220), startDateTime, endDateTime, false);
+                                BaseCalendarEvent allEvent = new BaseCalendarEvent(currentCalbit.getSummary(), "", "", 0, startDateTime, endDateTime, false);
+
+                                // Auto-configure the task completion of color and checked according to calbitica
+                                // Can't do the checkbox here accordingly, due to this functions should not indirect any
+                                // of the components in the WeekFragment, have to check separately
+                                // Overwrite the previous color, due to required fields from libraries
+                                if(currentCalbit.getCompleted() != null) {
+                                    if(currentCalbit.getCompleted().getStatus()) {
+                                        allEvent.setColor(Color.rgb(200, 200, 200));
+                                    } else {
+                                        allEvent.setColor(Color.rgb(100, 200, 220));
+                                    }
+                                }
                                 allEvent.setId(i);
+
                                 eventList.add(allEvent);
                             }
                         } else {
@@ -273,13 +291,7 @@ public class Database {
                 }
                 return true;
             }
-        })
-                .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                    @Override
-                    public void onResult(Boolean result) {
-
-                    }
-                }).create().start();
+        }).create().start();
     }
 
     public List<Calbit> getAllCalbit() {
@@ -413,13 +425,16 @@ public class Database {
                 // Retrieve the JWT
                 String jwt = UserData.get("jwt", mcontext);
 
+                // Saved the Changes to the task status
+                Calbit mongoStatus = new Calbit(status);
+
                 // Build the API Call
-                Call<Boolean> apiCall = CalbiticaAPI.getInstance(jwt).calbit().updateCalbitStatus(_id, status);
+                Call<Calbit> apiCall = CalbiticaAPI.getInstance(jwt).calbit().updateCalbitStatus(_id, mongoStatus);
 
                 // Make the API Call
-                apiCall.enqueue(new Callback<Boolean>() {
+                apiCall.enqueue(new Callback<Calbit>() {
                     @Override
-                    public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                    public void onResponse(Call<Calbit> call, Response<Calbit> response) {
                         if (!response.isSuccessful()) {
                             System.out.println("Unsuccessful to update event status in calbits " + response.raw());
                             return;
@@ -429,7 +444,7 @@ public class Database {
                     }
 
                     @Override
-                    public void onFailure(Call<Boolean> call, Throwable t) {
+                    public void onFailure(Call<Calbit> call, Throwable t) {
                         System.out.println("Fail tto update event status in calbits " + t.getMessage());
                     }
                 });

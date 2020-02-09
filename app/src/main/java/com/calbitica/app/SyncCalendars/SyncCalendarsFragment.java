@@ -233,7 +233,7 @@ public class SyncCalendarsFragment extends Fragment {
                 progressDialog.dismiss();
                 NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
-                Toast.makeText(getContext(), "There is no data in your database!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Please re-login, and close the app, JWT Expired!", Toast.LENGTH_SHORT).show();
             }
         }
     }

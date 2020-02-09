@@ -3,8 +3,11 @@ package com.calbitica.app.Agenda;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +31,7 @@ import com.calbitica.app.Week.WeekFragment;
 import com.calbitica.app.Week.WeekCreateEvent;
 import com.github.tibolte.agendacalendarview.AgendaCalendarView;
 import com.github.tibolte.agendacalendarview.CalendarPickerController;
+import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 import com.github.tibolte.agendacalendarview.models.CalendarEvent;
 import com.github.tibolte.agendacalendarview.models.DayItem;
 
@@ -41,8 +45,7 @@ import java.util.Locale;
 
 public class AgendaFragment extends Fragment{
     public static AgendaCalendarView agendaView;                        // Mainly modify from the Refresh, etc
-    public static List<CalendarEvent> eventList;                        // The events based on Agenda Calendar,
-                                                                        // but 1 more phrase on BaseCalendarEvent as a child (From firebase guide)
+    public static List<CalendarEvent> eventList;                        // The events based on Agenda Calendar, but 1 more phrase on BaseCalendarEvent as a child
     public static Calendar minDate, maxDate;                            // Set the necessary fields for the Agenda Fragment
     public static CalendarPickerController calendarPickerController;    // Have to call from here, re-use the same one, rather than keep creating(like a loop)
     private ProgressDialog progressDialog;                              // A fancy loading screen, but it not based the task finish length(Extra Stuff, for fun!)
@@ -108,8 +111,11 @@ public class AgendaFragment extends Fragment{
             maxDate.set(Calendar.DAY_OF_MONTH, 1);
 
             // Get the event from Calbitica
-            Database database = new Database(getContext());
+            database = new Database(getContext());
             database.getAllCalbitAndRenderOnAgenda(eventList);
+
+            // Get the _id from the database, as for valid checking
+            database.getAllCalbit();
 
             // This will populate the progressDialog
             for (int count = 0; count < 6; count++) {
@@ -132,10 +138,6 @@ public class AgendaFragment extends Fragment{
         @Override
         protected void onPostExecute(Integer result) {
             super.onPostExecute(result);
-            // Get the _id from the database, as for valid checking
-            database = new Database(getContext());
-            database.getAllCalbit();
-
             // Here is another async...
             job.doOnBackground();
         }
@@ -154,6 +156,7 @@ public class AgendaFragment extends Fragment{
 
                 @Override
                 public void onEventSelected(CalendarEvent event) {
+                    // Create a new event
                     if (event.getTitle().equals("No events")) {
                         // Re-use the same design & code as the Week Calendar Create Page
                         Intent intent = new Intent(getContext(), WeekCreateEvent.class);
@@ -170,6 +173,7 @@ public class AgendaFragment extends Fragment{
 
                         startActivity(intent);
                     } else {
+                        // Edit the event
                         // Get the layout and render from the Calendar Modal
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
@@ -204,13 +208,13 @@ public class AgendaFragment extends Fragment{
                            e.printStackTrace();
                         }
 
+                        // Setting the valid mongoId for the reference with the database
+                        int id = (int) event.getId();
+
                         new AsyncJob.AsyncJobBuilder<Boolean>()
                         .doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                             @Override
                             public Boolean doAsync() {
-                                // Setting the valid mongoId for the reference with the database
-                                int id = (int) event.getId();
-
                                 if (database.getAllCalbit().get(id).get_id() != null) {
                                     mongoId = database.getAllCalbit().get(id).get_id().toString();
                                 }
@@ -221,10 +225,19 @@ public class AgendaFragment extends Fragment{
                                     mongoReminder = "";
                                 }
 
+                                if(database.getAllCalbit().get(id).getCompleted() != null) {
+                                    if(database.getAllCalbit().get(id).getCompleted().getStatus()) {
+                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
+                                    } else {
+                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
+                                    }
+                                }
+
                                 // To allow to run Toast in the async method...
                                 getActivity().runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
+                                        check.setEnabled(false);
                                         Toast.makeText(getContext(), "Please wait...", Toast.LENGTH_LONG).show();
                                     }
                                 });
@@ -242,12 +255,23 @@ public class AgendaFragment extends Fragment{
                             @Override
                             public void onResult(Boolean result) {
                                 Toast.makeText(getContext(), "Done!", Toast.LENGTH_SHORT).show();
+                                check.setEnabled(true);
 
                                 check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                                     @Override
                                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                                         if(isChecked) {
-                                            Toast.makeText(getActivity(), "Completed the task and earn the exp points", Toast.LENGTH_LONG).show();
+                                            database.updateEventStatusInCalbit(mongoId, isChecked);
+                                            dialog.dismiss();
+
+                                            // Refresh the fragment again, to populate changes
+                                            getActivity().getSupportFragmentManager().beginTransaction().detach(AgendaFragment.this).attach(AgendaFragment.this).commit();
+                                        } else {
+                                            database.updateEventStatusInCalbit(mongoId, isChecked);
+                                            dialog.dismiss();
+
+                                            // Refresh the fragment again, to populate changes
+                                            getActivity().getSupportFragmentManager().beginTransaction().detach(AgendaFragment.this).attach(AgendaFragment.this).commit();
                                         }
                                     }
                                 });

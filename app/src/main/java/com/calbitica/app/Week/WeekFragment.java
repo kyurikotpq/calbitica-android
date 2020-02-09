@@ -163,7 +163,6 @@ public class WeekFragment extends Fragment {
                         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                             @Override
                             public Boolean doAsync() {
-
                                 if (database.getAllCalbit().get(id).get_id() != null) {
                                     mongoId = database.getAllCalbit().get(id).get_id().toString();
                                 }
@@ -172,6 +171,14 @@ public class WeekFragment extends Fragment {
                                     mongoReminder = database.getAllCalbit().get(id).getReminders().toString();
                                 } else {
                                     mongoReminder = "";
+                                }
+
+                                if(database.getAllCalbit().get(id).getCompleted() != null) {
+                                    if(database.getAllCalbit().get(id).getCompleted().getStatus()) {
+                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
+                                    } else {
+                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
+                                    }
                                 }
 
                                 // To allow to run Toast in the async method...
@@ -195,16 +202,6 @@ public class WeekFragment extends Fragment {
                         .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
                             @Override
                             public void onResult(Boolean result) {
-                                if(database.getAllCalbit().get(id).getCompleted() != null) {
-                                    if(database.getAllCalbit().get(id).getCompleted().getStatus()) {
-                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
-                                        event.setColor(Color.rgb(200, 200, 200));
-                                    } else {
-                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
-                                        event.setColor(Color.rgb(100, 200, 220));
-                                    }
-                                }
-
                                 Toast.makeText(getContext(), "Done!", Toast.LENGTH_SHORT).show();
                                 check.setEnabled(true);
 
@@ -213,6 +210,16 @@ public class WeekFragment extends Fragment {
                                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                                         if(isChecked) {
                                             database.updateEventStatusInCalbit(mongoId, isChecked);
+                                            event.setColor(Color.rgb(200, 200, 200));
+
+                                            // Refresh the Week Calendar to make any changes
+                                            weekView.notifyDatasetChanged();
+                                        } else {
+                                            database.updateEventStatusInCalbit(mongoId, isChecked);
+                                            event.setColor(Color.rgb(100, 200, 220));
+
+                                            // Refresh the Week Calendar to make any changes
+                                            weekView.notifyDatasetChanged();
                                         }
                                     }
                                 });
@@ -223,7 +230,6 @@ public class WeekFragment extends Fragment {
                                         Intent intent = new Intent(getContext(), WeekEditEvent.class);
 
                                         Bundle data = new Bundle();
-
                                         data.putString("id", mongoId);
                                         data.putString("title", event.getName());
                                         data.putString("startDateTime", event.getStartTime().getTime().toString());
