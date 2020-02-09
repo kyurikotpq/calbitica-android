@@ -242,16 +242,15 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
                                                 ? currentCalbit.getReminders().toString()
                                                 : "";
 
-                                        if (currentCalbit.getCompleted() != null) {
-                                            check.setChecked(
-                                                    currentCalbit.getCompleted().getStatus()
-                                            );
-                                        }
-
                                         // To allow to run Toast in the async method...
                                         getActivity().runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
+                                                if (currentCalbit.getCompleted() != null) {
+                                                    check.setChecked(
+                                                            currentCalbit.getCompleted().getStatus()
+                                                    );
+                                                }
                                                 check.setEnabled(false);
                                                 Toast.makeText(getContext(), "Please wait...",
                                                         Toast.LENGTH_LONG).show();
@@ -405,7 +404,7 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
             java.util.Calendar startDateTime = java.util.Calendar.getInstance();
             java.util.Calendar endDateTime = java.util.Calendar.getInstance();
 
-            SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm:ss z yyyy", Locale.ENGLISH);
 
             try {
                 Date startDateObj = currentCalbit.getLegitAllDay()
@@ -450,6 +449,12 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
         if(!firstLoad) {
             agendaView.init(eventList, minDate, maxDate,
                     Locale.getDefault(), calendarPickerController);
+        } else {
+            // Refresh the fragment again, to populate changes
+            getActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .detach(AgendaFragment.this)
+                    .attach(AgendaFragment.this).commit();
         }
     }
 

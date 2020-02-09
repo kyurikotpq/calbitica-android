@@ -1,5 +1,6 @@
 package com.calbitica.app.Week;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.RectF;
@@ -71,6 +72,22 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
         return view;    //return default view
     }
 
+
+    // handle result of calbit save
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch(requestCode) {
+            case (122) : {
+                if (resultCode == Activity.RESULT_OK) {
+                    // TODO Extract the data returned from the child Activity.
+                    CAWrapper.getAllCalbits(getContext(), WeekFragment.this);
+                }
+                break;
+            }
+        }
+    }
+
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -123,7 +140,7 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                         data.putString("endDateTime", endDateTime.getTime().toString());
                         intent.putExtras(data);
 
-                        startActivity(intent); // show the saving activity
+                        startActivityForResult(intent, 122); // show the saving activity
                     }
                 });
 
@@ -286,6 +303,11 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                                                 mNewEvents.remove(event);
                                                 listOfCalbits.removeIf(c -> c.get_id().equals(currentSelectedMongoID));
                                             }
+                                        }
+
+                                        // reset the indices
+                                        for (int i = 0; i < mNewEvents.size(); i++) {
+                                            mNewEvents.get(i).setId(i);
                                         }
 
                                         // Refresh the week calendar view.

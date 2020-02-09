@@ -9,13 +9,13 @@
         android:id="@+id/agendaView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        agendaCalendar:agendaCurrentDayTextColor="@color/theme_primary"
-        agendaCalendar:calendarColor="@color/theme_primary"
-        agendaCalendar:calendarCurrentDayTextColor="@color/calendar_text_current_day"
-        agendaCalendar:calendarDayTextColor="@color/theme_text_icons"
-        agendaCalendar:calendarHeaderColor="@color/theme_primary_dark"
-        agendaCalendar:calendarPastDayTextColor="@color/theme_light_primary"
-        agendaCalendar:fabColor="@color/theme_accent" />
+        agendaCalendar:agendaCurrentDayTextColor="@color/blue_3"
+        agendaCalendar:calendarColor="@color/gray_1"
+        agendaCalendar:calendarCurrentDayTextColor="@color/blue_3"
+        agendaCalendar:calendarDayTextColor="@color/gray_4"
+        agendaCalendar:calendarHeaderColor="@color/gray_1"
+        agendaCalendar:calendarPastDayTextColor="@color/blue_2"
+        agendaCalendar:fabColor="@color/gray_3" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"

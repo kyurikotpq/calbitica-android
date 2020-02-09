@@ -9,6 +9,7 @@ import com.calbitica.app.Models.Calendars.CalbiticaCalendar;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
@@ -435,10 +436,12 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
                 String calendarSummary = calendarSpinner.getSelectedItem().toString();
                 String calendarID = "";
-                for (CalbiticaCalendar c : calbiticaCalendarsList) {
-                    if (c.getSummary().equals(calendarSummary)) {
-                        calendarID = c.getGoogleID();
-                        break;
+                if(calbiticaCalendarsList != null) {
+                    for (CalbiticaCalendar c : calbiticaCalendarsList) {
+                        if (c.getSummary().equals(calendarSummary)) {
+                            calendarID = c.getGoogleID();
+                            break;
+                        }
                     }
                 }
 
@@ -499,9 +502,11 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                     // Close this activity!
                     String successTxt = isEditing ? "Event updated." : "Event created.";
                     Toast.makeText(WeekSaveEvent.this, successTxt, Toast.LENGTH_SHORT).show();
+                    setResult(Activity.RESULT_OK);
                     finish();
                 } catch (Exception e) {
                     Log.d("API JWT FAILED", e.getLocalizedMessage());
+                    setResult(Activity.RESULT_CANCELED);
                 }
             }
 
