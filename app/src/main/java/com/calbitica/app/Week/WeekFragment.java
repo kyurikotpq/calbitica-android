@@ -2,7 +2,6 @@ package com.calbitica.app.Week;
 
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,6 +24,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -33,25 +34,24 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
-import com.calbitica.app.Models.Calbit.Calbits;
-import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.Models.Calbit.Calbit;
+import com.calbitica.app.Models.Calbit.TaskCompleted;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
-import com.calbitica.app.Util.CalbiticaAPI;
-import com.calbitica.app.Util.UserData;
+import com.calbitica.app.Util.CAWrapper;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+public class WeekFragment extends Fragment implements CalbitResultInterface {
+    public static WeekView weekView;                                            // Mostly used from NavigationBar refresh, etc...(Week Calender)
+    public static ArrayList<WeekViewEvent> mNewEvents = new ArrayList<>();      // Mostly used from NavigationBar refresh, etc...(Event in Week CalbiticaCalendar)
+    public static boolean weekMonthCheck;                                       // Ensure the weekView is loaded finished
+    public static List<Calbit> listOfCalbits;               // Temp storage of calbit list from API
+    private String currentSelectedMongoID = null;                                              // Particular events(Mainly for edit and delete)
+    private String mongoReminder = null;                                        // Particular events(Pass the bundle to the edit event)
 
-public class WeekFragment extends Fragment {
-    public static WeekView weekView;                                    // Mostly used from NavigationBar refresh, etc...(Week Calender)
-    public static ArrayList<WeekViewEvent> mNewEvents;                  // Mostly used from NavigationBar refresh, etc...(Event in Week CalbiticaCalendar)
-    public static boolean weekMonthCheck;                               // Ensure the weekView is loaded finished
-    public static List<Calbit> listOfCalbits;                           // Temp storage of calbit list from API
-    private String mongoId = null;                                      // Particular events(Mainly for edit and delete)
-    private String mongoReminder = null;                                // Particular events(Pass the bundle to the edit event)
+    // Elements in our dialog
+    CheckBox check;
+    TextView title, startDateTime, endDateTime;
+    ImageView editing, deleting, close;
 
     public static WeekFragment newInstance(String selectedDate) {
         WeekFragment fragment = new WeekFragment();
@@ -78,6 +78,7 @@ public class WeekFragment extends Fragment {
                 weekMonthCheck = false;
                 weekView = getActivity().findViewById(R.id.weekView);
                 mNewEvents = new ArrayList<WeekViewEvent>();
+                listOfCalbits = new ArrayList<>();
 
                 // Get the information from the getCalendarMonths(required)
                 weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
@@ -95,38 +96,35 @@ public class WeekFragment extends Fragment {
                 // the week view. This is optional.
                 setupDateTimeInterpreter(true);
 
-                // Get the event from CAWrapper
-                getAllCalbits();
+                // Get the events from CAWrapper
+                CAWrapper.getAllCalbits(getContext(), WeekFragment.this);
 
                 return true;
             }
         }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
             @Override
             public void onResult(Boolean result) {
-                // Get the _id from the CAWrapper, as for valid checking
-//                CAWrapper.getAllCalbit(getContext());
-
                 // When click on the empty cell -> create event
                 weekView.setEmptyViewClickListener(new WeekView.EmptyViewClickListener() {
                     @Override
                     public void onEmptyViewClicked(Calendar startDateTime) {
-                        Intent intent = new Intent(getContext(), WeekCreateEvent.class);
-                        Toast.makeText(getActivity(), "Empty event selected: " + getEventTitle(startDateTime), Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(getContext(), WeekSaveEvent.class);
 
-                        // Set the new event with duration one hour.
+                        // Set the new event with duration 30mins
                         Calendar endDateTime = (Calendar) startDateTime.clone();
-                        endDateTime.add(Calendar.HOUR, 1);
+                        endDateTime.add(Calendar.MINUTE, 30);
 
+                        // Pass over the data
                         Bundle data = new Bundle();
                         data.putString("startDateTime", startDateTime.getTime().toString());
                         data.putString("endDateTime", endDateTime.getTime().toString());
                         intent.putExtras(data);
 
-                        startActivity(intent);
+                        startActivity(intent); // show the saving activity
                     }
                 });
 
-                // When click on the existing event(Will be the editing event & deleting event)
+                // When click on the existing event -> show detail dialog
                 weekView.setOnEventClickListener(new WeekView.EventClickListener() {
                     @Override
                     public void onEventClick(final WeekViewEvent event, RectF eventRect) {
@@ -134,13 +132,13 @@ public class WeekFragment extends Fragment {
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
 
-                        CheckBox check = (CheckBox) mView.findViewById(R.id.calendar_Modal_eventCheckBox);
-                        TextView title = (TextView) mView.findViewById(R.id.calendar_Modal_eventTitle);
-                        TextView startDateTime = (TextView) mView.findViewById(R.id.calendar_Modal_eventStartDateTime);
-                        TextView endDateTime = (TextView) mView.findViewById(R.id.calendar_Modal_eventEndDateTime);
-                        ImageView editing = (ImageView) mView.findViewById(R.id.calendar_Modal_editing);
-                        ImageView deleting = (ImageView) mView.findViewById(R.id.calendar_Modal_deleting);
-                        ImageView close = (ImageView) mView.findViewById(R.id.calendar_Modal_eventClose);
+                        check = mView.findViewById(R.id.calendar_Modal_eventCheckBox);
+                        title = mView.findViewById(R.id.calendar_Modal_eventTitle);
+                        startDateTime = mView.findViewById(R.id.calendar_Modal_eventStartDateTime);
+                        endDateTime = mView.findViewById(R.id.calendar_Modal_eventEndDateTime);
+                        editing = mView.findViewById(R.id.calendar_Modal_editing);
+                        deleting = mView.findViewById(R.id.calendar_Modal_deleting);
+                        close = mView.findViewById(R.id.calendar_Modal_eventClose);
 
                         // Convert to our respective  datetime format of start and end DateTime
                         Timestamp startTimeStamp = new Timestamp(event.getStartTime().getTimeInMillis());
@@ -164,78 +162,96 @@ public class WeekFragment extends Fragment {
                             e.printStackTrace();
                         }
 
-                        // Setting the valid mongoId for the reference with the CAWrapper
-                        int id = (int) event.getId();
+                        // Prepare for an edit/delete activity
+                        // get the currentSelectedMongoID
+                        int wveIndex = (int) event.getId();
+                        Calbit clickedOnCalbit = listOfCalbits.get(wveIndex);
 
-                        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-                            @Override
-                            public Boolean doAsync() {
-//                                mongoId = CAWrapper.getAllCalbit().get(id).get_id().toString();
+                        currentSelectedMongoID = clickedOnCalbit.get_id().toString();
+                        mongoReminder = (clickedOnCalbit.getReminders() != null)
+                                ? clickedOnCalbit.getReminders().get(0).toString()
+                                : "";
+
+                        if (clickedOnCalbit.getCompleted() != null) {
+                            check.setChecked(clickedOnCalbit.getCompleted().getStatus());
+                        } else {
+                            check.setChecked(false);
+                        }
+
+//                        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+//                            @Override
+//                            public Boolean doAsync() {
 //
-//                                if(CAWrapper.getAllCalbit().get(id).getReminders().size() != 0) {
-//                                    mongoReminder = CAWrapper.getAllCalbit().get(id).getReminders().get(0).toString();
-//                                } else {
-//                                    mongoReminder = "";
-//                                }
-
-//                                if (database.getAllCalbit().get(id).getCompleted() != null) {
-//                                    if (database.getAllCalbit().get(id).getCompleted().getStatus()) {
-//                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
-//                                    } else {
-//                                        check.setChecked(database.getAllCalbit().get(id).getCompleted().getStatus());
+//                                // Update the checkbox - needs to be done on a ui thread
+//                                getActivity().runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                        if (clickedOnCalbit.getCompleted() != null) {
+//                                            check.setChecked(clickedOnCalbit.getCompleted().getStatus());
+//                                        } else {
+//                                            check.setChecked(false);
+//                                        }
+//                                        Toast.makeText(getContext(), "Please wait...", Toast.LENGTH_LONG).show();
 //                                    }
-//                                }
+//                                });
 
                                 // To allow to run Toast in the async method...
+                                /*
                                 getActivity().runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        check.setEnabled(false);
+//                                        check.setEnabled(false);
                                         Toast.makeText(getContext(), "Please wait...", Toast.LENGTH_LONG).show();
                                     }
                                 });
+                                */
 
-                                try {
-                                    Thread.sleep(3000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-
-                                return true;
-                            }
-                        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                            @Override
-                            public void onResult(Boolean result) {
-                                Toast.makeText(getContext(), "Done!", Toast.LENGTH_SHORT).show();
-                                check.setEnabled(true);
+//                                try {
+//                                    Thread.sleep(3000);
+//                                } catch (InterruptedException e) {
+//                                    e.printStackTrace();
+//                                }
+//
+//                                return true;
+//                            }
+//                        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+//                            @Override
+//                            public void onResult(Boolean result) {
+//                                check.setEnabled(true);
 
                                 check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                                     @Override
                                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                        if (isChecked) {
-//                                            database.updateEventStatusInCalbit(mongoId, isChecked);
-                                            event.setColor(Color.rgb(200, 200, 200));
+                                        // Update the database
+                                        HashMap<String, Boolean> completion = new HashMap<>();
+                                        completion.put("status", isChecked);
+                                        CAWrapper.updateCalbitCompletion(getContext(),
+                                                currentSelectedMongoID, completion,
+                                                WeekFragment.this);
 
-                                            // Refresh the Week Calendar to make any changes
-                                            weekView.notifyDatasetChanged();
-                                        } else {
-//                                            database.updateEventStatusInCalbit(mongoId, isChecked);
-                                            event.setColor(Color.rgb(100, 200, 220));
+                                        // We will do local updates here, regardless of the result of the API call,
+                                        // as sooner or later the real changes will show up.
+                                        int newColor = (isChecked) ? R.color.gray_3 : R.color.blue_3;
+                                        event.setColor(getResources().getColor(newColor, null));
 
-                                            // Refresh the Week Calendar to make any changes
-                                            weekView.notifyDatasetChanged();
-                                        }
+                                        // update on the list of calbits too
+                                        clickedOnCalbit.setCompleted(new TaskCompleted(isChecked));
+
+                                        // Refresh the Week Calendar to make any changes
+                                        weekView.notifyDatasetChanged();
                                     }
                                 });
 
                                 editing.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        Intent intent = new Intent(getContext(), WeekEditEvent.class);
+                                        Intent intent = new Intent(getContext(), WeekSaveEvent.class);
 
                                         Bundle data = new Bundle();
-                                        data.putString("id", mongoId);
+                                        data.putString("id", currentSelectedMongoID);
+                                        data.putLong("wveIndex", event.getId());
                                         data.putString("title", event.getName());
+//                                        data.putString("calendarID", event.getCalendar());
                                         data.putString("startDateTime", event.getStartTime().getTime().toString());
                                         data.putString("endDateTime", event.getEndTime().getTime().toString());
                                         data.putString("reminderDateTime", mongoReminder);
@@ -250,18 +266,22 @@ public class WeekFragment extends Fragment {
                                     @Override
                                     public void onClick(View v) {
                                         // Delete from Calbitica with the existing data
-//                                        database.deleteEventInCalbit(mongoId);
+                                        CAWrapper.deleteCalbit(getContext(), currentSelectedMongoID,
+                                                WeekFragment.this);
 
                                         // Delete event with existing data(Only 1 data will be found and delete)
+                                        // Sadly, this is the only way to do it...
                                         for (int i = 0; i < mNewEvents.size(); i++) {
                                             if (mNewEvents.get(i).getId() == event.getId()) {
                                                 mNewEvents.remove(event);
+                                                listOfCalbits.removeIf(c -> c.get_id().equals(currentSelectedMongoID));
                                             }
                                         }
 
                                         // Refresh the week calendar view.
                                         weekView.notifyDatasetChanged();
-                                        Toast.makeText(getActivity(), "Event successfully deleted", Toast.LENGTH_SHORT).show();
+
+                                        Toast.makeText(getActivity(), "Event deleted.", Toast.LENGTH_SHORT).show();
                                         dialog.dismiss();
                                     }
                                 });
@@ -272,16 +292,8 @@ public class WeekFragment extends Fragment {
                                         dialog.dismiss();
                                     }
                                 });
-                            }
-                        }).create().start();
-                    }
-                });
-
-                // When click & hold on the existing event
-                weekView.setEventLongPressListener(new WeekView.EventLongPressListener() {
-                    @Override
-                    public void onEventLongPress(final WeekViewEvent event, RectF eventRect) {
-                        // For now, not needed...
+//                            }
+//                        }).create().start();
                     }
                 });
 
@@ -326,6 +338,7 @@ public class WeekFragment extends Fragment {
         }).create().start();
     }
 
+    // Other Week View setup & enhancements
     // To get the respective selected date and time
     public static String getEventTitle(Calendar time) {
         // Modify the start Minute to fixed value, rather than minute goes by actual click like 37, 32, etc...
@@ -333,7 +346,7 @@ public class WeekFragment extends Fragment {
         return String.format("Event of %02d:%02d %s/%d", time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE), time.get(Calendar.MONTH) + 1, time.get(Calendar.DAY_OF_MONTH));
     }
 
-    // Provide calendar information
+    // Provide calendar information for Weekview
     public static ArrayList<WeekViewEvent> getCalendarMonths(int year, int month) {
         // Get the starting point and ending point of the given month. We need this to find the events of the given month.
         Calendar startOfMonth = Calendar.getInstance();
@@ -391,106 +404,57 @@ public class WeekFragment extends Fragment {
         });
     }
 
-    public void getAllCalbits() {
-        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-            @Override
-            public Boolean doAsync() {
-                // Retrieve the JWT
-                String jwt = UserData.get("jwt", getContext());
+    // API handlers:
+    // Handle result of calbit list
+    @Override
+    public void onCalbitListResult(List<Calbit> calbitList) {
+        listOfCalbits.clear();
+        mNewEvents.clear();
 
-                // Build the API Call
-                Call<Calbits> apiCall = CalbiticaAPI.getInstance(jwt).calbit().getAllCalbits();
+        // save each calbit as a new WeekViewEvent
+        for (int i = 0; i < calbitList.size(); i++) {
+            Calbit currentCalbit = calbitList.get(i);
 
-                // Make the API Call
-                apiCall.enqueue(new Callback<Calbits>() {
-                    @Override
-                    public void onResponse(Call<Calbits> call, Response<Calbits> response) {
-                        if (!response.isSuccessful()) {
-                            System.out.println("Unsuccessful to get all calbits " + response.code());
-                            return;
-                        }
+            // Set start date and time
+            Calendar startDateTime = Calendar.getInstance();
+            Calendar endDateTime = Calendar.getInstance();
 
-                        Calbits allCalbits = response.body();
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
 
-                        if (allCalbits.getData() != null) {
-                            // Get the fresh list of calbits
-                            listOfCalbits = allCalbits.getData();
+            try {
+                Date startDateObj = currentCalbit.getLegitAllDay()
+                        ? sdf.parse(currentCalbit.getStart().getDate().toString())
+                        : sdf.parse(currentCalbit.getStart().getDateTime().toString());
+                startDateTime.setTime(startDateObj);
 
-                            // save each calbit as a new WeekViewEvent
-                            for (int i = 0; i < listOfCalbits.size(); i++) {
-                                Calbit currentCalbit = listOfCalbits.get(i);
+                Date endDateObj = currentCalbit.getLegitAllDay()
+                        ? sdf.parse(currentCalbit.getEnd().getDate().toString())
+                        : sdf.parse(currentCalbit.getEnd().getDateTime().toString());
+                endDateTime.setTime(endDateObj);
 
-                                // Declare the necessary fields into Week View CalbiticaCalendar
-                                Calendar startDateTime = Calendar.getInstance();
-                                Calendar endDateTime = Calendar.getInstance();
-
-                                if (currentCalbit.getStart().getDate() != null) {
-                                    try {
-                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                        startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDate().toString()));
-                                    } catch (java.text.ParseException e) {
-                                        e.printStackTrace();
-                                    }
-                                } else if (currentCalbit.getStart().getDateTime() != null) {
-                                    try {
-                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                        startDateTime.setTime(sdf.parse(currentCalbit.getStart().getDateTime().toString()));
-                                    } catch (java.text.ParseException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                                if (currentCalbit.getEnd().getDate() != null) {
-                                    try {
-                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                        endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDate().toString()));
-                                    } catch (java.text.ParseException e) {
-                                        e.printStackTrace();
-                                    }
-
-                                } else if (currentCalbit.getEnd().getDateTime() != null) {
-                                    try {
-                                        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                        endDateTime.setTime(sdf.parse(currentCalbit.getEnd().getDateTime().toString()));
-                                    } catch (java.text.ParseException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                                // Render all the data into WeekView CalbiticaCalendar
-                                WeekViewEvent weekEvents = new WeekViewEvent(i, currentCalbit.getSummary(), startDateTime, endDateTime);
-                                weekEvents.setAllDay(currentCalbit.getAllDay());
-                                mNewEvents.add(weekEvents);
-
-                            }
-
-                            // Refresh the Week CalbiticaCalendar
-                            weekView.notifyDatasetChanged();
-                        } else {
-                            Toast.makeText(getContext(), "There is no data found in CAWrapper", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<Calbits> call, Throwable t) {
-                        System.out.println("Fail to get all calbits " + t.getMessage());
-                    }
-                });
-
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return true;
+            } catch (java.text.ParseException e) {
+                e.printStackTrace();
             }
-        })
-                .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                    @Override
-                    public void onResult(Boolean result) {
 
-                    }
-                }).create().start();
+            // Render all the data into WeekView CalbiticaCalendar
+            // event.getId() = i later on
+            WeekViewEvent newWVE = new WeekViewEvent(i, currentCalbit.getSummary(), startDateTime, endDateTime);
 
+            int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
+            newWVE.setColor(getResources().getColor(newColor, null));
+
+            newWVE.setAllDay(currentCalbit.getAllDay());
+            mNewEvents.add(newWVE);
+        }
+
+        // Refresh the Week View
+        listOfCalbits = calbitList;
+        weekView.notifyDatasetChanged();
+    }
+
+    // Handle result of failed completion update
+    @Override
+    public void onCalbitCompletionFailure() {
+        Toast.makeText(getContext(), "That action didn't go through; please try again.", Toast.LENGTH_SHORT).show();
     }
 }

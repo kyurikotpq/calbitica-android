@@ -4,4 +4,5 @@
     android:padding="10dp"
     android:background="@color/gray_1"
     android:textColor="@color/white"
+    android:textAlignment="textEnd"
     />

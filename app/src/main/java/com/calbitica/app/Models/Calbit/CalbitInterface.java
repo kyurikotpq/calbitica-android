@@ -23,9 +23,9 @@ public interface CalbitInterface {
 
     // Edit the Event from Calbitica
     @PUT("calbit/{id}")
-    Call<Calbit> editCalbit(
+    Call<HashMap<String, Object>> updateCalbit(
             @Path("id") String id,
-            @Body Calbit putBody);
+            @Body HashMap<String, String> calbit);
 
     // Delete the Event from Calbitica
     @DELETE("calbit/{id}")
@@ -33,7 +33,7 @@ public interface CalbitInterface {
 
     // Update Calbit's Completion Status
     @PUT("calbit/{id}/complete")
-    Call<Calbit> updateCalbitStatus(
+    Call<HashMap<String, Object>> updateCalbitStatus(
             @Path("id") String id,
-            @Body Calbit status);     // Declare the body same with the Call, then add-in necessary field for API into Calbit Class
+            @Body HashMap<String, Boolean> status);     // Declare the body same with the Call, then add-in necessary field for API into Calbit Class
 }

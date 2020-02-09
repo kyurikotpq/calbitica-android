@@ -34,7 +34,7 @@
         <!-- Fixed Main Page of Navigation Bar -->
         <activity android:name="com.calbitica.app.NavigationBar.NavigationBar" />
         <!-- WeekFragment CreateEvent Page-->
-        <activity android:name="com.calbitica.app.Week.WeekCreateEvent" />
+        <activity android:name="com.calbitica.app.Week.WeekSaveEvent" />
         <!-- WeekFragment EditEvent Page-->
         <activity android:name="com.calbitica.app.Week.WeekEditEvent" />
     </application>

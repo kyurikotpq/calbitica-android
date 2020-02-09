@@ -9,27 +9,27 @@ import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.Models.Calendars.CalbiticaCalendar;
 import com.calbitica.app.Models.Calendars.Calendars;
 import com.calbitica.app.Week.CalListResultInterface;
-import com.calbitica.app.Week.WeekCreateEvent;
+import com.calbitica.app.Week.CalbitResultInterface;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-// Wrapper for some 'global' functionalities
+// Wrapper for shared functionalities
 // of the Calbitica API
+// C & U are handled by WeekSaveEvent, so there's no need
+// to put them here
+
 public class CAWrapper {
     static List<CalbiticaCalendar> allCalbiticaCalendars;
     static List<Calbit> allCalbitInfo;
-    static CalListResultInterface calListListener;
 
+    // Get all calendars
     public static void getAllCalendars(Context mcontext, CalListResultInterface listenerClass) {
-        calListListener = listenerClass;
         String jwt = UserData.get("jwt", mcontext);
 
         // Build the API Call
@@ -51,12 +51,9 @@ public class CAWrapper {
                 AsyncJob.doOnMainThread(new AsyncJob.OnMainThreadJob() {
                     @Override
                     public void doInUIThread() {
-                        System.out.println("NOW IN ui THREAD");
-                        calListListener.onCalendarListResult(allCalbiticaCalendars);
+                        listenerClass.onCalendarListResult(allCalbiticaCalendars);
                     }
                 });
-                System.out.println("CALEDNARS SAVED");
-                System.out.println(allCalbiticaCalendars);
             }
 
             @Override
@@ -66,6 +63,123 @@ public class CAWrapper {
         });
     }
 
+    // Get all calbits
+    public static void getAllCalbits(Context mcontext, CalbitResultInterface listenerClass) {
+        // Retrieve the JWT
+        String jwt = UserData.get("jwt", mcontext);
+
+        // Build the API Call
+        Call<Calbits> apiCall = CalbiticaAPI.getInstance(jwt).calbit().getAllCalbits();
+
+        // Make the API Call in BG thread
+        apiCall.enqueue(new Callback<Calbits>() {
+            @Override
+            public void onResponse(Call<Calbits> call, Response<Calbits> response) {
+                if (!response.isSuccessful() && response.code() == 410) {
+                    Toast.makeText(mcontext, "You may have revoked Calbitica's access to your account."
+                                    + " Please sign in again.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                Calbits allCalbits = response.body();
+
+                if (allCalbits != null) {
+                    // Get the fresh list of calbits
+                    allCalbitInfo = allCalbits.getData();
+
+                    AsyncJob.doOnMainThread(new AsyncJob.OnMainThreadJob() {
+                        @Override
+                        public void doInUIThread() {
+                            listenerClass.onCalbitListResult(allCalbitInfo);
+                        }
+                    });
+
+                } else {
+                    Toast.makeText(mcontext, "You don't have any events yet.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Calbits> call, Throwable t) {
+                System.out.println("Fail to get all calbits " + t.getMessage());
+            }
+        });
+    }
+
+    // Update Calbit completion status
+    public static void updateCalbitCompletion(Context mcontext, String _id,
+                                              HashMap<String, Boolean> completion,
+                                              CalbitResultInterface listenerClass) {
+        // Retrieve the JWT
+        String jwt = UserData.get("jwt", mcontext);
+
+        // Build the API Call
+        Call<HashMap<String, Object>> apiCall = CalbiticaAPI.getInstance(jwt).calbit()
+                .updateCalbitStatus(_id, completion);
+
+        // Make the API Call
+        apiCall.enqueue(new Callback<HashMap<String, Object>>() {
+            @Override
+            public void onResponse(Call<HashMap<String, Object>> call, Response<HashMap<String, Object>> response) {
+                if (!response.isSuccessful()) {
+                    System.out.println("Unsuccessful to update calbit completion " + response.code());
+                    return;
+                }
+
+                // No news is good news
+            }
+
+            @Override
+            public void onFailure(Call<HashMap<String, Object>> call, Throwable t) {
+                System.out.println("Fail to get update completion of calbit " + t.getMessage());
+
+                AsyncJob.doOnMainThread(new AsyncJob.OnMainThreadJob() {
+                    @Override
+                    public void doInUIThread() {
+                        listenerClass.onCalbitCompletionFailure();
+                    }
+                });
+            }
+        });
+    }
+
+    public static void deleteCalbit(Context mcontext, String _id,
+                                    CalbitResultInterface listenerClass) {
+        // Retrieve the JWT
+        String jwt = UserData.get("jwt", mcontext);
+
+        // Build the API Call
+        Call<Void> apiCall = CalbiticaAPI.getInstance(jwt).calbit().deleteCalbit(_id);
+
+        // Make the API Call
+        apiCall.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    try {
+                        System.out.println("Unsuccessful to delete event in calbits " + response.errorBody().string());
+                        return;
+                    } catch(Exception e) { }
+                }
+
+                AsyncJob.doOnMainThread(new AsyncJob.OnMainThreadJob() {
+                    @Override
+                    public void doInUIThread() {
+                        listenerClass.onCalbitListResult(allCalbitInfo);
+                    }
+                });
+                System.out.println("Calbitica Database deleted is: " + response.isSuccessful());
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                System.out.println("Fail to delete in calbits " + t.getMessage());
+            }
+        });
+    }
+
+    // old version
     /*
     public List<Calbit> getAllCalbit(Context mcontext) {
         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
@@ -164,8 +278,8 @@ public class CAWrapper {
 
                         System.out.println("NOW IN ui THREAD");
 
-                        if (mcontext instanceof WeekCreateEvent) {
-                            ((WeekCreateEvent) mcontext).updateCalendarSpinner(allCalbiticaCalendars);
+                        if (mcontext instanceof WeekSaveEvent) {
+                            ((WeekSaveEvent) mcontext).updateCalendarSpinner(allCalbiticaCalendars);
 
                         }
                     }
@@ -176,47 +290,7 @@ public class CAWrapper {
 
         return allCalbitInfo;
     }
-*/
-    public void updateEventInCalbit(final String _id, final String summary, final Date start, final Date end, final Date reminders, String calendarID, String googleID, Boolean allDay) {
-        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-            @Override
-            public Boolean doAsync() {
-//                // Retrieve the JWT
-//                String jwt = UserData.get("jwt", mcontext);
-//
-//                StartDateTime startDateTime = new StartDateTime();
-//                startDateTime.set();
-//
-//                Calbit putBody = new Calbit(_id, summary, start, end, reminders, calendarID, googleID, allDay);
-//
-//                // Build the API Call
-//                Call<Calbit> apiCall = CalbiticaAPI.getInstance(jwt).calbit().editCalbit(_id, putBody);
-//
-//                // Make the API Call
-//                apiCall.enqueue(new Callback<Calbit>() {
-//                    @Override
-//                    public void onResponse(Call<Calbit> call, Response<Calbit> response) {
-//                        if (!response.isSuccessful()) {
-//                            System.out.println("Unsuccessful to get all calbits " + response.code());
-//                            return;
-//                        }
-//
-//                        Calbit allCalbits = response.body();
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Call<Calbit> call, Throwable t) {
-//                        System.out.println("Fail to get all calbits " + t.getMessage());
-//                    }
-//                });
 
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return true;
-            }
-        }).create().start();
-    }
+
+     */
 }

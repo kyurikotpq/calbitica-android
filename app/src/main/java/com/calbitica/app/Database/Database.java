@@ -417,6 +417,7 @@ public class Database {
         }).create().start();
     }
 
+    /*
     public void updateEventStatusInCalbit(final String _id, final Boolean status) {
         new AsyncJob.AsyncJobBuilder<Boolean>()
         .doInBackground(new AsyncJob.AsyncAction<Boolean>() {
@@ -458,4 +459,5 @@ public class Database {
             }
         }).create().start();
     }
+    */
 }

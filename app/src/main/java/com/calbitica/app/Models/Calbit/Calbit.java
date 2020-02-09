@@ -169,7 +169,7 @@ public class Calbit {
     }
 
     // This is for TaskCompleted column to save the status field part
-    public Calbit(Boolean status) {
-        this.status = status;
-    }
+//    public Calbit(Boolean status) {
+//        this.status = status;
+//    }
 }

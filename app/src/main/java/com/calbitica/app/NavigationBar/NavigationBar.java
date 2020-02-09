@@ -40,7 +40,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.calbitica.app.Week.WeekCreateEvent;
+import com.calbitica.app.Week.WeekSaveEvent;
 import com.google.android.material.navigation.NavigationView;
 
 import java.text.DateFormat;
@@ -447,7 +447,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 break;
             case R.id.calendar_add:
                 // Just the empty fields, to give user to key in themselves
-                Intent intent = new Intent(NavigationBar.this, WeekCreateEvent.class);
+                Intent intent = new Intent(NavigationBar.this, WeekSaveEvent.class);
 
                 Bundle data = new Bundle();
                 data.putString("startDateTime", "");
