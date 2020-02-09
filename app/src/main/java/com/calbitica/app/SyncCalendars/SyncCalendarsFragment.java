@@ -195,7 +195,7 @@ public class SyncCalendarsFragment extends Fragment {
                                         @Override
                                         public void onResponse(Call<SyncCalendar> call, Response<SyncCalendar> response) {
                                             if (!response.isSuccessful()) {
-                                                System.out.println("Unsuccessful to sync the Calendar: " + response.code());
+                                                System.out.println("Unsuccessful to sync the CalbiticaCalendar: " + response.code());
                                                 return;
                                             }
 
@@ -206,7 +206,7 @@ public class SyncCalendarsFragment extends Fragment {
 
                                         @Override
                                         public void onFailure(Call<SyncCalendar> call, Throwable t) {
-                                            System.out.println("Fail to sync the Calendar: " + t.getMessage());
+                                            System.out.println("Fail to sync the CalbiticaCalendar: " + t.getMessage());
                                         }
                                     });
 

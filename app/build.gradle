@@ -7,7 +7,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.calbitica.app"
-        minSdkVersion 16
+        minSdkVersion 24 // -> For getOrDefault function(Able to retrieve the key of the checking values(Important)), previously is version 16
         targetSdkVersion 27 // -> For the week calendar to work, previously is 29
         versionCode 1
         versionName "1.0"
@@ -40,7 +40,7 @@ dependencies {
     // Added Design(For nav bar) libraries
     implementation 'com.android.support:design:29.1.0'
 
-    // Added Customization Calendar libraries
+    // Added Customization CalbiticaCalendar libraries
     implementation 'com.github.kmenager:android-week-view:1.3.7'
     implementation 'com.github.tibolte:agendacalendarview:1.0.4'
 

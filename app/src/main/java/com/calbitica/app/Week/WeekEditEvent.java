@@ -18,11 +18,12 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
-import com.calbitica.app.Database.Database;
+import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.Agenda.AgendaFragment;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 
+import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -36,14 +37,20 @@ import androidx.appcompat.widget.Toolbar;
 import com.calbitica.app.R;
 
 public class WeekEditEvent extends AppCompatActivity {
-    private EditText eventTitle = null;                                     // The iuput calendar title
-    private Calendar startDateTime, endDateTime, reminderDateTime;          // The input calendar start and end datetime
-    private WeekViewEvent event = null;                                     // The events that will in Week Calendar
-    private Database database = null;                                       // Reference for tally with the database
+    EditText eventTitle = null;                                     // The iuput calendar title
+    JSONObject colorInfo = new JSONObject();                        // To make it more information and more easier
+    Calendar startDateTime, endDateTime, reminderDateTime = null;   // The input calendar start and end datetime
+    WeekViewEvent event = null;                                     // The events that will in Week CalbiticaCalendar
+    ArrayList<String> calendarArrayKey = new ArrayList<>();         // Using this to tally with the specific calendar value
+    CAWrapper CAWrapper = null;                                       // Reference for tally with the CAWrapper
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+/*
+        // Get the _id from the CAWrapper, as for valid checking
+        CAWrapper.getAllCalbit(WeekEditEvent.this);
 
         // Using the same layout of the Event Create
         setContentView(R.layout.activity_week__create_event);
@@ -98,7 +105,7 @@ public class WeekEditEvent extends AppCompatActivity {
         final Spinner eventSync = (Spinner) findViewById(R.id.selectCalendar);
         ArrayList<String> calendarArrayValue = new ArrayList<>();
 
-        Database data = new Database(getBaseContext());
+        CAWrapper data = new CAWrapper(getBaseContext());
         data.getAllCalendars();
 
         Toast.makeText(getBaseContext(), "Please wait for Google Account to render...", Toast.LENGTH_SHORT).show();
@@ -107,6 +114,7 @@ public class WeekEditEvent extends AppCompatActivity {
             @Override
             public void run() {
                 for(int i = 0; i < data.getAllCalendars().size(); i++) {
+                    calendarArrayKey.add(data.getAllCalendars().get(i).getGoogleID());
                     calendarArrayValue.add(data.getAllCalendars().get(i).getSummary());
                     ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, calendarArrayValue);
                     arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -309,6 +317,7 @@ public class WeekEditEvent extends AppCompatActivity {
                 reminderTime.setText(reminderDateTime.get(Calendar.HOUR_OF_DAY) + ":" + reminderDateTime.get(Calendar.MINUTE));
             }
         }
+        */
     }
 
     // Right Menu Bar Creation
@@ -322,6 +331,7 @@ public class WeekEditEvent extends AppCompatActivity {
     // Right Menu Bar Selected, which is the Tick Image
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        /*
         if (item.getItemId() == R.id.ok) {
             if(eventTitle.getText().toString().equals("")) {
                 Toast.makeText(WeekEditEvent.this,"Please enter your title", Toast.LENGTH_SHORT).show();
@@ -329,13 +339,13 @@ public class WeekEditEvent extends AppCompatActivity {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
                 Toast.makeText(WeekEditEvent.this,"Start DateTime cannot be more than or equal to End DateTime", Toast.LENGTH_SHORT).show();
             } else {
-                // Setting the valid mongoId for the reference with the database
+                // Setting the valid mongoId for the reference with the CAWrapper
                 int id = (int) event.getId();
 
                 if(NavigationBar.selectedPages == "nav_week") {
                     // Modify event with new data(Only 1 data will be found and modify)
                     for(WeekViewEvent event : WeekFragment.mNewEvents) {
-                        if(database.getAllCalbit().get(id) != null) {
+                        if(CAWrapper.getAllCalbit().get(id) != null) {
                             event.setName(eventTitle.getText().toString());
                             event.setStartTime(startDateTime);
                             event.setEndTime(endDateTime);
@@ -344,8 +354,13 @@ public class WeekEditEvent extends AppCompatActivity {
                             WeekFragment.weekView.notifyDatasetChanged();
                         }
                     }
+<<<<<<< HEAD
+                } else if (NavigationBar.selectedPages == "nav_schedule") {
+                    // First, I delete the Schedule CalbiticaCalendar selected event(Only 1), due to BaseCalendarEvent options is inside CalendarEvent(only color is not in the list, so...)
+=======
                 } else if (NavigationBar.selectedPages == "nav_agenda") {
                     // First, I delete the Agenda Calendar selected event(Only 1), due to BaseCalendarEvent options is inside CalendarEvent(only color is not in the list, so...)
+>>>>>>> 211b6f1a3ca827fcf296fc4ace53dc290e53fb72
                     // Secondly, then I add again with the updated values, so will still serve as the edit portion...
                     for(int i = 0; i < AgendaFragment.eventList.size(); i++) {
                         if(AgendaFragment.eventList.get(i).getId() == id) {
@@ -355,8 +370,8 @@ public class WeekEditEvent extends AppCompatActivity {
                             allEvent.setId(id);
                             AgendaFragment.eventList.add(allEvent);
 
-                            // Agenda Calendar will also re-render the events as well
-                            AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
+                            // Schedule CalbiticaCalendar will also re-render the events as well
+                            AgendaFragment.scheduleView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                         }
                     }
                 }
@@ -375,7 +390,7 @@ public class WeekEditEvent extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-//                database.updateEventInCalbit(database.getAllCalbit().get(id).get_id().toString(), eventTitle.getText().toString(), start, end, reminder);
+//                CAWrapper.updateEventInCalbit(CAWrapper.getAllCalbit().get(id).get_id().toString(), eventTitle.getText().toString(), start, end, reminder);
 
                 finish();
                 Toast.makeText(WeekEditEvent.this,"Event successfully updated", Toast.LENGTH_SHORT).show();
@@ -383,5 +398,8 @@ public class WeekEditEvent extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+
+    */
+        return true;
     }
 }

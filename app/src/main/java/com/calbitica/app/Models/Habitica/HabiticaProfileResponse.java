@@ -1,6 +1,6 @@
 package com.calbitica.app.Models.Habitica;
 
-public class Habitica {
+public class HabiticaProfileResponse {
     // Create a list will become array
     // But, we want objects here, so will be just the another class.
     private HabiticaInfo data;

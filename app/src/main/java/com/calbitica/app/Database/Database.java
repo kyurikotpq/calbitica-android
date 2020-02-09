@@ -10,7 +10,7 @@ import com.arasthel.asyncjob.AsyncJob;
 import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.Models.Calbit.StartDateTime;
-import com.calbitica.app.Models.Calendars.Calendar;
+import com.calbitica.app.Models.Calendars.CalbiticaCalendar;
 import com.calbitica.app.Models.Calendars.Calendars;
 import com.calbitica.app.R;
 import com.calbitica.app.Util.CalbiticaAPI;
@@ -35,12 +35,12 @@ import static com.calbitica.app.Week.WeekFragment.weekView;
 
 public class Database {
     Context mcontext;
-    List<Calendar> allCalendarInfo;
+    List<CalbiticaCalendar> allCalendarInfo;
     List<Calbit> allCalbitInfo;
 
     public Database(Context context) {mcontext = context;}
 
-    public List<Calendar> getAllCalendars() {
+    public List<CalbiticaCalendar> getAllCalendars() {
         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
             @Override
             public Boolean doAsync() {
