@@ -67,6 +67,7 @@ public class CAWrapper {
     public static void getAllCalbits(Context mcontext, CalbitResultInterface listenerClass) {
         // Retrieve the JWT
         String jwt = UserData.get("jwt", mcontext);
+        System.out.println(jwt);
 
         // Build the API Call
         Call<Calbits> apiCall = CalbiticaAPI.getInstance(jwt).calbit().getAllCalbits();
@@ -162,13 +163,6 @@ public class CAWrapper {
                         return;
                     } catch(Exception e) { }
                 }
-
-                AsyncJob.doOnMainThread(new AsyncJob.OnMainThreadJob() {
-                    @Override
-                    public void doInUIThread() {
-                        listenerClass.onCalbitListResult(allCalbitInfo);
-                    }
-                });
                 System.out.println("Calbitica Database deleted is: " + response.isSuccessful());
             }
 

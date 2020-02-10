@@ -3,12 +3,14 @@
     xmlns:agendaCalendar="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/gray_1"
     android:orientation="vertical">
 
     <com.github.tibolte.agendacalendarview.AgendaCalendarView
         android:id="@+id/agendaView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/gray_1"
         agendaCalendar:agendaCurrentDayTextColor="@color/blue_3"
         agendaCalendar:calendarColor="@color/gray_1"
         agendaCalendar:calendarCurrentDayTextColor="@color/blue_3"
@@ -19,12 +21,13 @@
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@color/gray_1">
 
         <TextView
             android:id="@+id/text_viewResult"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#000"/>
+            android:textColor="@color/gray_4" />
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>

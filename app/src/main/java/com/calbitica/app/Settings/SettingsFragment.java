@@ -45,7 +45,7 @@ public class SettingsFragment extends Fragment {
             if(apiKey != null && !apiKey.equals("")) data.put("apiKey", apiKey);
 
             // Retrieve the JWT
-            String oldJWT = UserData.get("jwt", getContext());
+            String oldJWT = UserData.get("jwt", getActivity().getApplicationContext());
             // Build the API Call
             Call<HashMap<String, String>> apiCall = CalbiticaAPI.getInstance(oldJWT)
                                                     .settings().saveSettings(data);
@@ -68,7 +68,7 @@ public class SettingsFragment extends Fragment {
                             HashMap<String, String> user = new HashMap<>();
                             user.put("jwt", jwt);
 
-                            UserData.save(user, getContext());
+                            UserData.save(user, getActivity().getApplicationContext());
                             Log.d("API JWT: ", jwt);
 
                             String message = (data.containsKey("message"))

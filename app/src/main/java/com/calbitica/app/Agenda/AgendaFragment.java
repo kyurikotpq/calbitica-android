@@ -1,8 +1,10 @@
 package com.calbitica.app.Agenda;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -23,9 +25,11 @@ import androidx.fragment.app.Fragment;
 import com.arasthel.asyncjob.AsyncJob;
 import com.calbitica.app.Database.Database;
 import com.calbitica.app.Models.Calbit.Calbit;
+import com.calbitica.app.Models.Calbit.TaskCompleted;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import com.calbitica.app.Util.CAWrapper;
+import com.calbitica.app.Util.DateUtil;
 import com.calbitica.app.Week.CalbitResultInterface;
 import com.calbitica.app.Week.WeekEditEvent;
 import com.calbitica.app.Week.WeekFragment;
@@ -63,8 +67,6 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
     private String currentSelectedMongoID = null; // Particular events(Mainly for edit and delete)
     private String mongoReminder = null; // Particular events(Pass the bundle to the edit event)
 
-    boolean firstLoad = true;
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -72,11 +74,250 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
         return inflater.inflate(R.layout.fragment_agenda, container, false);
     }
 
+    // handle result of calbit save
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        System.out.println("ON ACTIVITy RESULT IN AGENDA " + requestCode);
+        switch (requestCode) {
+            case (122): {
+                if (resultCode == Activity.RESULT_OK) {
+                    // TODO Extract the data returned from the child Activity.
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    CAWrapper.getAllCalbits(
+                            getActivity().getApplicationContext(),
+                            AgendaFragment.this
+                    );
+                }
+                break;
+            }
+        }
+    }
+
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        firstLoad = true;
+        // Get the events from Calbitica
+        calendarPickerController = new CalendarPickerController() {
+            @Override
+            public void onDaySelected(DayItem dayItem) {
+                // We need to implement this method due to the nature of the class,
+                // but we're not using it... so cher don't penalize us please
+            }
+
+            @Override
+            public void onEventSelected(CalendarEvent currentCalendarEvent) {
+                BaseCalendarEvent event = (BaseCalendarEvent) currentCalendarEvent;
+
+                // Create a new event
+                if (event.getTitle().equals("No events")) {
+                    // Re-use the same design & code as the Week CalbiticaCalendar Create Page
+                    Intent intent = new Intent(getContext(), WeekSaveEvent.class);
+
+                    // Set the new event with duration 30mins.
+                    Calendar endDateTime = (Calendar) event.getInstanceDay().clone();
+                    endDateTime.add(Calendar.MINUTE, 30);
+
+                    Bundle data = new Bundle();
+
+                    data.putString("startDateTime", DateUtil.localToUTC(event.getInstanceDay().getTime()));
+                    data.putString("endDateTime", DateUtil.localToUTC(endDateTime.getTime()));
+
+                    intent.putExtras(data);
+
+                    startActivityForResult(intent, 122);
+                } else {
+                    // Viewing event detail
+                    // Get the layout and render from the Calendar Modal
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                    final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
+
+                    CheckBox check = (CheckBox) mView.findViewById(R.id.calendar_Modal_eventCheckBox);
+                    TextView title = (TextView) mView.findViewById(R.id.calendar_Modal_eventTitle);
+                    TextView startDateTime = (TextView) mView
+                            .findViewById(R.id.calendar_Modal_eventStartDateTime);
+                    TextView endDateTime = (TextView) mView
+                            .findViewById(R.id.calendar_Modal_eventEndDateTime);
+                    ImageView editing = (ImageView) mView.findViewById(R.id.calendar_Modal_editing);
+                    ImageView deleting = (ImageView) mView.findViewById(R.id.calendar_Modal_deleting);
+                    ImageView close = (ImageView) mView.findViewById(R.id.calendar_Modal_eventClose);
+
+                    title.setText(event.getTitle());
+
+                    // Convert to our respective datetime format of start and end DateTime
+                    Timestamp startTimeStamp = new Timestamp(event.getStartTime().getTimeInMillis());
+                    Timestamp endTimeStamp = new Timestamp(event.getEndTime().getTimeInMillis());
+                    SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, YYYY HH:mm", Locale.ENGLISH);
+                    String start = sdf.format(startTimeStamp);
+                    String end = sdf.format(endTimeStamp);
+
+                    startDateTime.setText("\n" + start + " - ");
+                    endDateTime.setText("\n" + end);
+
+                    // Render the Modal, must be in the last of the code
+                    builder.setView(mView);
+                    final AlertDialog dialog = builder.create();
+
+                    try {
+                        dialog.show();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    // Setting the valid currentSelectedMongoID for the reference with the database
+                    int currentAgendaIndex = (int) event.getId();
+                    Calbit currentCalbit = listOfCalbits.get(currentAgendaIndex);
+
+                    new AsyncJob.AsyncJobBuilder<Boolean>()
+                            .doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+                                @Override
+                                public Boolean doAsync() {
+                                    if (currentCalbit.get_id() != null) {
+                                        currentSelectedMongoID = currentCalbit.get_id().toString();
+                                    }
+
+                                    mongoReminder = (currentCalbit.getReminders() != null)
+                                            ? currentCalbit.getReminders().toString()
+                                            : "";
+
+                                    // To allow to run Toast in the async method...
+                                    getActivity().runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (currentCalbit.getCompleted() != null) {
+                                                check.setChecked(
+                                                        currentCalbit.getCompleted().getStatus()
+                                                );
+                                            }
+                                            check.setEnabled(false);
+                                            Toast.makeText(getContext(), "Please wait...",
+                                                    Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+
+                                    try {
+                                        Thread.sleep(3000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    return true;
+                                }
+                            }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                        @Override
+                        public void onResult(Boolean result) {
+                            Toast.makeText(getContext(), "Done!", Toast.LENGTH_SHORT).show();
+                            check.setEnabled(true);
+
+                            check.setOnCheckedChangeListener(
+                                    new CompoundButton.OnCheckedChangeListener() {
+                                        @Override
+                                        public void onCheckedChanged(CompoundButton buttonView,
+                                                                     boolean isChecked) {
+                                            // Update the database
+                                            HashMap<String, Boolean> completion = new HashMap<>();
+                                            completion.put("status", isChecked);
+                                            CAWrapper.updateCalbitCompletion(getActivity().getApplicationContext(),
+                                                    currentSelectedMongoID, completion,
+                                                    AgendaFragment.this);
+
+                                            // Update the local copy
+                                            // We will do local updates here, regardless of the result of the API call,
+                                            // as sooner or later the real changes will show up.
+                                            int newColor = (isChecked) ? R.color.gray_3 : R.color.blue_3;
+                                            event.setColor(getResources().getColor(newColor, null));
+                                            eventList.set(currentAgendaIndex, event);
+
+                                            // update on the list of calbits too
+                                            currentCalbit.setCompleted(new TaskCompleted(isChecked));
+                                            listOfCalbits.set(currentAgendaIndex, currentCalbit);
+
+                                            if (isChecked) {
+                                                dialog.dismiss();
+                                            }
+                                            agendaView.init(eventList, minDate, maxDate,
+                                                    Locale.getDefault(), calendarPickerController);
+
+                                        }
+                                    });
+
+                            editing.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    // Using back the same design as the WeekEditEvent
+                                    Intent intent = new Intent(getContext(), WeekSaveEvent.class);
+
+                                    Bundle calendarData = new Bundle();
+                                    calendarData.putString("id", currentSelectedMongoID);
+                                    calendarData.putString("title", event.getTitle());
+
+                                    calendarData.putString("startDateTime",
+                                            DateUtil.localToUTC(event.getStartTime().getTime()));
+                                    calendarData.putString("endDateTime",
+                                            DateUtil.localToUTC(event.getEndTime().getTime()));
+
+                                    calendarData.putString("reminderDateTime", mongoReminder);
+                                    intent.putExtras(calendarData);
+
+                                    startActivityForResult(intent, 122);
+                                    dialog.dismiss();
+                                }
+                            });
+
+                            deleting.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    // Delete from Calbitica with the existing data
+                                    CAWrapper.deleteCalbit(getActivity().getApplicationContext(), currentSelectedMongoID,
+                                            AgendaFragment.this);
+
+                                    // Delete event with existing data
+                                    for (int i = 0; i < eventList.size(); i++) {
+                                        if (eventList.get(i).getId() == event.getId()) {
+                                            eventList.remove(i); // remove only 1
+                                            listOfCalbits.removeIf(c -> c.get_id().equals(currentSelectedMongoID));
+                                        }
+                                    }
+
+                                    // Refresh the agenda calendar view
+                                    agendaView.init(eventList, minDate, maxDate,
+                                            Locale.getDefault(), calendarPickerController);
+
+                                    Toast.makeText(getActivity(), "Event successfully deleted",
+                                            Toast.LENGTH_SHORT).show();
+                                    dialog.dismiss();
+                                }
+                            });
+
+                            close.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    dialog.dismiss();
+                                }
+                            });
+                        }
+                    }).create().start();
+                }
+            }
+
+            @Override
+            public void onScrollToDate(Calendar calendar) {
+                // When selected different date or scroll the date, it will change the
+                // Navigation Bar of the Title
+                String currentMonth = DateFormat.getDateInstance(DateFormat.LONG)
+                        .format(calendar.getTime());
+                NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " "
+                        + calendar.get(Calendar.YEAR));
+            }
+        };
+        CAWrapper.getAllCalbits(getActivity().getApplicationContext(), AgendaFragment.this);
 
         // *It is in sequence order
         AsyncTaskRunner runner = new AsyncTaskRunner();
@@ -152,7 +393,6 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
         @Override
         protected void onPostExecute(Integer result) {
             super.onPostExecute(result);
-            // Here is another async...
             job.doOnBackground();
         }
     }
@@ -164,222 +404,12 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
             // then...
             // agendaView.init -> take quite some time to load, implement loading screen to
             // tell that is not hang/freeze...
-            calendarPickerController = new CalendarPickerController() {
-                @Override
-                public void onDaySelected(DayItem dayItem) {
-                    // We need to implement this method due to the nature of the class,
-                    // but we're not using it... so cher don't penalize us please
-                }
-
-                @Override
-                public void onEventSelected(CalendarEvent event) {
-                    // Create a new event
-                    if (event.getTitle().equals("No events")) {
-                        // Re-use the same design & code as the Week CalbiticaCalendar Create Page
-                        Intent intent = new Intent(getContext(), WeekSaveEvent.class);
-
-                        // Set the new event with duration 30mins.
-                        Calendar endDateTime = (Calendar) event.getInstanceDay().clone();
-                        endDateTime.add(Calendar.MINUTE, 30);
-
-                        Bundle data = new Bundle();
-                        data.putString("startDateTime", event.getInstanceDay().getTime().toString());
-                        data.putString("endDateTime", endDateTime.getTime().toString());
-                        intent.putExtras(data);
-
-                        startActivity(intent);
-                    } else {
-                        // Viewing event detail
-                        // Get the layout and render from the Calendar Modal
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
-
-                        CheckBox check = (CheckBox) mView.findViewById(R.id.calendar_Modal_eventCheckBox);
-                        TextView title = (TextView) mView.findViewById(R.id.calendar_Modal_eventTitle);
-                        TextView startDateTime = (TextView) mView
-                                .findViewById(R.id.calendar_Modal_eventStartDateTime);
-                        TextView endDateTime = (TextView) mView
-                                .findViewById(R.id.calendar_Modal_eventEndDateTime);
-                        ImageView editing = (ImageView) mView.findViewById(R.id.calendar_Modal_editing);
-                        ImageView deleting = (ImageView) mView.findViewById(R.id.calendar_Modal_deleting);
-                        ImageView close = (ImageView) mView.findViewById(R.id.calendar_Modal_eventClose);
-
-                        title.setText(event.getTitle());
-
-                        // Convert to our respective datetime format of start and end DateTime
-                        Timestamp startTimeStamp = new Timestamp(event.getStartTime().getTimeInMillis());
-                        Timestamp endTimeStamp = new Timestamp(event.getEndTime().getTimeInMillis());
-                        SimpleDateFormat sdf = new SimpleDateFormat("MMM D, YYYY HH:mm", Locale.ENGLISH);
-                        String start = sdf.format(startTimeStamp);
-                        String end = sdf.format(endTimeStamp);
-
-                        startDateTime.setText("\n" + start + " - ");
-                        endDateTime.setText("\n" + end);
-
-                        // Render the Modal, must be in the last of the code
-                        builder.setView(mView);
-                        final AlertDialog dialog = builder.create();
-
-                        try {
-                            dialog.show();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-
-                        // Setting the valid currentSelectedMongoID for the reference with the database
-                        int currentAgendaIndex = (int) event.getId();
-
-                        new AsyncJob.AsyncJobBuilder<Boolean>()
-                                .doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-                                    @Override
-                                    public Boolean doAsync() {
-                                        Calbit currentCalbit = listOfCalbits.get(currentAgendaIndex);
-                                        if (currentCalbit.get_id() != null) {
-                                            currentSelectedMongoID = currentCalbit.get_id().toString();
-                                        }
-
-                                        mongoReminder = (currentCalbit.getReminders() != null)
-                                                ? currentCalbit.getReminders().toString()
-                                                : "";
-
-                                        // To allow to run Toast in the async method...
-                                        getActivity().runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                if (currentCalbit.getCompleted() != null) {
-                                                    check.setChecked(
-                                                            currentCalbit.getCompleted().getStatus()
-                                                    );
-                                                }
-                                                check.setEnabled(false);
-                                                Toast.makeText(getContext(), "Please wait...",
-                                                        Toast.LENGTH_LONG).show();
-                                            }
-                                        });
-
-                                        try {
-                                            Thread.sleep(3000);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-
-                                        return true;
-                                    }
-                                }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                            @Override
-                            public void onResult(Boolean result) {
-                                Toast.makeText(getContext(), "Done!", Toast.LENGTH_SHORT).show();
-                                check.setEnabled(true);
-
-                                check.setOnCheckedChangeListener(
-                                        new CompoundButton.OnCheckedChangeListener() {
-                                            @Override
-                                            public void onCheckedChanged(CompoundButton buttonView,
-                                                                         boolean isChecked) {
-                                                // Update the database
-                                                HashMap<String, Boolean> completion = new HashMap<>();
-                                                completion.put("status", isChecked);
-                                                CAWrapper.updateCalbitCompletion(getContext(),
-                                                        currentSelectedMongoID, completion,
-                                                        AgendaFragment.this);
-
-                                                if (isChecked) {
-                                                    dialog.dismiss();
-
-                                                    // Refresh the fragment again, to populate changes
-                                                    getActivity().getSupportFragmentManager()
-                                                            .beginTransaction()
-                                                            .detach(AgendaFragment.this)
-                                                            .attach(AgendaFragment.this).commit();
-                                                }
-                                            }
-                                        });
-
-                                editing.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        // Using back the same design as the WeekEditEvent
-                                        Intent intent = new Intent(getContext(), WeekSaveEvent.class);
-
-                                        Bundle calendarData = new Bundle();
-                                        calendarData.putString("id", currentSelectedMongoID);
-                                        calendarData.putString("title", event.getTitle());
-                                        calendarData.putString("startDateTime",
-                                                event.getStartTime().getTime().toString());
-                                        calendarData.putString("endDateTime",
-                                                event.getEndTime().getTime().toString());
-                                        calendarData.putString("reminderDateTime", mongoReminder);
-                                        intent.putExtras(calendarData);
-
-                                        startActivity(intent);
-                                        dialog.dismiss();
-                                    }
-                                });
-
-                                deleting.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        // Delete from Calbitica with the existing data
-                                        CAWrapper.deleteCalbit(getContext(), currentSelectedMongoID,
-                                                AgendaFragment.this);
-
-                                        // Delete event with existing data
-                                        for (int i = 0; i < eventList.size(); i++) {
-                                            if (eventList.get(i).getId() == event.getId()) {
-                                                eventList.remove(i); // remove only 1
-                                                listOfCalbits.removeIf(c -> c.get_id().equals(currentSelectedMongoID));
-                                            }
-                                        }
-
-                                        // Refresh the agenda calendar view
-                                        agendaView.init(eventList, minDate, maxDate,
-                                                Locale.getDefault(), calendarPickerController);
-                                        Toast.makeText(getActivity(), "Event successfully deleted",
-                                                Toast.LENGTH_SHORT).show();
-                                        dialog.dismiss();
-                                    }
-                                });
-
-                                close.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                            }
-                        }).create().start();
-                    }
-                }
-
-                @Override
-                public void onScrollToDate(Calendar calendar) {
-                    // When selected different date or scroll the date, it will change the
-                    // Navigation Bar of the Title
-                    String currentMonth = DateFormat.getDateInstance(DateFormat.LONG)
-                            .format(calendar.getTime());
-                    NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " "
-                            + calendar.get(Calendar.YEAR));
-                }
-            };
-
-            // Get the events from Calbitica
-            CAWrapper.getAllCalbits(getContext(), AgendaFragment.this);
-
             agendaView.init(eventList, minDate, maxDate, Locale.getDefault(),
                     calendarPickerController);
-
-            try {
-                Thread.sleep(1000);
-            } catch (
-                    InterruptedException e) {
-                e.printStackTrace();
-            }
 
             AsyncJob.doOnMainThread(new AsyncJob.OnMainThreadJob() {
                 @Override
                 public void doInUIThread() {
-                    firstLoad = false;
-
                     // Enable back the control to the user
                     progressDialog.dismiss();
                     NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
@@ -396,49 +426,45 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
     public void onCalbitListResult(List<Calbit> calbitList) {
         listOfCalbits.clear();
         eventList.clear();
+        System.out.println("LIST OF CALBITS IN ALLCALBITINFO " + calbitList.size());
 
-        for (int i = 0; i < listOfCalbits.size(); i++) {
-            Calbit currentCalbit = listOfCalbits.get(i);
-
+        for (int i = 0; i < calbitList.size(); i++) {
+            Calbit currentCalbit = calbitList.get(i);
+            System.out.println("LIST OF CALBITS IN ALLCALBITINFO " + currentCalbit.getSummary());
             // Declare the necessary fields into Week View Calendar
-            java.util.Calendar startDateTime = java.util.Calendar.getInstance();
-            java.util.Calendar endDateTime = java.util.Calendar.getInstance();
+            Calendar startDateTime = Calendar.getInstance();
+            Calendar endDateTime = Calendar.getInstance();
 
-            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm:ss z yyyy", Locale.ENGLISH);
+            // This format is a requirement for events to render correctly
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd, HH:mm:ss z yyyy", Locale.ENGLISH);
 
             try {
                 Date startDateObj = currentCalbit.getLegitAllDay()
-                        ? sdf.parse(currentCalbit.getStart().getDate().toString())
-                        : sdf.parse(currentCalbit.getStart().getDateTime().toString());
+                        ? currentCalbit.getStart().getDate()
+                        : currentCalbit.getStart().getDateTime();
+
+                System.out.println(startDateObj);
+
                 startDateTime.setTime(startDateObj);
 
                 Date endDateObj = currentCalbit.getLegitAllDay()
-                        ? sdf.parse(currentCalbit.getEnd().getDate().toString())
-                        : sdf.parse(currentCalbit.getEnd().getDateTime().toString());
+                        ? currentCalbit.getEnd().getDate()
+                        : currentCalbit.getEnd().getDateTime();
                 endDateTime.setTime(endDateObj);
 
-            } catch (java.text.ParseException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
             // Based on the Agenda Calendar format, and return back the list
+            // Auto-configure the task completion of color and checked according to calbitica
             int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
+            int resourceColor = getResources().getColor(newColor, null);
 
             BaseCalendarEvent allEvent = new BaseCalendarEvent(
                     currentCalbit.getSummary(), "", "",
-                    newColor, startDateTime, endDateTime, currentCalbit.getAllDay());
+                    resourceColor, startDateTime, endDateTime, currentCalbit.getAllDay());
 
-            // Auto-configure the task completion of color and checked according to calbitica
-            // Can't do the checkbox here accordingly, due to this functions should not indirect any
-            // of the components in the WeekFragment, have to check separately
-            // Overwrite the previous color, due to required fields from libraries
-//            if (currentCalbit.getCompleted() != null) {
-//                if (currentCalbit.getCompleted().getStatus()) {
-//                    allEvent.setColor(Color.rgb(200, 200, 200));
-//                } else {
-//                    allEvent.setColor(Color.rgb(100, 200, 220));
-//                }
-//            }
             allEvent.setId(i);
 
             eventList.add(allEvent);
@@ -446,16 +472,9 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
         // Refresh the agenda calendar view
         listOfCalbits = calbitList;
 
-        if(!firstLoad) {
-            agendaView.init(eventList, minDate, maxDate,
-                    Locale.getDefault(), calendarPickerController);
-        } else {
-            // Refresh the fragment again, to populate changes
-            getActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .detach(AgendaFragment.this)
-                    .attach(AgendaFragment.this).commit();
-        }
+        agendaView.init(eventList, minDate, maxDate,
+                Locale.getDefault(), calendarPickerController);
+
     }
 
     @Override

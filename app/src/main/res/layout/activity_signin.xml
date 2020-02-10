@@ -6,19 +6,35 @@
     android:background="@color/gray_1"
     tools:context=".SignIn.SignIn">
 
-    <TextView
-        android:id="@+id/error"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:text="Sign In Your Google Account"
-        android:textColor="@color/white"
-        android:textSize="25sp" />
+        android:layout_centerInParent="true"
+        android:padding="20dp">
 
-    <com.google.android.gms.common.SignInButton
-        android:id="@+id/btn_signinGoogle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true" />
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/white_logo" />
+
+        <TextView
+            android:id="@+id/error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/logo"
+            android:layout_centerInParent="true"
+            android:text="Sign In Your Google Account"
+            android:textColor="@color/white"
+            android:textSize="25sp" />
+
+        <com.google.android.gms.common.SignInButton
+            android:id="@+id/btn_signinGoogle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/error"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp" />
+    </RelativeLayout>
+
 </RelativeLayout>

@@ -86,7 +86,7 @@ public class ProfileFragment extends Fragment {
         questReject = getActivity().findViewById(R.id.questReject);
 
         // Retrieve the JWT
-        String jwt = UserData.get("jwt", getContext());
+        String jwt = UserData.get("jwt", getActivity().getApplicationContext());
 
         // Build the API Call
         Call<HabiticaProfileResponse> apiCall = CalbiticaAPI.getInstance(jwt).habitica().getHabiticaProfile();
@@ -198,7 +198,7 @@ public class ProfileFragment extends Fragment {
 
     public void onSleepBtnClicked() {
         // Retrieve the JWT
-        String oldJWT = UserData.get("jwt", getContext());
+        String oldJWT = UserData.get("jwt", getActivity().getApplicationContext());
         // Build the API Call
         Call<HabiticaToggleSleepResponse> apiCall = CalbiticaAPI.getInstance(oldJWT)
                             .habitica().toggleSleep();
@@ -224,7 +224,7 @@ public class ProfileFragment extends Fragment {
                         HashMap<String, String> user = new HashMap<>();
                         user.put("jwt", responseData.getJwt());
 
-                        UserData.save(user, getContext());
+                        UserData.save(user, getActivity().getApplicationContext());
                         Log.d("API JWT: ", responseData.getJwt());
                     }
 
@@ -255,7 +255,7 @@ public class ProfileFragment extends Fragment {
         questStatus.setText("You have accepted the quest invitation.");
 
         // Retrieve the JWT
-        String oldJWT = UserData.get("jwt", getContext());
+        String oldJWT = UserData.get("jwt", getActivity().getApplicationContext());
         // Build the API Call
         Call<HabiticaQuestResponse> apiCall = CalbiticaAPI.getInstance(oldJWT)
                 .habitica().inviteQuest(true, groupId);
@@ -287,7 +287,7 @@ public class ProfileFragment extends Fragment {
         questStatus.setText("You have rejected the quest invitation.");
 
         // Retrieve the JWT
-        String oldJWT = UserData.get("jwt", getContext());
+        String oldJWT = UserData.get("jwt", getActivity().getApplicationContext());
         // Build the API Call
         Call<HabiticaQuestResponse> apiCall = CalbiticaAPI.getInstance(oldJWT)
                 .habitica().inviteQuest(false, groupId);

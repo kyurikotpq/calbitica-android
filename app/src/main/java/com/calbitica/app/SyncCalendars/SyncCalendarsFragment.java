@@ -81,7 +81,7 @@ public class SyncCalendarsFragment extends Fragment {
                 @Override
                 public Boolean doAsync() {
                     // Retrieve the JWT
-                    String jwt = UserData.get("jwt", getContext());
+                    String jwt = UserData.get("jwt", getActivity().getApplicationContext());
 
                     // Build the API Call
                     Call<Calendars> apiCall = CalbiticaAPI.getInstance(jwt).calendars().getAllCalendars();
@@ -185,7 +185,7 @@ public class SyncCalendarsFragment extends Fragment {
                                 @Override
                                 public Boolean doAsync() {
                                     // Retrieve the JWT
-                                    String jwt = UserData.get("jwt", getContext());
+                                    String jwt = UserData.get("jwt", getActivity().getApplicationContext());
 
                                     // Build the API Call, and get the specific checkbox information
                                     Call<SyncCalendar> apiCall = CalbiticaAPI.getInstance(jwt).calendars().syncCalendar(buttonView.getHint().toString(), isChecked);

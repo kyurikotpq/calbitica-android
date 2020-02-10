@@ -1,6 +1,5 @@
 package com.calbitica.app.Models.Calbit;
 
-import java.sql.Array;
 import java.util.Date;
 import java.util.List;
 
@@ -168,8 +167,16 @@ public class Calbit {
         this.allDay = allDay;
     }
 
-    // This is for TaskCompleted column to save the status field part
-//    public Calbit(Boolean status) {
-//        this.status = status;
-//    }
+    // This is for a new Calbit to be passed over to the API
+    // DO NOT USE IT for listOfCalbit.
+    public Calbit(String summary, StartDateTime start, EndDateTime end,
+                  List<Date> reminders, String calendarID, Boolean allDay) {
+        this.summary = summary;
+        this.start = start;
+        this.end = end;
+        this.reminders = reminders;
+        this.calendarID = calendarID;
+        this.allDay = allDay;
+        this.isDump = false;
+    }
 }

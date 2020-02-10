@@ -31,9 +31,15 @@ public class DateUtil {
         return HHmmFormat.format(date);
     }
 
-    public static Date utcToLocalDate(String date) {
-//        Date local = new Date(date.getTime() + TimeZone.getDefault().getOffset(date.getTime()));
-//        return local;
-        return new Date();
+    public static Date utcStringToLocalDate(String utc) {
+        try {
+            isoDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date utcDate = isoDateFormat.parse(utc);
+            Date local = new Date(utcDate.getTime());
+            return local;
+        } catch(Exception e) {
+            return new Date();
+        }
+
     }
 }

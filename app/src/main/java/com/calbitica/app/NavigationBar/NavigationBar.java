@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
 import com.bumptech.glide.Glide;
@@ -22,9 +23,12 @@ import com.calbitica.app.Notification.Notification;
 import com.calbitica.app.R;
 import com.calbitica.app.Agenda.AgendaFragment;
 import com.calbitica.app.Settings.SettingsFragment;
+import com.calbitica.app.Util.CAWrapper;
+import com.calbitica.app.Util.DateUtil;
 import com.calbitica.app.Util.UserData;
 import com.calbitica.app.Week.WeekFragment;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -70,8 +74,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     public static String acctName;                                  // To pass into database for each different account
     private Database database;                                      // To check the event list with our database (notification)
     public static String eventName;                                 // To display info to the notification alert
-    public static StartDateTime eventStart;                         // To display info to the notification alert
-    public static EndDateTime eventEnd;                             // To display info to the notification alert
+    public static String eventStart;                                // To display info to the notification alert
+    public static String eventEnd;                                  // To display info to the notification alert
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -193,33 +197,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        // To check the current calendar is today, then populate the notification
-                        Calendar current = Calendar.getInstance();
-
-                        if(database.getAllCalbit() != null) {
-                            for(int i = 0; i < database.getAllCalbit().size(); i++) {
-                                if (database.getAllCalbit().get(i).getReminders() != null) {
-                                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
-                                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                                        // Using timestamp to check the notification, 100% accurate
-                                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
-                                            eventName = database.getAllCalbit().get(i).getSummary();
-                                            eventStart = database.getAllCalbit().get(i).getStart();
-                                            eventEnd = database.getAllCalbit().get(i).getEnd();
-
-                                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                                            Intent intent = new Intent(NavigationBar.this, Notification.class);
-                                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
-
-                                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        notificationAlert();
                     }
                 }, 3000);
             }
@@ -374,6 +352,31 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         return true;
     }
 
+    // handle result of calbit save
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        System.out.print("ON ACTIVITy RESULT " + requestCode);
+        switch(requestCode) {
+            case (122) : {
+                if (resultCode == Activity.RESULT_OK) {
+                    Fragment currentFragment = getSupportFragmentManager()
+                                        .findFragmentById(R.id.fragment_container);
+
+                    AgendaFragment afInstance = null; WeekFragment wfInstance = null;
+                    if(currentFragment instanceof WeekFragment) {
+                        wfInstance = (WeekFragment) currentFragment;
+                        CAWrapper.getAllCalbits(getApplicationContext(), wfInstance);
+                    } else if(currentFragment instanceof AgendaFragment){
+                        afInstance = (AgendaFragment) currentFragment;
+                        CAWrapper.getAllCalbits(getApplicationContext(), afInstance);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
     // Right Navigation Bar Creation
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -484,7 +487,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 data.putString("endDateTime", "");
                 intent.putExtras(data);
 
-                startActivity(intent);
+                startActivityForResult(intent, 122);
                 break;
         }
 
@@ -504,7 +507,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
             if(selectedList.size() <= 0) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(NavigationBar.this);
 
-                builder.setTitle("Attention!!!")
+                builder.setTitle("Attention!")
                         .setMessage("Are you sure you want to exit the app")
                         // Negative will always on the left, but I prefer in right hand side so...
                         .setNegativeButton("Yes", new DialogInterface.OnClickListener() {
@@ -629,6 +632,50 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         }
     }
 
+    protected void notificationAlert() {
+        // To check the current calendar is today, then populate the notification
+        Calendar current = Calendar.getInstance();
+
+        if(database.getAllCalbit() != null) {
+            for(int i = 0; i < database.getAllCalbit().size(); i++) {
+                if (database.getAllCalbit().get(i).getReminders() != null) {
+                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
+                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                        // Using timestamp to check the notification, 100% accurate
+                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
+                            eventName = database.getAllCalbit().get(i).getSummary();
+
+                            // Calbit currentCalbit = xxx
+                            Boolean isAllDay  = database.getAllCalbit().get(i).getLegitAllDay();
+
+                            String startDateObj = isAllDay
+                                    ? DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getStart().getDate()) + " at:"  + DateUtil.HHmm(database.getAllCalbit().get(i).getStart().getDate())
+                                    : DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getStart().getDateTime()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getStart().getDateTime());
+
+
+                            String endDateObj = isAllDay
+                                    ? DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getEnd().getDate()) + " at:"  + DateUtil.HHmm(database.getAllCalbit().get(i).getEnd().getDate())
+                                    : DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getEnd().getDateTime()) + " at:"  + DateUtil.HHmm(database.getAllCalbit().get(i).getEnd().getDateTime());
+
+
+                            eventStart = startDateObj;
+                            eventEnd = endDateObj;
+
+                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
+
+                            Intent intent = new Intent(NavigationBar.this, Notification.class);
+                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
+
+                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -647,102 +694,24 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     }
 
     @Override
-    protected void onRestart() {
-        super.onRestart();
+    protected void onStop() {
+        super.onStop();
 
-        // To check the current calendar is today, then populate the notification
-        Calendar current = Calendar.getInstance();
-
-        if(database.getAllCalbit() != null) {
-            for(int i = 0; i < database.getAllCalbit().size(); i++) {
-                if (database.getAllCalbit().get(i).getReminders() != null) {
-                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
-                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                        // Using timestamp to check the notification, 100% accurate
-                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
-                            eventName = database.getAllCalbit().get(i).getSummary();
-                            eventStart = database.getAllCalbit().get(i).getStart();
-                            eventEnd = database.getAllCalbit().get(i).getEnd();
-
-                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                            Intent intent = new Intent(NavigationBar.this, Notification.class);
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
-
-                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
-                        }
-                    }
-                }
-            }
-        }
+        notificationAlert();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onPause() {
+        super.onPause();
 
-        // To check the current calendar is today, then populate the notification
-        Calendar current = Calendar.getInstance();
-
-        if(database.getAllCalbit() != null) {
-            for(int i = 0; i < database.getAllCalbit().size(); i++) {
-                if (database.getAllCalbit().get(i).getReminders() != null) {
-                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
-                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                        // Using timestamp to check the notification, 100% accurate
-                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
-                            eventName = database.getAllCalbit().get(i).getSummary();
-                            eventStart = database.getAllCalbit().get(i).getStart();
-                            eventEnd = database.getAllCalbit().get(i).getEnd();
-
-                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                            Intent intent = new Intent(NavigationBar.this, Notification.class);
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
-
-                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
-                        }
-                    }
-                }
-            }
-        }
+        notificationAlert();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        // To check the current calendar is today, then populate the notification
-        Calendar current = Calendar.getInstance();
-
-        if(database.getAllCalbit() != null) {
-            for(int i = 0; i < database.getAllCalbit().size(); i++) {
-                if (database.getAllCalbit().get(i).getReminders() != null) {
-                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
-                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                        // Using timestamp to check the notification, 100% accurate
-                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
-                            eventName = database.getAllCalbit().get(i).getSummary();
-                            eventStart = database.getAllCalbit().get(i).getStart();
-                            eventEnd = database.getAllCalbit().get(i).getEnd();
-
-                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                            Intent intent = new Intent(NavigationBar.this, Notification.class);
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
-
-                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
-                        }
-                    }
-                }
-            }
-        }
+        notificationAlert();
     }
 
     // Check the SDK_INT version to run only on Android 8.0 (API level 26) and higher,

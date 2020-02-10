@@ -35,6 +35,7 @@ import com.calbitica.app.Util.CalbiticaAPI;
 import com.calbitica.app.Util.DateUtil;
 import com.calbitica.app.Util.UserData;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
+import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,7 +61,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
     Calendar startDateTime, endDateTime, reminderDateTime; // This is the one that goes CAWrapper
 
     // Helps us format our dates later
-    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+    SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm:ss z yyyy", Locale.ENGLISH);
 
     // Helps with dynamic spinners
     ArrayAdapter<String> calendarSpinnerAdapter;
@@ -134,8 +135,12 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
         // From the plus icon from NavigationBar
         try {
-            Date startDTDate = (startDT.equals("")) ? new Date() : sdf.parse(startDT);
-            Date endDTDate = (endDT.equals("")) ? new Date() : sdf.parse(endDT);
+            Date startDTDate = (startDT.equals(""))
+                    ? new Date()
+                    : DateUtil.utcStringToLocalDate(startDT);
+            Date endDTDate = (endDT.equals(""))
+                    ? new Date()
+                    : DateUtil.utcStringToLocalDate(endDT);
 
             startDateTime.setTime(startDTDate);
             endDateTime.setTime(endDTDate);
@@ -146,7 +151,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
             endDate.setText(DateUtil.ddMMMyyyy(endDTDate));
             endTime.setText(DateUtil.HHmm(endDTDate));
 
-        } catch (java.text.ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -266,7 +271,9 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                                     reminderDateTime = Calendar.getInstance();
 
                                     reminderDateTime.set(year, month, day);
-                                    reminderDate.setText(day + "/" + (month + 1) + "/" + year);
+
+                                    Date newReminderDateTime = reminderDateTime.getTime();
+                                    reminderDate.setText(DateUtil.ddMMMyyyy(newReminderDateTime));
                                 }
                             }
                         }, year, month, dayOfMonth);
@@ -290,11 +297,11 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                                 if (reminderTime.getText() != null) {
                                     reminderDateTime = Calendar.getInstance();
 
-                                    if (minute < 10) {
-                                        reminderTime.setText(hourOfDay + ":" + "0" + minute);
-                                    } else {
-                                        reminderTime.setText(hourOfDay + ":" + minute);
-                                    }
+                                    String reminderTimeStr = (minute < 10)
+                                            ? hourOfDay + ":" + "0" + minute
+                                            : hourOfDay + ":" + minute;
+
+                                    reminderTime.setText(reminderTimeStr);
 
                                     reminderDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                     reminderDateTime.set(Calendar.MINUTE, minute);
@@ -323,7 +330,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
     public void setupCalendarSpinner() {
         // should delegate to a ui thread
-        CAWrapper.getAllCalendars(this, WeekSaveEvent.this);
+        CAWrapper.getAllCalendars(getApplicationContext(), WeekSaveEvent.this);
         calendarSpinnerAdapter = new ArrayAdapter<String>(WeekSaveEvent.this, R.layout.spinner_item,
                 calbiticaCalendarSummaries);
 
@@ -387,7 +394,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                                     ? R.color.gray_3
                                     : R.color.blue_3;
                             newWVE.setColor(getResources().getColor(newColor, null));
-
                             WeekFragment.mNewEvents.set(newWVEIndex, newWVE);
 
                         } else {
@@ -412,6 +418,8 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
                         BaseCalendarEvent allEvent = new BaseCalendarEvent(title.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
                         allEvent.setId(newWVEIndex);
+//                        TODO: Set color
+                        // TODO: accommodate edit
                         AgendaFragment.eventList.add(allEvent);
 
                         // Schedule CalbiticaCalendar will need to re-render the events as well
@@ -422,18 +430,8 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 }
 
                 // Make Post Request to Calbitica API
-                HashMap<String, String> calbit = new HashMap<>();
+                String titleStr = title.getText().toString();
                 Boolean isAllDay = allDaySwitch.isChecked();
-                String startDateStr = isAllDay ? DateUtil.localToUTCAllDay(startDateTime.getTime())
-                        : DateUtil.localToUTC(startDateTime.getTime());
-                String endDateStr = isAllDay ? DateUtil.localToUTCAllDay(endDateTime.getTime())
-                        : DateUtil.localToUTC(endDateTime.getTime());
-
-                calbit.put("start", startDateStr);
-                calbit.put("end", endDateStr);
-
-                calbit.put("allDay", "" + isAllDay); // TODO: don't hardcode this please
-
                 String calendarSummary = calendarSpinner.getSelectedItem().toString();
                 String calendarID = "";
                 if(calbiticaCalendarsList != null) {
@@ -445,14 +443,26 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                     }
                 }
 
-                calbit.put("calendarID", calendarID); // TODO: don't hardcode this please
+                HashMap<String, String> calbit = new HashMap<>();
+                String startDateStr = isAllDay ? DateUtil.localToUTCAllDay(startDateTime.getTime())
+                        : DateUtil.localToUTC(startDateTime.getTime());
+                String endDateStr = isAllDay ? DateUtil.localToUTCAllDay(endDateTime.getTime())
+                        : DateUtil.localToUTC(endDateTime.getTime());
+
+                calbit.put("start", startDateStr);
+                calbit.put("end", endDateStr);
+
+                calbit.put("allDay", "" + isAllDay);
+                calbit.put("calendarID", calendarID);
                 calbit.put("display", "true");
                 calbit.put("isDump", "false");
-                calbit.put("title", title.getText().toString());
+                calbit.put("title", titleStr);
 
                 // TODO: Save reminders
-                // TODO: Add location
-
+                if(reminderDateTime != null) {
+                    String[] reminders = { DateUtil.localToUTCAllDay(reminderDateTime.getTime()) };
+                    calbit.put("reminders", new Gson().toJson(reminders));
+                }
                 saveCalbit(calbit);
             }
         }
@@ -467,7 +477,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
     // API calls
     public void saveCalbit(HashMap<String, String> calbit) {
         // Retrieve the JWT
-        String oldJWT = UserData.get("jwt", WeekSaveEvent.this);
+        String oldJWT = UserData.get("jwt", getApplicationContext());
 
         // Build the API Call
         Boolean isEditing = (_id != null && !_id.equals(""));
@@ -482,13 +492,12 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 if (!response.isSuccessful()) {
                     try {
                         System.out.println(calbit);
-                        Log.d("SAVE CALL", response.errorBody().string());
+                        Toast.makeText(WeekSaveEvent.this, "We don't support all-day events for now, sorry!", Toast.LENGTH_SHORT).show();
                         return;
                     } catch (Exception e) {
                     }
                 }
                 try {
-
                     HashMap<String, Object> responseData = response.body();
                     // Handle new JWT returned, if any
                     if (responseData.containsKey("jwt")) {
@@ -496,7 +505,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                         HashMap<String, String> user = new HashMap<>();
                         user.put("jwt", responseData.get("jwt").toString());
 
-                        UserData.save(user, WeekSaveEvent.this);
+                        UserData.save(user, getApplicationContext());
                     }
 
                     // Close this activity!
@@ -507,6 +516,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 } catch (Exception e) {
                     Log.d("API JWT FAILED", e.getLocalizedMessage());
                     setResult(Activity.RESULT_CANCELED);
+                    finish();
                 }
             }
 
