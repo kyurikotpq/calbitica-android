@@ -31,14 +31,11 @@ import android.widget.Toast;
 import com.alamkanak.weekview.WeekViewEvent;
 import com.calbitica.app.Agenda.AgendaFragment;
 import com.calbitica.app.Util.CAWrapper;
+import com.calbitica.app.Util.CalListResultInterface;
 import com.calbitica.app.Util.CalbiticaAPI;
 import com.calbitica.app.Util.DateUtil;
 import com.calbitica.app.Util.UserData;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
-import com.google.gson.Gson;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -66,7 +63,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
     // Helps with dynamic spinners
     ArrayAdapter<String> calendarSpinnerAdapter;
     List<CalbiticaCalendar> calbiticaCalendarsList;
-    String existingCalendarID = "";
+    String calendarID = "";
     List<String> calbiticaCalendarSummaries = new ArrayList<>();
 
     // Keeps track of Event's Mongo ID
@@ -89,6 +86,10 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
         calbiticaCalendarSummaries.add("");
 
+        // Setup other global vars
+        startDateTime = Calendar.getInstance();
+        endDateTime = Calendar.getInstance();
+
         // Default the text will be Calbitica Android, by setting as empty for custom
         // TextView to be shown instead
         navTitleTV = findViewById(R.id.nav_Title);
@@ -101,6 +102,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         close.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                setResult(Activity.RESULT_CANCELED);
                 finish();
             }
         });
@@ -110,18 +112,23 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         // Get info from WeekFragment
         Bundle bundle = getIntent().getExtras();
 
-
         // Check if this is a create or update
         _id = bundle.getString("id");
         wveIndex = bundle.getLong("wveIndex");
 
         if (_id != null && !_id.equals("")) {
-            System.out.println("mongo id " + _id);
             // EDITING: populate the views accordingly
             title.setText(bundle.getString("title"));
             allDaySwitch.setChecked(bundle.getBoolean("legitAllDay"));
-//            existingCalendarID = bundle.getString("calendarID");
-//          reminderDateTime = bundle.getString("reminderDateTime", mongoReminder);
+
+            String reminderStr = bundle.getString("reminderDateTime");
+            if (reminderStr != null && !reminderStr.equals("")) {
+                Date reminderDateObj = DateUtil.utcStringToLocalDate(reminderStr);
+                reminderDateTime = Calendar.getInstance();
+                reminderDateTime.setTime(reminderDateObj);
+            }
+
+            calendarID = bundle.getString("calendarID");
             navTitleTV.setText("Edit Event");
         } else {
             reminderDateTime = null;
@@ -130,8 +137,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
         String startDT = bundle.getString("startDateTime");
         String endDT = bundle.getString("endDateTime");
-        startDateTime = Calendar.getInstance();
-        endDateTime = Calendar.getInstance();
 
         // From the plus icon from NavigationBar
         try {
@@ -268,8 +273,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                             @Override
                             public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                                 if (reminderDate.getText() != null) {
-                                    reminderDateTime = Calendar.getInstance();
-
                                     reminderDateTime.set(year, month, day);
 
                                     Date newReminderDateTime = reminderDateTime.getTime();
@@ -343,10 +346,18 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         calbiticaCalendarsList = calbiticaCalendars;
         calbiticaCalendarSummaries.clear();
 
-        for (CalbiticaCalendar c : calbiticaCalendars)
+        int index = 0;
+        for (int i = 0; i < calbiticaCalendars.size(); i++) {
+            CalbiticaCalendar c = calbiticaCalendars.get(i);
+
+            if (c.getGoogleID().equals(calendarID))
+                index = i;
+
             calbiticaCalendarSummaries.add(c.getSummary());
+        }
 
         calendarSpinnerAdapter.notifyDataSetChanged();
+        calendarSpinner.setSelection(index);
     }
 
     // Right Menu Bar Item: Create the 'container'/space
@@ -373,11 +384,12 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 // Setting the valid mongoId for the reference with the database
                 boolean isEditing = (_id != null && !_id.equals("") && wveIndex != -1);
 
+                // Prevent spam
+                item.setEnabled(false);
+
+                Toast.makeText(WeekSaveEvent.this, "Saving your event...", Toast.LENGTH_SHORT).show();
 
                 if (NavigationBar.selectedPages == "nav_week") {
-                    System.out.println("INDEX: " + wveIndex);
-                    System.out.println("INDEX: " + WeekFragment.mNewEvents.size());
-                    System.out.println("INDEX: " + WeekFragment.listOfCalbits.size());
                     int newWVEIndex = isEditing
                             ? (int) wveIndex
                             : WeekFragment.mNewEvents.size();
@@ -403,7 +415,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                         }
 
                         // Refresh the week view. onMonthChange will be called again.
-                        WeekFragment.weekView.notifyDatasetChanged();
+//                        WeekFragment.weekView.notifyDatasetChanged();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -418,12 +430,10 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
                         BaseCalendarEvent allEvent = new BaseCalendarEvent(title.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
                         allEvent.setId(newWVEIndex);
-//                        TODO: Set color
-                        // TODO: accommodate edit
                         AgendaFragment.eventList.add(allEvent);
 
                         // Schedule CalbiticaCalendar will need to re-render the events as well
-                        AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
+//                        AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -434,7 +444,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 Boolean isAllDay = allDaySwitch.isChecked();
                 String calendarSummary = calendarSpinner.getSelectedItem().toString();
                 String calendarID = "";
-                if(calbiticaCalendarsList != null) {
+                if (calbiticaCalendarsList != null) {
                     for (CalbiticaCalendar c : calbiticaCalendarsList) {
                         if (c.getSummary().equals(calendarSummary)) {
                             calendarID = c.getGoogleID();
@@ -450,7 +460,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 String endDateStr = isAllDay ? DateUtil.localToUTCAllDay(endDateTime.getTime())
                         : DateUtil.localToUTC(endDateTime.getTime());
 
-                if(isAllDay && startDateStr.equals(endDateStr)) {
+                if (isAllDay && startDateStr.equals(endDateStr)) {
                     endDateTime.add(Calendar.DATE, 1);
                     endDateStr = DateUtil.localToUTCAllDay(endDateTime.getTime());
                 }
@@ -464,11 +474,11 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 calbit.put("isDump", "false");
                 calbit.put("title", titleStr);
 
-                // TODO: Save reminders
-                if(reminderDateTime != null) {
-                    String[] reminders = { DateUtil.localToUTC(reminderDateTime.getTime()) };
-                    calbit.put("reminders", new Gson().toJson(reminders));
+                if (reminderDateTime != null) {
+                    String reminders = DateUtil.localToUTC(reminderDateTime.getTime());
+                    calbit.put("reminders", reminders);
                 }
+
                 saveCalbit(calbit);
             }
         }
@@ -476,9 +486,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         return super.onOptionsItemSelected(item);
 
     }
-
-    // TODO: disable time if on all day
-
 
     // API calls
     public void saveCalbit(HashMap<String, String> calbit) {
@@ -497,7 +504,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
             public void onResponse(Call<HashMap<String, Object>> call, Response<HashMap<String, Object>> response) {
                 if (!response.isSuccessful()) {
                     try {
-                        System.out.println(calbit);
                         Toast.makeText(WeekSaveEvent.this, "We don't support all-day events for now, sorry!", Toast.LENGTH_SHORT).show();
                         return;
                     } catch (Exception e) {
@@ -528,6 +534,8 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
             @Override
             public void onFailure(Call<HashMap<String, Object>> call, Throwable t) {
+                Toast.makeText(WeekSaveEvent.this, "Check your internet connection and try again.",
+                        Toast.LENGTH_SHORT).show();
                 Log.d("Create event FAILED", call.toString());
                 Log.d("Create event MORE DETAILS", t.getLocalizedMessage());
             }

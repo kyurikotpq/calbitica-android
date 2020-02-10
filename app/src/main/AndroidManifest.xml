@@ -40,6 +40,6 @@
         <activity android:name="com.calbitica.app.Week.WeekSaveEvent" />
         <!-- WeekFragment EditEvent Page-->
 
-        <receiver android:name=".Notification.Notification"/>
+        <receiver android:name=".Notification.Notification" android:enabled="true"/>
     </application>
 </manifest>

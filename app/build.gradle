@@ -1,5 +1,5 @@
 apply plugin: 'com.android.application'
-// For Firebase
+// For Google sign in
 apply plugin: 'com.google.gms.google-services'
 
 android {

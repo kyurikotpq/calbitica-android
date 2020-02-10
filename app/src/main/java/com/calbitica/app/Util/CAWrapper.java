@@ -8,10 +8,7 @@ import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.Models.Calendars.CalbiticaCalendar;
 import com.calbitica.app.Models.Calendars.Calendars;
-import com.calbitica.app.Week.CalListResultInterface;
-import com.calbitica.app.Week.CalbitResultInterface;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -67,7 +64,6 @@ public class CAWrapper {
     public static void getAllCalbits(Context mcontext, CalbitResultInterface listenerClass) {
         // Retrieve the JWT
         String jwt = UserData.get("jwt", mcontext);
-        System.out.println(jwt);
 
         // Build the API Call
         Call<Calbits> apiCall = CalbiticaAPI.getInstance(jwt).calbit().getAllCalbits();

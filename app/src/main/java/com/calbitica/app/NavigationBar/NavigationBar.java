@@ -11,9 +11,7 @@ import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
 import com.bumptech.glide.Glide;
-import com.calbitica.app.Database.Database;
-import com.calbitica.app.Models.Calbit.EndDateTime;
-import com.calbitica.app.Models.Calbit.StartDateTime;
+import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Profile.ProfileFragment;
 import com.calbitica.app.SyncCalendars.SyncCalendarsFragment;
 import com.calbitica.app.About.AboutFragment;
@@ -26,6 +24,7 @@ import com.calbitica.app.Settings.SettingsFragment;
 import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.Util.DateUtil;
 import com.calbitica.app.Util.UserData;
+import com.calbitica.app.Util.CalbitResultInterface;
 import com.calbitica.app.Week.WeekFragment;
 
 import android.app.Activity;
@@ -52,13 +51,16 @@ import android.widget.Toast;
 import com.calbitica.app.Week.WeekSaveEvent;
 import com.google.android.material.navigation.NavigationView;
 
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
-public class NavigationBar extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class NavigationBar extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
+        CalbitResultInterface {
     public static DrawerLayout drawerLayout;                        // Relate to all the NavigationBar stuff
     private boolean arrowTrigger = false;                           // When pressed the Middle NavigationBar arrow
     public static TextView title;                                   // Middle NavigationBar
@@ -72,7 +74,6 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     public static MenuItem nav_today, nav_refresh, nav_add;         // To use for respective pages(show/not show)
     private CalendarView calendarView;                              // To hide or show for display of nav small calendar
     public static String acctName;                                  // To pass into database for each different account
-    private Database database;                                      // To check the event list with our database (notification)
     public static String eventName;                                 // To display info to the notification alert
     public static String eventStart;                                // To display info to the notification alert
     public static String eventEnd;                                  // To display info to the notification alert
@@ -190,16 +191,6 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     e.printStackTrace();
                 }
                 return true;
-            }
-        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-            @Override
-            public void onResult(Boolean result) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        notificationAlert();
-                    }
-                }, 3000);
             }
         }).create().start();
     }
@@ -356,25 +347,25 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        System.out.print("ON ACTIVITy RESULT " + requestCode);
-        switch (requestCode) {
-            case (122): {
-                if (resultCode == Activity.RESULT_OK) {
-                    Fragment currentFragment = getSupportFragmentManager()
-                            .findFragmentById(R.id.fragment_container);
 
-                    AgendaFragment afInstance = null;
-                    WeekFragment wfInstance = null;
-                    if (currentFragment instanceof WeekFragment) {
-                        wfInstance = (WeekFragment) currentFragment;
-                        CAWrapper.getAllCalbits(getApplicationContext(), wfInstance);
-                    } else if (currentFragment instanceof AgendaFragment) {
-                        afInstance = (AgendaFragment) currentFragment;
-                        CAWrapper.getAllCalbits(getApplicationContext(), afInstance);
-                    }
-                }
-                break;
-            }
+        Fragment currentFragment = getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_container);
+
+        AgendaFragment afInstance = null;
+        WeekFragment wfInstance = null;
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (currentFragment instanceof WeekFragment) {
+            wfInstance = (WeekFragment) currentFragment;
+            CAWrapper.getAllCalbits(getApplicationContext(), wfInstance);
+        } else if (currentFragment instanceof AgendaFragment) {
+            afInstance = (AgendaFragment) currentFragment;
+            CAWrapper.getAllCalbits(getApplicationContext(), afInstance);
         }
     }
 
@@ -425,12 +416,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                         @Override
                         public Boolean doAsync() {
-                            // Always clear the whole of the event list upon click
-                            WeekFragment.mNewEvents = new ArrayList<>();
-
                             // Get the event from Calbitica
-                            Database database = new Database(NavigationBar.this);
-                            database.getAllCalbitAndRenderOnWeek();
+                            CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
 
                             try {
                                 Thread.sleep(3000);
@@ -443,7 +430,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                             .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
                                 @Override
                                 public void onResult(Boolean result) {
-                                    WeekFragment.weekView.notifyDatasetChanged();
+                                    // Prevent refresh spamming
                                     nav_refresh.setEnabled(true);
                                 }
                             }).create().start();
@@ -456,14 +443,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                         @Override
                         public Boolean doAsync() {
-                            // Always clear the whole of the event list upon click
-                            AgendaFragment.eventList = new ArrayList<>();
-
                             // Get the event from Calbitica
-                            // Based on the Agenda Calendar format, and return back the list
-                            // TODO
-                            Database database = new Database(NavigationBar.this);
-                            database.getAllCalbitAndRenderOnAgenda(AgendaFragment.eventList);
+                            CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
 
                             try {
                                 Thread.sleep(3000);
@@ -476,9 +457,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                             .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
                                 @Override
                                 public void onResult(Boolean result) {
-                                    // Reload the agenda calendar
-                                    AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate,
-                                            Locale.getDefault(), AgendaFragment.calendarPickerController);
+                                    // Prevent spamming
                                     nav_refresh.setEnabled(true);
                                 }
                             }).create().start();
@@ -493,7 +472,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 data.putString("endDateTime", "");
                 intent.putExtras(data);
 
-                startActivityForResult(intent, 122);
+                startActivityForResult(intent, 121);
                 break;
         }
 
@@ -637,86 +616,80 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         }
     }
 
-    protected void notificationAlert() {
+    protected void notificationAlert(List<Calbit> calbitList) {
+        if (calbitList == null || calbitList.size() == 0) return;
+
         // To check the current calendar is today, then populate the notification
         Calendar current = Calendar.getInstance();
 
-        if (database.getAllCalbit() != null) {
-            for (int i = 0; i < database.getAllCalbit().size(); i++) {
-                if (database.getAllCalbit().get(i).getReminders() != null) {
-                    for (int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
-                        System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
+        // lock in the current time
+        final long currentTimestamp = current.getTime().getTime();
 
-                        // Using timestamp to check the notification, 100% accurate
-                        if (database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
-                            eventName = database.getAllCalbit().get(i).getSummary();
+        for (int i = 0; i < calbitList.size(); i++) {
+            Calbit currentCalbit = calbitList.get(i);
+            if (currentCalbit.getReminders() != null) {
 
-                            // Calbit currentCalbit = xxx
-                            Boolean isAllDay = database.getAllCalbit().get(i).getLegitAllDay();
+                for (int r = 0; r < currentCalbit.getReminders().size(); r++) {
+                    // Using timestamp to check the notification, 100% accurate
+                    long reminderTimestamp = currentCalbit.getReminders().get(r).getTime();
+                    if (reminderTimestamp >= currentTimestamp) {
+                        eventName = currentCalbit.getSummary();
 
-                            String startDateObj = isAllDay
-                                    ? DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getStart().getDate()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getStart().getDate())
-                                    : DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getStart().getDateTime()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getStart().getDateTime());
+                        // Calbit currentCalbit = xxx
+                        Boolean isAllDay = currentCalbit.getLegitAllDay();
+
+                        String startDateObj = isAllDay
+                                ? DateUtil.ddMMMyyyy(currentCalbit.getStart().getDate()) + " at:" + DateUtil.HHmm(currentCalbit.getStart().getDate())
+                                : DateUtil.ddMMMyyyy(currentCalbit.getStart().getDateTime()) + " at:" + DateUtil.HHmm(currentCalbit.getStart().getDateTime());
+
+                        String endDateObj = isAllDay
+                                ? DateUtil.ddMMMyyyy(currentCalbit.getEnd().getDate()) + " at:" + DateUtil.HHmm(currentCalbit.getEnd().getDate())
+                                : DateUtil.ddMMMyyyy(currentCalbit.getEnd().getDateTime()) + " at:" + DateUtil.HHmm(currentCalbit.getEnd().getDateTime());
 
 
-                            String endDateObj = isAllDay
-                                    ? DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getEnd().getDate()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getEnd().getDate())
-                                    : DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getEnd().getDateTime()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getEnd().getDateTime());
+                        eventStart = startDateObj;
+                        eventEnd = endDateObj;
 
+                        current.setTimeInMillis(reminderTimestamp);
 
-                            eventStart = startDateObj;
-                            eventEnd = endDateObj;
+                        Intent intent = new Intent(NavigationBar.this, Notification.class);
+                        PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
 
-                            current.setTimeInMillis(database.getAllCalbit().get(i).getReminders().get(r).getTime());
-
-                            Intent intent = new Intent(NavigationBar.this, Notification.class);
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
-
-                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                            alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
-                        }
+                        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
                     }
                 }
             }
         }
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        database = new Database(NavigationBar.this);
-        database.getAllCalbit();
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (database.getAllCalbit() == null) {
-                    Toast.makeText(NavigationBar.this, "Your JWT have expired, Please logout, login and close the app", Toast.LENGTH_LONG).show();
-                }
-            }
-        }, 3000);
+        CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
 
-        notificationAlert();
+        notificationAlert(null);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        notificationAlert();
+        notificationAlert(null);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        notificationAlert();
+        notificationAlert(null);
     }
 
     // Check the SDK_INT version to run only on Android 8.0 (API level 26) and higher,
@@ -733,4 +706,26 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
             manager.createNotificationChannel(notificationChannel);
         }
     }
+
+    // For rendering on Week / Agenda
+    // and notifications
+    @Override
+    public void onCalbitListResult(List<Calbit> calbitList) {
+        if (calbitList.isEmpty()) {
+            Toast.makeText(NavigationBar.this,
+                    "Your session has expired. Please login again.",
+                    Toast.LENGTH_LONG).show();
+        } else {
+            // run notifications
+            notificationAlert(calbitList);
+        }
+    }
+
+    @Override
+    public void onCalbitCompletionFailure() {
+        Toast.makeText(NavigationBar.this,
+                "Something went wrong. Check your internet and try again.",
+                Toast.LENGTH_LONG).show();
+    }
+
 }

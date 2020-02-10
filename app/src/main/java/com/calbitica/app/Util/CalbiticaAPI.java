@@ -21,9 +21,9 @@ public class CalbiticaAPI {
     private static final String BASE_URL = "https://app.kyurikotpq.com/calbitica/api/";
 
     // HTTP interceptor - add header to all requests
-    private static OkHttpClient okHttpClient;
-
-    private static CalbiticaAPI instance = null;
+    private OkHttpClient okHttpClient;
+    private String currentJWT = "";
+    private static CalbiticaAPI instance = new CalbiticaAPI();
 
     // Interfaces
     private AuthInterface authInterface = null;
@@ -32,7 +32,9 @@ public class CalbiticaAPI {
     private CalendarsInterface calendarsInterface = null;
     private HabiticaInterface habiticaInterface = null;
 
-    private CalbiticaAPI(String jwt) {
+    private CalbiticaAPI() { rebuildInterceptor(""); }
+    private void rebuildInterceptor(String jwt) {
+        this.currentJWT = jwt;
         okHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(new Interceptor() {
                     @Override
@@ -120,9 +122,14 @@ public class CalbiticaAPI {
         habiticaInterface = retrofit.create(HabiticaInterface.class);
     }
 
+    private boolean jwtHasChanged(String newJWT) {
+        return !newJWT.equals(this.currentJWT);
+    }
+
     public static CalbiticaAPI getInstance(String jwt) {
-        if (instance == null)
-            instance = new CalbiticaAPI(jwt);
+        if (instance.jwtHasChanged(jwt)) {
+            instance.rebuildInterceptor(jwt);
+        }
 
         return instance;
     }

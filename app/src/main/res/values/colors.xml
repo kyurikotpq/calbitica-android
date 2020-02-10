@@ -3,7 +3,7 @@
     <!--    Default color when created-->
     <color name="colorPrimary">#44D3FF</color>
     <color name="colorPrimaryDark">#000000</color>
-    <color name="colorAccent">#0067AE</color>
+    <color name="colorAccent">#F05C61</color>
 
     <!-- +++++++++++++++++ Our Color here +++++++++++++++++ -->
     <!--The higher the number,-->

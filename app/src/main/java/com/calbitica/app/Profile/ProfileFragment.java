@@ -230,7 +230,6 @@ public class ProfileFragment extends Fragment {
 
                     // Update the button! + toast
                     if(responseData.getData().containsKey("sleep")) {
-                        System.out.println("WE GOT SLEEP");
                         HashMap<String, Object> dataHM = responseData.getData();
                         String msg = dataHM.get("message").toString();
                         isSleeping = (boolean) dataHM.get("sleep");
@@ -269,8 +268,6 @@ public class ProfileFragment extends Fragment {
                     Log.d("Quest Call: ", response.toString());
                     return;
                 }
-
-                System.out.println(("Quest Response: " + response.message()));
             }
 
             @Override

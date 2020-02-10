@@ -2,6 +2,7 @@ package com.calbitica.app.Week;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.RectF;
 import android.os.Bundle;
@@ -35,23 +36,21 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
-import com.calbitica.app.Database.Database;
-import com.calbitica.app.Models.Calbit.Calbits;
 import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Models.Calbit.TaskCompleted;
 import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
-import com.calbitica.app.Util.CAWrapper;
+import com.calbitica.app.Util.CalbitResultInterface;
 import com.calbitica.app.Util.DateUtil;
 
 public class WeekFragment extends Fragment implements CalbitResultInterface {
+    public static Context ctx;                                                  // For use by renderEevent()
     public static WeekView weekView;                                            // Mostly used from NavigationBar refresh, etc...(Week Calender)
     public static ArrayList<WeekViewEvent> mNewEvents = new ArrayList<>();      // Mostly used from NavigationBar refresh, etc...(Event in Week CalbiticaCalendar)
     public static boolean weekMonthCheck;                                       // Ensure the weekView is loaded finished
     public static List<Calbit> listOfCalbits;               // Temp storage of calbit list from API
     private String currentSelectedMongoID = null;                                              // Particular events(Mainly for edit and delete)
-    private String mongoReminder = null;                                        // Particular events(Pass the bundle to the edit event)
 
     // Elements in our dialog
     CheckBox check;
@@ -77,11 +76,14 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        System.out.print("ON ACTIVITy RESULT " + requestCode);
-        switch(requestCode) {
-            case (122) : {
+        switch (requestCode) {
+            case (122): {
                 if (resultCode == Activity.RESULT_OK) {
-                    // TODO Extract the data returned from the child Activity.
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     CAWrapper.getAllCalbits(getActivity().getApplicationContext(), WeekFragment.this);
                 }
                 break;
@@ -92,6 +94,8 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        ctx = getContext();
 
         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
             @Override
@@ -190,7 +194,7 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                         Calbit clickedOnCalbit = listOfCalbits.get(wveIndex);
 
                         currentSelectedMongoID = clickedOnCalbit.get_id().toString();
-                        mongoReminder = (clickedOnCalbit.getReminders() != null)
+                        String mongoReminder = (clickedOnCalbit.getReminders() != null)
                                 ? clickedOnCalbit.getReminders().get(0).toString()
                                 : "";
 
@@ -199,7 +203,6 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                         } else {
                             check.setChecked(false);
                         }
-
 
                         close.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -240,7 +243,7 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                                 data.putString("id", currentSelectedMongoID);
                                 data.putLong("wveIndex", event.getId());
                                 data.putString("title", event.getName());
-//                                        data.putString("calendarID", event.getCalendar());
+                                data.putString("calendarID", clickedOnCalbit.getCalendarID());
 
                                 data.putString("startDateTime", DateUtil.localToUTC(event.getStartTime().getTime()));
                                 data.putString("endDateTime", DateUtil.localToUTC(event.getEndTime().getTime()));
@@ -249,7 +252,7 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                                 data.putBoolean("legitAllDay", clickedOnCalbit.getAllDay());
                                 intent.putExtras(data);
 
-                                startActivity(intent);
+                                startActivityForResult(intent, 122);
                                 dialog.dismiss();
                             }
                         });
@@ -409,8 +412,6 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
         listOfCalbits.clear();
         mNewEvents.clear();
 
-        System.out.println("RENDERING CALBIT NOW");
-
         // save each calbit as a new WeekViewEvent
         for (int i = 0; i < calbitList.size(); i++) {
             Calbit currentCalbit = calbitList.get(i);
@@ -441,7 +442,7 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
             WeekViewEvent newWVE = new WeekViewEvent(i, currentCalbit.getSummary(), startDateTime, endDateTime);
 
             int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
-            newWVE.setColor(getResources().getColor(newColor, null));
+            newWVE.setColor(getActivity().getResources().getColor(newColor, null));
 
             newWVE.setAllDay(currentCalbit.getAllDay());
             mNewEvents.add(newWVE);

@@ -3,6 +3,7 @@ package com.calbitica.app.Agenda;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -28,7 +29,7 @@ import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.Util.DateUtil;
-import com.calbitica.app.Week.CalbitResultInterface;
+import com.calbitica.app.Util.CalbitResultInterface;
 import com.calbitica.app.Week.WeekSaveEvent;
 import com.github.tibolte.agendacalendarview.AgendaCalendarView;
 import com.github.tibolte.agendacalendarview.CalendarPickerController;
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class AgendaFragment extends Fragment implements CalbitResultInterface {
+    public static Context ctx;                   // For use by renderEvent()
     public static AgendaCalendarView agendaView; // Mainly modify from the Refresh, etc
     public static List<CalendarEvent> eventList; // The events based on Agenda Calendar, but 1 more phrase on
     // BaseCalendarEvent as a child
@@ -73,11 +75,9 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        System.out.println("ON ACTIVITy RESULT IN AGENDA " + requestCode);
         switch (requestCode) {
             case (122): {
                 if (resultCode == Activity.RESULT_OK) {
-                    // TODO Extract the data returned from the child Activity.
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
@@ -97,6 +97,8 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        ctx = getContext();
 
         // Get the events from Calbitica
         calendarPickerController = new CalendarPickerController() {
@@ -178,7 +180,7 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
                                     }
 
                                     mongoReminder = (currentCalbit.getReminders() != null)
-                                            ? currentCalbit.getReminders().toString()
+                                            ? currentCalbit.getReminders().get(0).toString()
                                             : "";
 
                                     // To allow to run Toast in the async method...
@@ -251,6 +253,7 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
                                     Bundle calendarData = new Bundle();
                                     calendarData.putString("id", currentSelectedMongoID);
                                     calendarData.putString("title", event.getTitle());
+                                    calendarData.putString("calendarID", currentCalbit.getCalendarID());
 
                                     calendarData.putString("startDateTime",
                                             DateUtil.localToUTC(event.getStartTime().getTime()));
@@ -279,6 +282,11 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
                                             eventList.remove(i); // remove only 1
                                             listOfCalbits.removeIf(c -> c.get_id().equals(currentSelectedMongoID));
                                         }
+                                    }
+
+                                    // reset indices
+                                    for (int i = 0; i < eventList.size(); i++) {
+                                        eventList.get(i).setId(i);
                                     }
 
                                     // Refresh the agenda calendar view
@@ -421,24 +429,18 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
     public void onCalbitListResult(List<Calbit> calbitList) {
         listOfCalbits.clear();
         eventList.clear();
-        System.out.println("LIST OF CALBITS IN ALLCALBITINFO " + calbitList.size());
 
         for (int i = 0; i < calbitList.size(); i++) {
             Calbit currentCalbit = calbitList.get(i);
-            System.out.println("LIST OF CALBITS IN ALLCALBITINFO " + currentCalbit.getSummary());
+
             // Declare the necessary fields into Week View Calendar
             Calendar startDateTime = Calendar.getInstance();
             Calendar endDateTime = Calendar.getInstance();
-
-            // This format is a requirement for events to render correctly
-            SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd, HH:mm:ss z yyyy", Locale.ENGLISH);
 
             try {
                 Date startDateObj = currentCalbit.getLegitAllDay()
                         ? currentCalbit.getStart().getDate()
                         : currentCalbit.getStart().getDateTime();
-
-                System.out.println(startDateObj);
 
                 startDateTime.setTime(startDateObj);
 
@@ -454,7 +456,7 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
             // Based on the Agenda Calendar format, and return back the list
             // Auto-configure the task completion of color and checked according to calbitica
             int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
-            int resourceColor = getResources().getColor(newColor, null);
+            int resourceColor = ctx.getResources().getColor(newColor, null);
 
             BaseCalendarEvent allEvent = new BaseCalendarEvent(
                     currentCalbit.getSummary(), "", "",
@@ -469,7 +471,6 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
 
         agendaView.init(eventList, minDate, maxDate,
                 Locale.getDefault(), calendarPickerController);
-
     }
 
     @Override

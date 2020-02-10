@@ -26,8 +26,9 @@ public class Notification extends BroadcastReceiver {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Calbitica")
                 .setSmallIcon(R.drawable.favicon)
                 .setContentTitle(eventName)
+                .setContentText(eventDateTime)
                 .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(eventDateTime)
+                        .bigText(eventDateTime) // expandable notification
                 )
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 

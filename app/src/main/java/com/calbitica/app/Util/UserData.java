@@ -39,7 +39,9 @@ public class UserData {
         SharedPreferences sharedPreferences = context.getSharedPreferences("user", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         try {
-            editor.clear();
+            editor.remove("jwt");
+            editor.remove("thumbnail");
+            editor.remove("displayName");
             editor.commit();
         } catch (Exception e) {
             successful = false;
