@@ -79,8 +79,6 @@ public class SignIn extends AppCompatActivity implements ConnectivityReceiver.Co
             // Then store the JWT in sharedPreferences
             String authCode = account.getServerAuthCode();
 
-            System.out.println("authCode: " + authCode);
-
             // very bad typing, I'm sorry
             HashMap<String, String> codeObj = new HashMap<>();
             codeObj.put("code", authCode);

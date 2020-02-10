@@ -40,7 +40,7 @@ public class UserData {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         try {
             editor.clear();
-            editor.apply();
+            editor.commit();
         } catch (Exception e) {
             successful = false;
         }

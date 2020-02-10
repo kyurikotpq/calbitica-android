@@ -444,10 +444,16 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 }
 
                 HashMap<String, String> calbit = new HashMap<>();
+
                 String startDateStr = isAllDay ? DateUtil.localToUTCAllDay(startDateTime.getTime())
                         : DateUtil.localToUTC(startDateTime.getTime());
                 String endDateStr = isAllDay ? DateUtil.localToUTCAllDay(endDateTime.getTime())
                         : DateUtil.localToUTC(endDateTime.getTime());
+
+                if(isAllDay && startDateStr.equals(endDateStr)) {
+                    endDateTime.add(Calendar.DATE, 1);
+                    endDateStr = DateUtil.localToUTCAllDay(endDateTime.getTime());
+                }
 
                 calbit.put("start", startDateStr);
                 calbit.put("end", endDateStr);
@@ -460,7 +466,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
                 // TODO: Save reminders
                 if(reminderDateTime != null) {
-                    String[] reminders = { DateUtil.localToUTCAllDay(reminderDateTime.getTime()) };
+                    String[] reminders = { DateUtil.localToUTC(reminderDateTime.getTime()) };
                     calbit.put("reminders", new Gson().toJson(reminders));
                 }
                 saveCalbit(calbit);

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -23,7 +22,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
 import com.arasthel.asyncjob.AsyncJob;
-import com.calbitica.app.Database.Database;
 import com.calbitica.app.Models.Calbit.Calbit;
 import com.calbitica.app.Models.Calbit.TaskCompleted;
 import com.calbitica.app.NavigationBar.NavigationBar;
@@ -31,8 +29,6 @@ import com.calbitica.app.R;
 import com.calbitica.app.Util.CAWrapper;
 import com.calbitica.app.Util.DateUtil;
 import com.calbitica.app.Week.CalbitResultInterface;
-import com.calbitica.app.Week.WeekEditEvent;
-import com.calbitica.app.Week.WeekFragment;
 import com.calbitica.app.Week.WeekSaveEvent;
 import com.github.tibolte.agendacalendarview.AgendaCalendarView;
 import com.github.tibolte.agendacalendarview.CalendarPickerController;
@@ -49,8 +45,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-
-import static com.calbitica.app.Week.WeekFragment.listOfCalbits;
 
 public class AgendaFragment extends Fragment implements CalbitResultInterface {
     public static AgendaCalendarView agendaView; // Mainly modify from the Refresh, etc
@@ -264,6 +258,7 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
                                             DateUtil.localToUTC(event.getEndTime().getTime()));
 
                                     calendarData.putString("reminderDateTime", mongoReminder);
+                                    calendarData.putBoolean("legitAllDay", currentCalbit.getAllDay());
                                     intent.putExtras(calendarData);
 
                                     startActivityForResult(intent, 122);

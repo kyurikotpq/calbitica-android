@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--    Default color when created-->
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
+    <color name="colorPrimary">#44D3FF</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#0067AE</color>
 
     <!-- +++++++++++++++++ Our Color here +++++++++++++++++ -->
     <!--The higher the number,-->
@@ -12,8 +12,6 @@
     <!--Neutrals-->
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
-    <color name="brown_1">#733426</color>
-    <color name="brown_2">#E0BFB8</color>
 
     <color name="gray_1">#333333</color>
     <color name="gray_2">#4F4F4F</color>
@@ -27,53 +25,12 @@
     <color name="blue_2">#00ABDF</color> <!--Brand Primary Color-->
     <color name="blue_3">#44D3FF</color>
 
-    <!--Teal-->
-    <color name="teal_1">#26A0AB</color>
-    <color name="teal_2">#3BCAD7</color>
-    <color name="teal_3">#3EEDF6</color>
-
     <!--Red-->
     <color name="red_1">#BB0A0A</color>
     <color name="red_2">#F23035</color>
     <color name="red_3">#F05C61</color>
 
-    <!--Yellow-->
-    <color name="yellow_1">#EE9109</color>
-    <color name="yellow_2">#FFA624</color>
+    <!-- Yellow -->
     <color name="yellow_3">#FFBE5D</color>
 
-    <!--Green-->
-    <color name="green_1">#219653</color>
-    <color name="green_2">#27AE60</color>
-    <color name="green_3">#6FCF97</color>
-
-    <!-- ++++++++++++++++++++++++ -->
-
-    <!--CalbiticaCalendar colors-->
-    <color name="c_orange_1">#E68800</color>
-    <color name="c_orange_2">#FFD699</color>
-
-    <color name="c_teal_1">#00D3E6</color>
-    <color name="c_teal_2">#99F6FF</color>
-
-    <color name="c_blue_1">#0088E6</color>
-    <color name="c_blue_2">#99D5FF</color>
-
-    <color name="c_purple_1">#8600E6</color>
-    <color name="c_purple_2">#D499FF</color>
-
-    <color name="c_dblue_1">#0009E6</color>
-    <color name="c_dblue_2">#999DFF</color>
-
-    <color name="c_pink_1">#E600AC</color>
-    <color name="c_pink_2">#FF99E6</color>
-
-    <color name="c_red_1">#E60000</color>
-    <color name="c_red_2">#FF9999</color>
-
-    <color name="c_dgreen_1">#219653</color>
-    <color name="c_dgreen_2">#ABEDC7</color>
-
-    <color name="c_green_1">#12E600</color>
-    <color name="c_green_2">#A1FF99</color>
 </resources>

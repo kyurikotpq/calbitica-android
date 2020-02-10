@@ -200,22 +200,6 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                             check.setChecked(false);
                         }
 
-//                        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-//                            @Override
-//                            public Boolean doAsync() {
-//
-//                                // Update the checkbox - needs to be done on a ui thread
-//                                getActivity().runOnUiThread(new Runnable() {
-//                                    @Override
-//                                    public void run() {
-//                                        if (clickedOnCalbit.getCompleted() != null) {
-//                                            check.setChecked(clickedOnCalbit.getCompleted().getStatus());
-//                                        } else {
-//                                            check.setChecked(false);
-//                                        }
-//                                        Toast.makeText(getContext(), "Please wait...", Toast.LENGTH_LONG).show();
-//                                    }
-//                                });
 
                         close.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -223,30 +207,6 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                                 dialog.dismiss();
                             }
                         });
-
-                        // To allow to run Toast in the async method...
-                                /*
-                                getActivity().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-//                                        check.setEnabled(false);
-                                        Toast.makeText(getContext(), "Please wait...", Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                                */
-
-//                                try {
-//                                    Thread.sleep(3000);
-//                                } catch (InterruptedException e) {
-//                                    e.printStackTrace();
-//                                }
-//
-//                                return true;
-//                            }
-//                        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-//                            @Override
-//                            public void onResult(Boolean result) {
-//                                check.setEnabled(true);
 
                         check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                             @Override
@@ -286,6 +246,7 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                                 data.putString("endDateTime", DateUtil.localToUTC(event.getEndTime().getTime()));
 
                                 data.putString("reminderDateTime", mongoReminder);
+                                data.putBoolean("legitAllDay", clickedOnCalbit.getAllDay());
                                 intent.putExtras(data);
 
                                 startActivity(intent);

@@ -210,7 +210,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         switch (menuItem.getItemId()) {
             case R.id.nav_week:
                 if (!menuItem.isChecked()) {
-                    if(WeekFragment.weekMonthCheck) {
+                    if (WeekFragment.weekMonthCheck) {
                         menuItem.setCheckable(true);
 
                         // Setting the necessary items for each respective pages
@@ -357,17 +357,18 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         System.out.print("ON ACTIVITy RESULT " + requestCode);
-        switch(requestCode) {
-            case (122) : {
+        switch (requestCode) {
+            case (122): {
                 if (resultCode == Activity.RESULT_OK) {
                     Fragment currentFragment = getSupportFragmentManager()
-                                        .findFragmentById(R.id.fragment_container);
+                            .findFragmentById(R.id.fragment_container);
 
-                    AgendaFragment afInstance = null; WeekFragment wfInstance = null;
-                    if(currentFragment instanceof WeekFragment) {
+                    AgendaFragment afInstance = null;
+                    WeekFragment wfInstance = null;
+                    if (currentFragment instanceof WeekFragment) {
                         wfInstance = (WeekFragment) currentFragment;
                         CAWrapper.getAllCalbits(getApplicationContext(), wfInstance);
-                    } else if(currentFragment instanceof AgendaFragment){
+                    } else if (currentFragment instanceof AgendaFragment) {
                         afInstance = (AgendaFragment) currentFragment;
                         CAWrapper.getAllCalbits(getApplicationContext(), afInstance);
                     }
@@ -407,7 +408,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 // Title change as well
                 SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
                 String selectedMonth = month_date.format(calendar.getTime());
-                title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
+                title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
                 // As then also pass the data into WeekFragment
                 WeekFragment fragment = WeekFragment.newInstance(calendar.getTime().toString());
@@ -418,6 +419,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 if (selectedPages == "nav_week") {
                     // Set the Week Fragment List as empty then, render from database again, also prevent to spam the button as well
                     nav_refresh.setEnabled(false);
+                    Toast.makeText(NavigationBar.this, "Retrieving events...", Toast.LENGTH_SHORT)
+                            .show();
 
                     new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                         @Override
@@ -437,17 +440,19 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                             return true;
                         }
                     })
-                    .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                        @Override
-                        public void onResult(Boolean result) {
-                            WeekFragment.weekView.notifyDatasetChanged();
-                            nav_refresh.setEnabled(true);
-                        }
-                    }).create().start();
+                            .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                                @Override
+                                public void onResult(Boolean result) {
+                                    WeekFragment.weekView.notifyDatasetChanged();
+                                    nav_refresh.setEnabled(true);
+                                }
+                            }).create().start();
                 } else if (selectedPages == "nav_agenda") {
                     // Set the Agenda Fragment List as empty then, render from database again, also prevent to spam the button as well
                     nav_refresh.setEnabled(false);
 
+                    Toast.makeText(NavigationBar.this, "Retrieving events...", Toast.LENGTH_SHORT)
+                            .show();
                     new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
                         @Override
                         public Boolean doAsync() {
@@ -456,6 +461,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                             // Get the event from Calbitica
                             // Based on the Agenda Calendar format, and return back the list
+                            // TODO
                             Database database = new Database(NavigationBar.this);
                             database.getAllCalbitAndRenderOnAgenda(AgendaFragment.eventList);
 
@@ -467,15 +473,15 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                             return true;
                         }
                     })
-                    .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                        @Override
-                        public void onResult(Boolean result) {
-                            // Reload the agenda calendar
-                            AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate,
-                                    Locale.getDefault(), AgendaFragment.calendarPickerController);
-                            nav_refresh.setEnabled(true);
-                        }
-                    }).create().start();
+                            .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                                @Override
+                                public void onResult(Boolean result) {
+                                    // Reload the agenda calendar
+                                    AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate,
+                                            Locale.getDefault(), AgendaFragment.calendarPickerController);
+                                    nav_refresh.setEnabled(true);
+                                }
+                            }).create().start();
                 }
                 break;
             case R.id.calendar_add:
@@ -504,7 +510,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
             selectedList.remove(selectedList.size() - 1);
 
             // When the previous page is the last page, just render the WeekView CalbiticaCalendar(Dashboard/Main Page)
-            if(selectedList.size() <= 0) {
+            if (selectedList.size() <= 0) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(NavigationBar.this);
 
                 builder.setTitle("Attention!")
@@ -537,7 +543,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                 SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
                 String selectedMonth = month_date.format(calendar.getTime());
-                title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
+                title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
                 navigationView.setCheckedItem(R.id.nav_week);
 
@@ -548,7 +554,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 // ArrayList.get() start from '0' -> Very First Page, ArrayList.size() start from '1' -> Very First Page(Tally both of them)
                 selectedPages = selectedList.get(selectedList.size() - 1);
 
-                if(selectedPages.equals("nav_week")) {
+                if (selectedPages.equals("nav_week")) {
                     // Setting the necessary items for each respective pages
                     arrow.setVisibility(View.VISIBLE);
                     arrowTrigger = false;
@@ -560,10 +566,10 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                     SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
                     String selectedMonth = month_date.format(calendar.getTime());
-                    title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
+                    title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
                     navigationView.setCheckedItem(R.id.nav_week);
-                } else if(selectedPages.equals("nav_agenda")) {
+                } else if (selectedPages.equals("nav_agenda")) {
                     // Setting the necessary items for each respective pages
                     arrow.setVisibility(View.GONE);
                     arrowTrigger = false;
@@ -575,7 +581,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                     SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
                     String selectedMonth = month_date.format(calendar.getTime());
-                    title.setText(selectedMonth.substring(0, 3) + " "  + calendar.get(Calendar.YEAR));
+                    title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
                     navigationView.setCheckedItem(R.id.nav_agenda);
                 } else if (selectedPages.equals("sync_calendars")) {
@@ -590,7 +596,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     nav_add.setVisible(false);
 
                     navigationView.setCheckedItem(R.id.sync_calendars);
-                } else if(selectedPages.equals("nav_profile")) {
+                } else if (selectedPages.equals("nav_profile")) {
                     // Setting the necessary items for each respective pages
                     title.setText("Profile");
                     arrow.setVisibility(View.GONE);
@@ -602,8 +608,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     nav_add.setVisible(false);
 
                     navigationView.setCheckedItem(R.id.nav_profile);
-                }
-                else if(selectedPages.equals("nav_settings")) {
+                } else if (selectedPages.equals("nav_settings")) {
                     // Setting the necessary items for each respective pages
                     title.setText("Settings");
                     arrow.setVisibility(View.GONE);
@@ -636,27 +641,27 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         // To check the current calendar is today, then populate the notification
         Calendar current = Calendar.getInstance();
 
-        if(database.getAllCalbit() != null) {
-            for(int i = 0; i < database.getAllCalbit().size(); i++) {
+        if (database.getAllCalbit() != null) {
+            for (int i = 0; i < database.getAllCalbit().size(); i++) {
                 if (database.getAllCalbit().get(i).getReminders() != null) {
-                    for(int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
+                    for (int r = 0; r < database.getAllCalbit().get(i).getReminders().size(); r++) {
                         System.out.println("Database Reminders: " + database.getAllCalbit().get(i).getReminders().get(r).getTime());
 
                         // Using timestamp to check the notification, 100% accurate
-                        if(database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
+                        if (database.getAllCalbit().get(i).getReminders().get(r).getTime() >= current.getTime().getTime()) {
                             eventName = database.getAllCalbit().get(i).getSummary();
 
                             // Calbit currentCalbit = xxx
-                            Boolean isAllDay  = database.getAllCalbit().get(i).getLegitAllDay();
+                            Boolean isAllDay = database.getAllCalbit().get(i).getLegitAllDay();
 
                             String startDateObj = isAllDay
-                                    ? DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getStart().getDate()) + " at:"  + DateUtil.HHmm(database.getAllCalbit().get(i).getStart().getDate())
+                                    ? DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getStart().getDate()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getStart().getDate())
                                     : DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getStart().getDateTime()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getStart().getDateTime());
 
 
                             String endDateObj = isAllDay
-                                    ? DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getEnd().getDate()) + " at:"  + DateUtil.HHmm(database.getAllCalbit().get(i).getEnd().getDate())
-                                    : DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getEnd().getDateTime()) + " at:"  + DateUtil.HHmm(database.getAllCalbit().get(i).getEnd().getDateTime());
+                                    ? DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getEnd().getDate()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getEnd().getDate())
+                                    : DateUtil.ddMMMyyyy(database.getAllCalbit().get(i).getEnd().getDateTime()) + " at:" + DateUtil.HHmm(database.getAllCalbit().get(i).getEnd().getDateTime());
 
 
                             eventStart = startDateObj;
@@ -686,7 +691,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                if(database.getAllCalbit() == null) {
+                if (database.getAllCalbit() == null) {
                     Toast.makeText(NavigationBar.this, "Your JWT have expired, Please logout, login and close the app", Toast.LENGTH_LONG).show();
                 }
             }
