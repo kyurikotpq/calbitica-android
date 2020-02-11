@@ -14,7 +14,7 @@
         app:todayHeaderTextColor="@color/blue_3"
         app:todayBackgroundColor="@color/gray_2"
         app:showNowLine="true"
-        app:nowLineColor="@color/blue_3"
+        app:nowLineColor="@color/red_3"
 
         app:futureBackgroundColor="@color/blue_3"
         app:pastBackgroundColor="@color/blue_3"

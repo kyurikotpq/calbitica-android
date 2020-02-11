@@ -27,7 +27,6 @@ import com.calbitica.app.Util.UserData;
 import com.calbitica.app.Util.CalbitResultInterface;
 import com.calbitica.app.Week.WeekFragment;
 
-import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -51,13 +50,11 @@ import android.widget.Toast;
 import com.calbitica.app.Week.WeekSaveEvent;
 import com.google.android.material.navigation.NavigationView;
 
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 
 public class NavigationBar extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
         CalbitResultInterface {
@@ -73,7 +70,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
     public static MenuItem nav_today, nav_refresh, nav_add;         // To use for respective pages(show/not show)
     private CalendarView calendarView;                              // To hide or show for display of nav small calendar
-    public static String acctName;                                  // To pass into database for each different account
+    public static int notifCount = 0;
     public static String eventName;                                 // To display info to the notification alert
     public static String eventStart;                                // To display info to the notification alert
     public static String eventEnd;                                  // To display info to the notification alert
@@ -330,11 +327,11 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 // Logout from Google Account, AND clear shared preferences
                 GoogleAuth.getInstance(getApplicationContext()).getClient().signOut();
                 UserData.clearAll(getApplicationContext());
-                finish();
+                finish(); // finish the current activity
 
                 // direct back to Sign In Activity
                 startActivity(new Intent(NavigationBar.this, SignIn.class));
-                finish();
+//                finish();
                 Toast.makeText(getApplicationContext(), "Logged out successfully", Toast.LENGTH_SHORT).show();
                 break;
         }
@@ -644,27 +641,31 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Using timestamp to check the notification, 100% accurate
                     long reminderTimestamp = currentCalbit.getReminders().get(r).getTime();
                     if (reminderTimestamp >= currentTimestamp) {
-                        eventName = currentCalbit.getSummary();
-
                         // Calbit currentCalbit = xxx
                         Boolean isAllDay = currentCalbit.getLegitAllDay();
 
-                        String startDateObj = isAllDay
-                                ? DateUtil.ddMMMyyyy(currentCalbit.getStart().getDate()) + " at:" + DateUtil.HHmm(currentCalbit.getStart().getDate())
-                                : DateUtil.ddMMMyyyy(currentCalbit.getStart().getDateTime()) + " at:" + DateUtil.HHmm(currentCalbit.getStart().getDateTime());
+                        String startDateStr = isAllDay
+                                ? DateUtil.ddMMMyyyy(currentCalbit.getStart().getDate()) + " at: " + DateUtil.HHmm(currentCalbit.getStart().getDate())
+                                : DateUtil.ddMMMyyyy(currentCalbit.getStart().getDateTime()) + " at: " + DateUtil.HHmm(currentCalbit.getStart().getDateTime());
 
-                        String endDateObj = isAllDay
-                                ? DateUtil.ddMMMyyyy(currentCalbit.getEnd().getDate()) + " at:" + DateUtil.HHmm(currentCalbit.getEnd().getDate())
-                                : DateUtil.ddMMMyyyy(currentCalbit.getEnd().getDateTime()) + " at:" + DateUtil.HHmm(currentCalbit.getEnd().getDateTime());
-
-
-                        eventStart = startDateObj;
-                        eventEnd = endDateObj;
+                        String endDateStr = isAllDay
+                                ? DateUtil.ddMMMyyyy(currentCalbit.getEnd().getDate()) + " at: " + DateUtil.HHmm(currentCalbit.getEnd().getDate())
+                                : DateUtil.ddMMMyyyy(currentCalbit.getEnd().getDateTime()) + " at: " + DateUtil.HHmm(currentCalbit.getEnd().getDateTime());
 
                         current.setTimeInMillis(reminderTimestamp);
 
+                        notifCount += 1;
+
                         Intent intent = new Intent(NavigationBar.this, Notification.class);
-                        PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, 0, intent, 0);
+
+                        Bundle data = new Bundle();
+                        data.putInt("id", notifCount);
+                        data.putString("eventName", currentCalbit.getSummary());
+                        data.putString("eventStart", startDateStr);
+                        data.putString("eventEnd", endDateStr);
+                        intent.putExtras(data);
+
+                        PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, notifCount, intent, 0);
 
                         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
                         alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
@@ -678,6 +679,13 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     @Override
     protected void onStart() {
         super.onStart();
+
+        CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
     }

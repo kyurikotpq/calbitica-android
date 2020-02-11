@@ -192,7 +192,8 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                         Calbit clickedOnCalbit = listOfCalbits.get(wveIndex);
 
                         currentSelectedMongoID = clickedOnCalbit.get_id().toString();
-                        String mongoReminder = (clickedOnCalbit.getReminders() != null)
+                        String mongoReminder = (clickedOnCalbit.getReminders() != null
+                        && clickedOnCalbit.getReminders().size() > 0)
                                 ? clickedOnCalbit.getReminders().get(0).toString()
                                 : "";
 
@@ -248,6 +249,8 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
 
                                 data.putString("reminderDateTime", mongoReminder);
                                 data.putBoolean("legitAllDay", clickedOnCalbit.getAllDay());
+                                data.putString("googleID", clickedOnCalbit.getGoogleID());
+
                                 intent.putExtras(data);
 
                                 startActivityForResult(intent, 122);

@@ -176,7 +176,8 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
                                         currentSelectedMongoID = currentCalbit.get_id().toString();
                                     }
 
-                                    mongoReminder = (currentCalbit.getReminders() != null)
+                                    mongoReminder = (currentCalbit.getReminders() != null
+                                            && currentCalbit.getReminders().size() > 0)
                                             ? currentCalbit.getReminders().get(0).toString()
                                             : "";
 
@@ -259,6 +260,8 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
 
                                     calendarData.putString("reminderDateTime", mongoReminder);
                                     calendarData.putBoolean("legitAllDay", currentCalbit.getAllDay());
+                                    calendarData.putString("googleID", currentCalbit.getGoogleID());
+
                                     intent.putExtras(calendarData);
 
                                     startActivityForResult(intent, 122);

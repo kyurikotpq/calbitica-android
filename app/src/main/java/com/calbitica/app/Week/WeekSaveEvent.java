@@ -53,12 +53,10 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
     TextView navTitleTV = null;
     EditText title = null; // Input CalbiticaCalendar Title
     TextView startDate, startTime, endDate, endTime; // This is just the display from the layout
+    TextView reminderDate, reminderTime;
     Spinner calendarSpinner; // For selecting the calendar
     Switch allDaySwitch;
     Calendar startDateTime, endDateTime, reminderDateTime; // This is the one that goes CAWrapper
-
-    // Helps us format our dates later
-    SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm:ss z yyyy", Locale.ENGLISH);
 
     // Helps with dynamic spinners
     ArrayAdapter<String> calendarSpinnerAdapter;
@@ -66,8 +64,9 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
     String calendarID = "";
     List<String> calbiticaCalendarSummaries = new ArrayList<>();
 
-    // Keeps track of Event's Mongo ID
+    // Keeps track of Event's Mongo ID and google ID
     String _id = "";
+    String googleID = "";
     long wveIndex = -1;
 
     @Override
@@ -83,12 +82,15 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         startTime = (TextView) findViewById(R.id.startTime);
         endDate = findViewById(R.id.endDate);
         endTime = (TextView) findViewById(R.id.endTime);
+        reminderDate = (TextView) findViewById(R.id.reminderDate);
+        reminderTime = (TextView) findViewById(R.id.reminderTime);
 
         calbiticaCalendarSummaries.add("");
 
         // Setup other global vars
         startDateTime = Calendar.getInstance();
         endDateTime = Calendar.getInstance();
+        reminderDateTime = Calendar.getInstance();
 
         // Default the text will be Calbitica Android, by setting as empty for custom
         // TextView to be shown instead
@@ -124,15 +126,23 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
             String reminderStr = bundle.getString("reminderDateTime");
             if (reminderStr != null && !reminderStr.equals("")) {
                 Date reminderDateObj = DateUtil.utcStringToLocalDate(reminderStr);
-                reminderDateTime = Calendar.getInstance();
                 reminderDateTime.setTime(reminderDateObj);
+
+                reminderDate.setText(DateUtil.ddMMMyyyy(reminderDateTime.getTime()));
+                reminderTime.setText(DateUtil.HHmm(reminderDateTime.getTime()));
+            }
+
+            String sentGoogleID = bundle.getString("googleID");
+            if (sentGoogleID != null && !sentGoogleID.equals("")) {
+                googleID = sentGoogleID;
             }
 
             calendarID = bundle.getString("calendarID");
             navTitleTV.setText("Edit Event");
         } else {
-            reminderDateTime = null;
             navTitleTV.setText("Create Event");
+            reminderDate.setText(null);
+            reminderTime.setText(null);
         }
 
         String startDT = bundle.getString("startDateTime");
@@ -259,7 +269,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
 
         // Prompt the Reminder Date Picker to choose
-        final TextView reminderDate = (TextView) findViewById(R.id.reminderDate);
         reminderDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -285,7 +294,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         });
 
         // Prompt the Reminder Time Picker to choose
-        final TextView reminderTime = (TextView) findViewById(R.id.reminderTime);
         reminderTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -315,20 +323,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
             }
         });
 
-        // Default reminderDateTime will be automatically configure
-        if (reminderDateTime != null) {
-            int reminderMonth = reminderDateTime.get(Calendar.MONTH) + 1;
-            reminderDate.setText(reminderDateTime.get(Calendar.DAY_OF_MONTH) + "/" + reminderMonth + "/"
-                    + reminderDateTime.get(Calendar.YEAR));
-
-            if (reminderDateTime.get(Calendar.MINUTE) < 10) {
-                reminderTime.setText(
-                        reminderDateTime.get(Calendar.HOUR_OF_DAY) + ":" + "0" + reminderDateTime.get(Calendar.MINUTE));
-            } else {
-                reminderTime.setText(
-                        reminderDateTime.get(Calendar.HOUR_OF_DAY) + ":" + reminderDateTime.get(Calendar.MINUTE));
-            }
-        }
     }
 
     public void setupCalendarSpinner() {
@@ -465,6 +459,10 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                     endDateStr = DateUtil.localToUTCAllDay(endDateTime.getTime());
                 }
 
+                if (!googleID.equals("")) {
+                    calbit.put("googleID", googleID);
+                }
+
                 calbit.put("start", startDateStr);
                 calbit.put("end", endDateStr);
 
@@ -474,7 +472,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 calbit.put("isDump", "false");
                 calbit.put("title", titleStr);
 
-                if (reminderDateTime != null) {
+                if (!reminderDate.getText().equals("")) {
                     String reminders = DateUtil.localToUTC(reminderDateTime.getTime());
                     calbit.put("reminders", reminders);
                 }
