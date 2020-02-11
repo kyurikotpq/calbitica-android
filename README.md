@@ -16,4 +16,26 @@ Access Tokens from the Google OAuth process expire every hour. Therefore, you ma
 Solution: signing in and out usually solves the problem, but if all else fails, revoke Calbitica's access to your account and try again.
 
 ## API
-The API is hosted at [https://app.kyurikotpq.com/calbitica](https://app.kyurikotpq.com/calbitica).
+The API is hosted at [https://app.kyurikotpq.com/calbitica/](https://app.kyurikotpq.com/calbitica/) (trailing backslash is needed). A Habitica account must be connected or the API will refuse to do anything. This is because rewards (gold coins, experience points, etc.) are tagged to Habitica tasks, so a Habitica account is crucial.
+
+## Work breakdown:
+- Google Auth Sign In, Session Management & Sign Out: Pei Qi
+- WeekView - CRUD, Today, Refresh & Add buttons: Poh Heng
+- AgendaView - CRUD, Display, Add: Poh Heng
+- AgendaView - Troubleshooting: Pei Qi & Poh Heng
+- Sync Calendars: Poh Heng
+- Profile (Stats bars and Damage button): Pei Qi
+- Profile (Quest accept/reject): Poh Heng
+- Settings: Pei Qi
+- About: Poh Heng
+- Code structuring & cleanup: Pei Qi*
+- Utilities (CAWrapper): Poh Heng (writing) & Pei Qi (structuring & troubleshooting)
+- Utilities (others): Pei Qi
+
+*: Since Poh Heng wanted to use the Retrofit library for HTTP requests, I wrote a class, CalbiticaAPI, to provide a more centralised way of using the library.
+
+Retrofit is strongly typed as well, so the individual interfaces and classes (CalbitInterface, HabiticaInterface, etc.) were created to facilitate that. Though, I must admit, our API wasn't coded very well and we had to discard the type casting for some requests in order for our API to go through.
+
+Poh Heng later mentioned that CalbiticaAPI wasn't centralised enough, especially when it came to requesting all of the user's events ("calbits") from our API for both AgendaView and WeekView. If relying solely on CalbiticaAPI alone, the `apiCall.enqueue(...)` has to be called twice, once in each fragment. 
+
+So he wrote a class, originally named Database, to do HTTP requests *and* rendering of events. I moved the rendering codes to the fragments, triggering them through the use of interfaces (*ResultInterfaces) which was a design pattern we learnt in class.

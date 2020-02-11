@@ -407,6 +407,9 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
                 break;
             case R.id.calendar_refresh:
+                Fragment currentFragment = getSupportFragmentManager()
+                        .findFragmentById(R.id.fragment_container);
+
                 if (selectedPages == "nav_week") {
                     // Set the Week Fragment List as empty then, render from database again, also prevent to spam the button as well
                     nav_refresh.setEnabled(false);
@@ -417,7 +420,11 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         @Override
                         public Boolean doAsync() {
                             // Get the event from Calbitica
-                            CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
+                            if (currentFragment instanceof WeekFragment) {
+                                WeekFragment wfInstance = null;
+                                wfInstance = (WeekFragment) currentFragment;
+                                CAWrapper.getAllCalbits(getApplicationContext(), wfInstance);
+                            }
 
                             try {
                                 Thread.sleep(3000);
@@ -444,7 +451,11 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         @Override
                         public Boolean doAsync() {
                             // Get the event from Calbitica
-                            CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
+                            if (currentFragment instanceof AgendaFragment) {
+                                AgendaFragment afInstance = null;
+                                afInstance = (AgendaFragment) currentFragment;
+                                CAWrapper.getAllCalbits(getApplicationContext(), afInstance);
+                            }
 
                             try {
                                 Thread.sleep(3000);

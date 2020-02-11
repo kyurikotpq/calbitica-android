@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class AgendaFragment extends Fragment implements CalbitResultInterface {
-    public static Context ctx;                   // For use by renderEvent()
     public static AgendaCalendarView agendaView; // Mainly modify from the Refresh, etc
     public static List<CalendarEvent> eventList; // The events based on Agenda Calendar, but 1 more phrase on
     // BaseCalendarEvent as a child
@@ -97,8 +96,6 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        ctx = getContext();
 
         // Get the events from Calbitica
         calendarPickerController = new CalendarPickerController() {
@@ -456,7 +453,7 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
             // Based on the Agenda Calendar format, and return back the list
             // Auto-configure the task completion of color and checked according to calbitica
             int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
-            int resourceColor = ctx.getResources().getColor(newColor, null);
+            int resourceColor = getActivity().getResources().getColor(newColor, null);
 
             BaseCalendarEvent allEvent = new BaseCalendarEvent(
                     currentCalbit.getSummary(), "", "",

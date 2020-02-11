@@ -45,7 +45,6 @@ import com.calbitica.app.Util.CalbitResultInterface;
 import com.calbitica.app.Util.DateUtil;
 
 public class WeekFragment extends Fragment implements CalbitResultInterface {
-    public static Context ctx;                                                  // For use by renderEevent()
     public static WeekView weekView;                                            // Mostly used from NavigationBar refresh, etc...(Week Calender)
     public static ArrayList<WeekViewEvent> mNewEvents = new ArrayList<>();      // Mostly used from NavigationBar refresh, etc...(Event in Week CalbiticaCalendar)
     public static boolean weekMonthCheck;                                       // Ensure the weekView is loaded finished
@@ -95,7 +94,9 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        ctx = getContext();
+
+        // Get the events from CAWrapper
+        CAWrapper.getAllCalbits(getActivity().getApplicationContext(), WeekFragment.this);
 
         new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
             @Override
@@ -120,9 +121,6 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                 // Set up a date time interpreter to interpret how the date and time will be formatted in
                 // the week view. This is optional.
                 setupDateTimeInterpreter(true);
-
-                // Get the events from CAWrapper
-                CAWrapper.getAllCalbits(getActivity().getApplicationContext(), WeekFragment.this);
 
                 return true;
             }
@@ -419,8 +417,6 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
             // Set start date and time
             Calendar startDateTime = Calendar.getInstance();
             Calendar endDateTime = Calendar.getInstance();
-
-            // SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
 
             try {
                 Date startDateObj = currentCalbit.getLegitAllDay()
