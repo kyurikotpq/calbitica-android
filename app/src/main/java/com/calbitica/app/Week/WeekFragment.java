@@ -48,8 +48,8 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
     public static WeekView weekView;                                            // Mostly used from NavigationBar refresh, etc...(Week Calender)
     public static ArrayList<WeekViewEvent> mNewEvents = new ArrayList<>();      // Mostly used from NavigationBar refresh, etc...(Event in Week CalbiticaCalendar)
     public static boolean weekMonthCheck;                                       // Ensure the weekView is loaded finished
-    public static List<Calbit> listOfCalbits;               // Temp storage of calbit list from API
-    private String currentSelectedMongoID = null;                                              // Particular events(Mainly for edit and delete)
+    public static List<Calbit> listOfCalbits;                                   // Temp storage of calbit list from API
+    private String currentSelectedMongoID = null;                               // Particular events(Mainly for edit and delete)
 
     // Elements in our dialog
     CheckBox check;

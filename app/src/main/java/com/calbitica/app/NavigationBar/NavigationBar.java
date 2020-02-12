@@ -77,8 +77,8 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     public static MenuItem nav_today, nav_refresh, nav_add;         // To use for respective pages(show/not show)
     private CalendarView calendarView;                              // To hide or show for display of nav small calendar
     public static int notifCount = 0;                               // This will populate respective notification and render the event
-    public static List<PendingIntent> notifIntents;
-    AlarmManager alarmManager;
+    public static List<PendingIntent> notifIntents;                 // To remove the duplicate notification
+    private AlarmManager alarmManager;                              // To remove the duplicate notification
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -632,72 +632,22 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     }
 
     protected void notificationAlert(List<Calbit> calbitList) {
-//        if (calbitList == null || calbitList.size() == 0) return;
-//
-//        // To check the current calendar is today, then populate the notification
-//        Calendar current = Calendar.getInstance();
-//
-//        // lock in the current time
-//        final long currentTimestamp = current.getTime().getTime();
-//
-//        for (int i = 0; i < calbitList.size(); i++) {
-//            Calbit currentCalbit = calbitList.get(i);
-//
-//            if (currentCalbit.getReminders() != null) {
-//                // Using timestamp to check the notification, 100% accurate
-//                long reminderTimestamp = currentCalbit.getReminders().get(0).getTime();
-//
-//                if (reminderTimestamp >= currentTimestamp) {
-//                    Boolean isAllDay = currentCalbit.getLegitAllDay();
-//
-//                    String startDateStr = isAllDay
-//                            ? DateUtil.ddMMMyyyy(currentCalbit.getStart().getDate()) + " at: " + DateUtil.HHmm(currentCalbit.getStart().getDate())
-//                            : DateUtil.ddMMMyyyy(currentCalbit.getStart().getDateTime()) + " at: " + DateUtil.HHmm(currentCalbit.getStart().getDateTime());
-//
-//                    String endDateStr = isAllDay
-//                            ? DateUtil.ddMMMyyyy(currentCalbit.getEnd().getDate()) + " at: " + DateUtil.HHmm(currentCalbit.getEnd().getDate())
-//                            : DateUtil.ddMMMyyyy(currentCalbit.getEnd().getDateTime()) + " at: " + DateUtil.HHmm(currentCalbit.getEnd().getDateTime());
-//
-//                    current.setTimeInMillis(reminderTimestamp);
-//
-//                    notifCount += 1;
-//
-//                    System.out.println("notfifCount " + notifCount);
-//                    System.out.println("currentCalbit.getSummary() " + currentCalbit.getSummary());
-//                    System.out.println("currentCalbit.getReminders() " + currentCalbit.getReminders().get(0));
-//
-//                    Intent intent = new Intent(NavigationBar.this, Notification.class);
-//
-//                    Bundle data = new Bundle();
-//                    data.putInt("id", notifCount);
-//                    data.putString("eventName", currentCalbit.getSummary());
-//                    data.putString("eventStart", startDateStr);
-//                    data.putString("eventEnd", endDateStr);
-//                    intent.putExtras(data);
-//
-//                    PendingIntent pendingIntent = PendingIntent.getBroadcast(NavigationBar.this, notifCount, intent, 0);
-//
-//                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-//                    alarmManager.set(AlarmManager.RTC_WAKEUP, current.getTimeInMillis(), pendingIntent);
-//                }
-//            }
-//        }
-
         // Don't do anything if list is empty
         if (calbitList == null || calbitList.size() == 0) return;
 
         // Clear notifications
         for(PendingIntent p : notifIntents) {
-            p.cancel();
             alarmManager.cancel(p);
+            p.cancel();
         }
+
         notifIntents.clear();
 
         for (int i = 0; i < calbitList.size(); i++) {
             // To check the current calendar is today, then populate the notification
-            //
             Calendar current = Calendar.getInstance();
-            current.set(Calendar.SECOND, 00);
+            current.set(Calendar.SECOND, 0);
+            current.set(Calendar.MILLISECOND, 0);
             long currentTimestamp = current.getTime().getTime();
 
             Calbit currentCalbit = calbitList.get(i);
@@ -707,12 +657,12 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Using timestamp to check the notification, 100% accurate
                     long reminderTimestamp = currentCalbit.getReminders().get(r).getTime();
 
+                    System.out.println("reminderTimestamp " + DateUtil.localToUTC(currentCalbit.getReminders().get(0)));
                     // Debugging
                     System.out.println(currentCalbit.getSummary() + " CURRENT: " + currentTimestamp + "  REMINDER: " +  reminderTimestamp);
-                    System.out.println(currentCalbit.getSummary() +
-                             " IS PAST: " +  (reminderTimestamp <= currentTimestamp));
+                    System.out.println(currentCalbit.getSummary() + " IS PAST: " +  (reminderTimestamp <= currentTimestamp));
 
-                    if (reminderTimestamp >= currentTimestamp) {
+                    if (reminderTimestamp > currentTimestamp) {
                         // Calbit currentCalbit = xxx
                         Boolean isAllDay = currentCalbit.getLegitAllDay();
 
@@ -727,10 +677,6 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                         current.setTimeInMillis(reminderTimestamp);
 
                         notifCount += 1;
-
-                        System.out.println("notfifCount " + notifCount);
-                        System.out.println("currentCalbit.getSummary() " + currentCalbit.getSummary());
-                        System.out.println("currentCalbit.getReminders() " + currentCalbit.getReminders().get(0));
 
                         Intent intent = new Intent(NavigationBar.this, Notification.class);
 
@@ -749,14 +695,14 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 }
             }
         }
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        // This data will also get called, if not clearing, it will just creating non-stop
+        System.out.println("onResume Called");
+
         CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
     }
 

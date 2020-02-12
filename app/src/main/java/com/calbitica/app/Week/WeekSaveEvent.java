@@ -372,6 +372,15 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
     // When the Right Menu Bar Item (Tick Image) is Selected
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        // For notification
+        Calendar current = Calendar.getInstance();
+        current.set(Calendar.SECOND, 0);
+        current.set(Calendar.MILLISECOND, 0);
+        long currentTimestamp = current.getTime().getTime();
+
+        System.out.println(reminderDateTime.getTime().getTime());
+        System.out.println(currentTimestamp);
+
         if (item.getItemId() == R.id.ok) {
             // Due to Schedule CalbiticaCalendar "No events" is a empty view as default
             if (title.getText().toString().equals("") || title.getText().toString().equals("No events") ||
@@ -383,6 +392,8 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
             } else if (startDateTime.getTime().getTime() >= endDateTime.getTime().getTime()) {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
                 Toast.makeText(WeekSaveEvent.this, "Start date and time must be before end date and time", Toast.LENGTH_SHORT).show();
+            } else if (reminderDateTime.getTime().getTime() < currentTimestamp || reminderDateTime.getTime().getTime() == currentTimestamp) {
+                Toast.makeText(WeekSaveEvent.this, "Please give a reminder that will notify you :)", Toast.LENGTH_SHORT).show();
             } else {
                 // Setting the valid mongoId for the reference with the database
                 boolean isEditing = (_id != null && !_id.equals("") && wveIndex != -1);
