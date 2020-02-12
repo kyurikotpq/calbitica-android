@@ -223,6 +223,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                                 startDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                 startDateTime.set(Calendar.MINUTE, minute);
                                 startDateTime.set(Calendar.SECOND, 00);
+                                startDateTime.set(Calendar.MILLISECOND, 00);
                             }
                         }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekSaveEvent.this));
                 timePickerDialog.show();
@@ -273,6 +274,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                                 endDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                 endDateTime.set(Calendar.MINUTE, minute);
                                 endDateTime.set(Calendar.SECOND, 00);
+                                endDateTime.set(Calendar.MILLISECOND, 00);
                             }
                         }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekSaveEvent.this));
                 timePickerDialog.show();
@@ -324,6 +326,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                                 reminderDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                 reminderDateTime.set(Calendar.MINUTE, minute);
                                 reminderDateTime.set(Calendar.SECOND, 00);
+                                reminderDateTime.set(Calendar.MILLISECOND, 00);
                             }
                         }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekSaveEvent.this));
                 timePickerDialog.show();
@@ -378,8 +381,8 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         current.set(Calendar.MILLISECOND, 0);
         long currentTimestamp = current.getTime().getTime();
 
-        System.out.println(reminderDateTime.getTime().getTime());
-        System.out.println(currentTimestamp);
+        System.out.println("reminderDateTime " + reminderDateTime.getTime().getTime());
+        System.out.println("currentTimestamp " + currentTimestamp);
 
         if (item.getItemId() == R.id.ok) {
             // Due to Schedule CalbiticaCalendar "No events" is a empty view as default
@@ -392,7 +395,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
             } else if (startDateTime.getTime().getTime() >= endDateTime.getTime().getTime()) {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
                 Toast.makeText(WeekSaveEvent.this, "Start date and time must be before end date and time", Toast.LENGTH_SHORT).show();
-            } else if (reminderDateTime.getTime().getTime() < currentTimestamp || reminderDateTime.getTime().getTime() == currentTimestamp) {
+            } else if (reminderDateTime.getTime().getTime() <= currentTimestamp) {
                 Toast.makeText(WeekSaveEvent.this, "Please give a reminder that will notify you :)", Toast.LENGTH_SHORT).show();
             } else {
                 // Setting the valid mongoId for the reference with the database
