@@ -10,10 +10,6 @@ import com.calbitica.app.R;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-//import static com.calbitica.app.NavigationBar.NavigationBar.eventEnd;
-//import static com.calbitica.app.NavigationBar.NavigationBar.eventName;
-//import static com.calbitica.app.NavigationBar.NavigationBar.eventStart;
-
 public class Notification extends BroadcastReceiver {
     // Live Notification upon app open
     @Override

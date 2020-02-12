@@ -683,25 +683,22 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 //            }
 //        }
 
-
+        // Don't do anything if list is empty
         if (calbitList == null || calbitList.size() == 0) return;
 
+        // Clear notifications
         for(PendingIntent p : notifIntents) {
-
+            p.cancel();
             alarmManager.cancel(p);
         }
         notifIntents.clear();
 
-        // Reset the notifCount back to 0, so it won't duplicate
-//        notifCount = 0;
-
-        // To check the current calendar is today, then populate the notification
-        Calendar current = Calendar.getInstance();
-        current.set(Calendar.SECOND, 00);
-
         for (int i = 0; i < calbitList.size(); i++) {
-            // lock in the current time
-            final long currentTimestamp = current.getTime().getTime();
+            // To check the current calendar is today, then populate the notification
+            //
+            Calendar current = Calendar.getInstance();
+            current.set(Calendar.SECOND, 00);
+            long currentTimestamp = current.getTime().getTime();
 
             Calbit currentCalbit = calbitList.get(i);
             if (currentCalbit.getReminders() != null) {
@@ -709,6 +706,12 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                 for (int r = 0; r < currentCalbit.getReminders().size(); r++) {
                     // Using timestamp to check the notification, 100% accurate
                     long reminderTimestamp = currentCalbit.getReminders().get(r).getTime();
+
+                    // Debugging
+                    System.out.println(currentCalbit.getSummary() + " CURRENT: " + currentTimestamp + "  REMINDER: " +  reminderTimestamp);
+                    System.out.println(currentCalbit.getSummary() +
+                             " IS PAST: " +  (reminderTimestamp <= currentTimestamp));
+
                     if (reminderTimestamp >= currentTimestamp) {
                         // Calbit currentCalbit = xxx
                         Boolean isAllDay = currentCalbit.getLegitAllDay();
