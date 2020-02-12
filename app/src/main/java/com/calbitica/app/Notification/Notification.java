@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.calbitica.app.NavigationBar.NavigationBar;
 import com.calbitica.app.R;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -28,6 +29,7 @@ public class Notification extends BroadcastReceiver {
             eventDateTime = eventStart + " - " + eventEnd;
         }
 
+        System.out.println("eventName " + eventName);
         System.out.println("EVENT ID AND DATE TIME " + id + " "  + eventDateTime);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Calbitica")

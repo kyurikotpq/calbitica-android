@@ -80,7 +80,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:width="80dp"
                     android:textColorHighlight="@color/blue_1"
                     android:textColorLink="@color/blue_3" />
 
@@ -220,12 +219,17 @@
                     android:layout_gravity="center"
                     android:layout_weight="3"
                     android:hint="Time"
-                    android:textAlignment="viewEnd"
+                    android:textAlignment="textEnd"
                     android:textColor="@color/white"
                     android:textColorHint="@color/gray_4"
                     android:textSize="16sp" />
             </LinearLayout>
 
+            <Button
+                android:id="@+id/removeReminder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Remove Reminder"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

@@ -74,7 +74,7 @@ public class SettingsFragment extends Fragment {
                             String message = (data.containsKey("message"))
                                     ? data.get("message")
                                     : "Something went wrong. Please try again.";
-                            Toast.makeText(getActivity(),message, Toast.LENGTH_LONG).show();
+                            Toast.makeText(getActivity(),message, Toast.LENGTH_SHORT).show();
                         }
                     } catch (Exception e) {
                         Log.d("API JWT FAILED", e.getLocalizedMessage());

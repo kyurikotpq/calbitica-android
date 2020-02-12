@@ -194,7 +194,7 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
                         currentSelectedMongoID = clickedOnCalbit.get_id().toString();
                         String mongoReminder = (clickedOnCalbit.getReminders() != null
                         && clickedOnCalbit.getReminders().size() > 0)
-                                ? clickedOnCalbit.getReminders().get(0).toString()
+                                ? DateUtil.localToUTC(clickedOnCalbit.getReminders().get(0))
                                 : "";
 
                         if (clickedOnCalbit.getCompleted() != null) {

@@ -19,6 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -37,13 +38,11 @@ import com.calbitica.app.Util.DateUtil;
 import com.calbitica.app.Util.UserData;
 import com.github.tibolte.agendacalendarview.models.BaseCalendarEvent;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -84,6 +83,17 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         endTime = (TextView) findViewById(R.id.endTime);
         reminderDate = (TextView) findViewById(R.id.reminderDate);
         reminderTime = (TextView) findViewById(R.id.reminderTime);
+        Button removeReminder = (Button) findViewById(R.id.removeReminder);
+
+        removeReminder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                reminderDateTime = Calendar.getInstance();
+
+                reminderDate.setText(null);
+                reminderTime.setText(null);
+            }
+        });
 
         calbiticaCalendarSummaries.add("");
 
@@ -128,8 +138,8 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                 Date reminderDateObj = DateUtil.utcStringToLocalDate(reminderStr);
                 reminderDateTime.setTime(reminderDateObj);
 
-                reminderDate.setText(DateUtil.ddMMMyyyy(reminderDateTime.getTime()));
-                reminderTime.setText(DateUtil.HHmm(reminderDateTime.getTime()));
+                reminderDate.setText(DateUtil.ddMMMyyyy(reminderDateObj));
+                reminderTime.setText(DateUtil.HHmm(reminderDateObj));
             }
 
             String sentGoogleID = bundle.getString("googleID");
@@ -212,6 +222,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
                                 startDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                 startDateTime.set(Calendar.MINUTE, minute);
+                                startDateTime.set(Calendar.SECOND, 00);
                             }
                         }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekSaveEvent.this));
                 timePickerDialog.show();
@@ -261,6 +272,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
 
                                 endDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                 endDateTime.set(Calendar.MINUTE, minute);
+                                endDateTime.set(Calendar.SECOND, 00);
                             }
                         }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekSaveEvent.this));
                 timePickerDialog.show();
@@ -281,12 +293,10 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                         new DatePickerDialog.OnDateSetListener() {
                             @Override
                             public void onDateSet(DatePicker datePicker, int year, int month, int day) {
-                                if (reminderDate.getText() != null) {
-                                    reminderDateTime.set(year, month, day);
+                                reminderDateTime.set(year, month, day);
 
-                                    Date newReminderDateTime = reminderDateTime.getTime();
-                                    reminderDate.setText(DateUtil.ddMMMyyyy(newReminderDateTime));
-                                }
+                                Date newReminderDateTime = reminderDateTime.getTime();
+                                reminderDate.setText(DateUtil.ddMMMyyyy(newReminderDateTime));
                             }
                         }, year, month, dayOfMonth);
                 datePickerDialog.show();
@@ -305,18 +315,15 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                         new TimePickerDialog.OnTimeSetListener() {
                             @Override
                             public void onTimeSet(TimePicker timePicker, int hourOfDay, int minute) {
-                                if (reminderTime.getText() != null) {
-                                    reminderDateTime = Calendar.getInstance();
+                                String reminderTimeStr = (minute < 10)
+                                        ? hourOfDay + ":" + "0" + minute
+                                        : hourOfDay + ":" + minute;
 
-                                    String reminderTimeStr = (minute < 10)
-                                            ? hourOfDay + ":" + "0" + minute
-                                            : hourOfDay + ":" + minute;
+                                reminderTime.setText(reminderTimeStr);
 
-                                    reminderTime.setText(reminderTimeStr);
-
-                                    reminderDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                                    reminderDateTime.set(Calendar.MINUTE, minute);
-                                }
+                                reminderDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                                reminderDateTime.set(Calendar.MINUTE, minute);
+                                reminderDateTime.set(Calendar.SECOND, 00);
                             }
                         }, hourOfDay, minute, android.text.format.DateFormat.is24HourFormat(WeekSaveEvent.this));
                 timePickerDialog.show();
@@ -369,7 +376,9 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
             // Due to Schedule CalbiticaCalendar "No events" is a empty view as default
             if (title.getText().toString().equals("") || title.getText().toString().equals("No events") ||
                     startDate.getText().toString().equals("") || startTime.getText().toString().equals("") ||
-                    endDate.getText().toString().equals("") || endTime.getText().toString().equals("")) {
+                    endDate.getText().toString().equals("") || endTime.getText().toString().equals("") ||
+                    (reminderDate.getText().toString().equals("") && !reminderTime.getText().toString().equals("") ||
+                            !reminderDate.getText().toString().equals("") && reminderTime.getText().toString().equals(""))) {
                 Toast.makeText(WeekSaveEvent.this, "Please fill in all the fields", Toast.LENGTH_SHORT).show();
             } else if (startDateTime.getTime().getTime() >= endDateTime.getTime().getTime()) {
                 // Making use of the Epoch & Unix Timestamp Conversion Tools, can easily tell all the information of the dates
@@ -505,6 +514,7 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                         Toast.makeText(WeekSaveEvent.this, "We don't support all-day events for now, sorry!", Toast.LENGTH_SHORT).show();
                         return;
                     } catch (Exception e) {
+
                     }
                 }
                 try {

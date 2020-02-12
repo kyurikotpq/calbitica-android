@@ -178,7 +178,7 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
 
                                     mongoReminder = (currentCalbit.getReminders() != null
                                             && currentCalbit.getReminders().size() > 0)
-                                            ? currentCalbit.getReminders().get(0).toString()
+                                            ? DateUtil.localToUTC(currentCalbit.getReminders().get(0))
                                             : "";
 
                                     // To allow to run Toast in the async method...
