@@ -25,9 +25,6 @@ public class Notification extends BroadcastReceiver {
             eventDateTime = eventStart + " - " + eventEnd;
         }
 
-        System.out.println("eventName " + eventName);
-        System.out.println("EVENT ID AND DATE TIME " + id + " "  + eventDateTime);
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Calbitica")
                 .setSmallIcon(R.drawable.favicon)
                 .setContentTitle(eventName)

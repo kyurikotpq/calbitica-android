@@ -657,11 +657,6 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     // Using timestamp to check the notification, 100% accurate
                     long reminderTimestamp = currentCalbit.getReminders().get(r).getTime();
 
-                    System.out.println("reminderTimestamp " + DateUtil.localToUTC(currentCalbit.getReminders().get(0)));
-                    // Debugging
-                    System.out.println(currentCalbit.getSummary() + " CURRENT: " + currentTimestamp + "  REMINDER: " +  reminderTimestamp);
-                    System.out.println(currentCalbit.getSummary() + " IS PAST: " +  (reminderTimestamp <= currentTimestamp));
-
                     if (reminderTimestamp > currentTimestamp) {
                         // Calbit currentCalbit = xxx
                         Boolean isAllDay = currentCalbit.getLegitAllDay();
@@ -701,16 +696,12 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     protected void onResume() {
         super.onResume();
 
-        System.out.println("onResume Called");
-
         CAWrapper.getAllCalbits(getApplicationContext(), NavigationBar.this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-
-        System.out.println("onPause Called");
 
         if(UserData.get("jwt", getApplicationContext()) != null) {
             // This data will also get called, if not clearing, it will just creating non-stop

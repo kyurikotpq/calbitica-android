@@ -381,9 +381,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
         current.set(Calendar.MILLISECOND, 0);
         long currentTimestamp = current.getTime().getTime();
 
-        System.out.println("reminderDateTime " + reminderDateTime.getTime().getTime());
-        System.out.println("currentTimestamp " + currentTimestamp);
-
         if (item.getItemId() == R.id.ok) {
             // Due to Schedule CalbiticaCalendar "No events" is a empty view as default
             if (title.getText().toString().equals("") || title.getText().toString().equals("No events") ||
@@ -430,9 +427,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                             newWVE.setColor(getResources().getColor(newColor, null));
                             WeekFragment.mNewEvents.add(newWVE);
                         }
-
-                        // Refresh the week view. onMonthChange will be called again.
-//                        WeekFragment.weekView.notifyDatasetChanged();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -448,9 +442,6 @@ public class WeekSaveEvent extends AppCompatActivity implements CalListResultInt
                         BaseCalendarEvent allEvent = new BaseCalendarEvent(title.getText().toString(), "", "", colorText, startDateTime, endDateTime, false);
                         allEvent.setId(newWVEIndex);
                         AgendaFragment.eventList.add(allEvent);
-
-                        // Schedule CalbiticaCalendar will need to re-render the events as well
-//                        AgendaFragment.agendaView.init(AgendaFragment.eventList, AgendaFragment.minDate, AgendaFragment.maxDate, Locale.getDefault(), AgendaFragment.calendarPickerController);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

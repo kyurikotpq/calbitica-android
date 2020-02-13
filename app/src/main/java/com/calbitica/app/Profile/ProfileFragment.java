@@ -298,8 +298,6 @@ public class ProfileFragment extends Fragment {
                     Log.d("Quest Call: ", response.toString());
                     return;
                 }
-
-                System.out.println(("Quest Response: " + response.message()));
             }
 
             @Override
