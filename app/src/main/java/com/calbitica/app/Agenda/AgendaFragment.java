@@ -358,34 +358,38 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
         // components(View & void function, etc...)
         @Override
         protected Integer doInBackground(Void... params) {
-            agendaView = getActivity().findViewById(R.id.agendaView);
+            try {
+                agendaView = getActivity().findViewById(R.id.agendaView);
 
-            eventList = new ArrayList<>();
-            listOfCalbits = new ArrayList<>();
+                eventList = new ArrayList<>();
+                listOfCalbits = new ArrayList<>();
 
-            // minimum and maximum date of our calendar
-            // 2 year behind, 2 year ahead, example: March 2010 -> Jan 2008 <-> Feb 2012
-            minDate = Calendar.getInstance();
-            minDate.add(Calendar.YEAR, -2);
-            minDate.set(Calendar.DAY_OF_MONTH, 1);
+                // minimum and maximum date of our calendar
+                // 2 year behind, 2 year ahead, example: March 2010 -> Jan 2008 <-> Feb 2012
+                minDate = Calendar.getInstance();
+                minDate.add(Calendar.YEAR, -2);
+                minDate.set(Calendar.DAY_OF_MONTH, 1);
 
-            maxDate = Calendar.getInstance();
-            maxDate.add(Calendar.YEAR, 2);
-            maxDate.set(Calendar.MONTH, 1);
-            maxDate.set(Calendar.DAY_OF_MONTH, 1);
+                maxDate = Calendar.getInstance();
+                maxDate.add(Calendar.YEAR, 2);
+                maxDate.set(Calendar.MONTH, 1);
+                maxDate.set(Calendar.DAY_OF_MONTH, 1);
 
-            // This will populate the progressDialog
-            for (int count = 0; count < 6; count++) {
-                // Each time will load and update the progress accordingly
-                progressDialog.setProgress(count);
+                // This will populate the progressDialog
+                for (int count = 0; count < 6; count++) {
+                    // Each time will load and update the progress accordingly
+                    progressDialog.setProgress(count);
 
-                try {
-                    // need to wait, in order to show the progressDialog
-                    Thread.sleep(200);
-                    // onProgressUpdate will be showing in process
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    try {
+                        // need to wait, in order to show the progressDialog
+                        Thread.sleep(200);
+                        // onProgressUpdate will be showing in process
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             return null;

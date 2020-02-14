@@ -392,102 +392,116 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.calendar_today:
-                // Set the Week Fragment List as empty then, render from database again, also prevent to spam the button as well
-                nav_today.setEnabled(false);
+                try {
+                    // Set the Week Fragment List as empty then, render from database again, also prevent to spam the button as well
+                    nav_today.setEnabled(false);
 
-                Calendar today = Calendar.getInstance();
+                    Calendar today = Calendar.getInstance();
 
-                // Assign to the same calendar to have a link relationship of the Navigation Bar and Today
-                calendar.setTime(today.getTime());
+                    // Assign to the same calendar to have a link relationship of the Navigation Bar and Today
+                    calendar.setTime(today.getTime());
 
-                // Title change as well
-                SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
-                String selectedMonth = month_date.format(calendar.getTime());
-                title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
+                    // Title change as well
+                    SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
+                    String selectedMonth = month_date.format(calendar.getTime());
+                    title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
-                // As then also pass the data into WeekFragment
-                WeekFragment fragment = WeekFragment.newInstance(calendar.getTime().toString());
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
+                    // As then also pass the data into WeekFragment
+                    WeekFragment fragment = WeekFragment.newInstance(calendar.getTime().toString());
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
                 break;
             case R.id.calendar_refresh:
-                Fragment currentFragment = getSupportFragmentManager()
-                        .findFragmentById(R.id.fragment_container);
+                try {
+                    Fragment currentFragment = getSupportFragmentManager()
+                            .findFragmentById(R.id.fragment_container);
 
-                if (selectedPages == "nav_week") {
-                    // Set the Week Fragment List as empty then, render from database again, also prevent to spam the button as well
-                    nav_refresh.setEnabled(false);
-                    Toast.makeText(NavigationBar.this, "Retrieving events...", Toast.LENGTH_SHORT)
-                            .show();
+                    if (selectedPages == "nav_week") {
+                        // Set the Week Fragment List as empty then, render from database again, also prevent to spam the button as well
+                        nav_refresh.setEnabled(false);
+                        Toast.makeText(NavigationBar.this, "Retrieving events...", Toast.LENGTH_SHORT)
+                                .show();
 
-                    new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-                        @Override
-                        public Boolean doAsync() {
-                            // Get the event from Calbitica
-                            if (currentFragment instanceof WeekFragment) {
-                                WeekFragment wfInstance = null;
-                                wfInstance = (WeekFragment) currentFragment;
-                                CAWrapper.getAllCalbits(getApplicationContext(), wfInstance);
-                            }
-
-                            try {
-                                Thread.sleep(3000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            return true;
-                        }
-                    })
-                            .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                                @Override
-                                public void onResult(Boolean result) {
-                                    // Prevent refresh spamming
-                                    nav_refresh.setEnabled(true);
+                        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+                            @Override
+                            public Boolean doAsync() {
+                                // Get the event from Calbitica
+                                if (currentFragment instanceof WeekFragment) {
+                                    WeekFragment wfInstance = null;
+                                    wfInstance = (WeekFragment) currentFragment;
+                                    CAWrapper.getAllCalbits(getApplicationContext(), wfInstance);
                                 }
-                            }).create().start();
-                } else if (selectedPages == "nav_agenda") {
-                    // Set the Agenda Fragment List as empty then, render from database again, also prevent to spam the button as well
-                    nav_refresh.setEnabled(false);
 
-                    Toast.makeText(NavigationBar.this, "Retrieving events...", Toast.LENGTH_SHORT)
-                            .show();
-                    new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-                        @Override
-                        public Boolean doAsync() {
-                            // Get the event from Calbitica
-                            if (currentFragment instanceof AgendaFragment) {
-                                AgendaFragment afInstance = null;
-                                afInstance = (AgendaFragment) currentFragment;
-                                CAWrapper.getAllCalbits(getApplicationContext(), afInstance);
-                            }
-
-                            try {
-                                Thread.sleep(3000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            return true;
-                        }
-                    })
-                            .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                                @Override
-                                public void onResult(Boolean result) {
-                                    // Prevent spamming
-                                    nav_refresh.setEnabled(true);
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
                                 }
-                            }).create().start();
+                                return true;
+                            }
+                        })
+                                .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                                    @Override
+                                    public void onResult(Boolean result) {
+                                        // Prevent refresh spamming
+                                        nav_refresh.setEnabled(true);
+                                    }
+                                }).create().start();
+                    } else if (selectedPages == "nav_agenda") {
+                        // Set the Agenda Fragment List as empty then, render from database again, also prevent to spam the button as well
+                        nav_refresh.setEnabled(false);
+
+                        Toast.makeText(NavigationBar.this, "Retrieving events...", Toast.LENGTH_SHORT)
+                                .show();
+                        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+                            @Override
+                            public Boolean doAsync() {
+                                // Get the event from Calbitica
+                                if (currentFragment instanceof AgendaFragment) {
+                                    AgendaFragment afInstance = null;
+                                    afInstance = (AgendaFragment) currentFragment;
+                                    CAWrapper.getAllCalbits(getApplicationContext(), afInstance);
+                                }
+
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                return true;
+                            }
+                        })
+                                .doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                                    @Override
+                                    public void onResult(Boolean result) {
+                                        // Prevent spamming
+                                        nav_refresh.setEnabled(true);
+                                    }
+                                }).create().start();
+                    }
+                }catch (Exception e) {
+                    e.printStackTrace();
                 }
+
                 break;
             case R.id.calendar_add:
-                // Just the empty fields, to give user to key in themselves
-                Intent intent = new Intent(NavigationBar.this, WeekSaveEvent.class);
+                try {
+                    // Just the empty fields, to give user to key in themselves
+                    Intent intent = new Intent(NavigationBar.this, WeekSaveEvent.class);
 
-                Bundle data = new Bundle();
-                data.putString("startDateTime", "");
-                data.putString("endDateTime", "");
-                intent.putExtras(data);
+                    Bundle data = new Bundle();
+                    data.putString("startDateTime", "");
+                    data.putString("endDateTime", "");
+                    intent.putExtras(data);
 
-                startActivityForResult(intent, 121);
+                    startActivityForResult(intent, 121);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 break;
         }
 
@@ -548,88 +562,92 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
                     e.printStackTrace();
                 }
             } else {
-                super.onBackPressed();
-                // ArrayList.get() start from '0' -> Very First Page, ArrayList.size() start from '1' -> Very First Page(Tally both of them)
-                selectedPages = selectedList.get(selectedList.size() - 1);
+                try {
+                    super.onBackPressed();
+                    // ArrayList.get() start from '0' -> Very First Page, ArrayList.size() start from '1' -> Very First Page(Tally both of them)
+                    selectedPages = selectedList.get(selectedList.size() - 1);
 
-                if (selectedPages.equals("nav_week")) {
-                    // Setting the necessary items for each respective pages
-                    arrow.setVisibility(View.VISIBLE);
-                    arrowTrigger = false;
-                    arrow.setImageResource(R.drawable.down_arrow);
-                    calendarView.setVisibility(View.GONE);
-                    nav_today.setVisible(true);
-                    nav_refresh.setVisible(true);
-                    nav_add.setVisible(true);
+                    if (selectedPages.equals("nav_week")) {
+                        // Setting the necessary items for each respective pages
+                        arrow.setVisibility(View.VISIBLE);
+                        arrowTrigger = false;
+                        arrow.setImageResource(R.drawable.down_arrow);
+                        calendarView.setVisibility(View.GONE);
+                        nav_today.setVisible(true);
+                        nav_refresh.setVisible(true);
+                        nav_add.setVisible(true);
 
-                    SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
-                    String selectedMonth = month_date.format(calendar.getTime());
-                    title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
+                        SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
+                        String selectedMonth = month_date.format(calendar.getTime());
+                        title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
-                    navigationView.setCheckedItem(R.id.nav_week);
-                } else if (selectedPages.equals("nav_agenda")) {
-                    // Setting the necessary items for each respective pages
-                    arrow.setVisibility(View.GONE);
-                    arrowTrigger = false;
-                    arrow.setImageResource(R.drawable.down_arrow);
-                    calendarView.setVisibility(View.GONE);
-                    nav_today.setVisible(false);
-                    nav_refresh.setVisible(true);
-                    nav_add.setVisible(true);
+                        navigationView.setCheckedItem(R.id.nav_week);
+                    } else if (selectedPages.equals("nav_agenda")) {
+                        // Setting the necessary items for each respective pages
+                        arrow.setVisibility(View.GONE);
+                        arrowTrigger = false;
+                        arrow.setImageResource(R.drawable.down_arrow);
+                        calendarView.setVisibility(View.GONE);
+                        nav_today.setVisible(false);
+                        nav_refresh.setVisible(true);
+                        nav_add.setVisible(true);
 
-                    SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
-                    String selectedMonth = month_date.format(calendar.getTime());
-                    title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
+                        SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
+                        String selectedMonth = month_date.format(calendar.getTime());
+                        title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
-                    navigationView.setCheckedItem(R.id.nav_agenda);
-                } else if (selectedPages.equals("sync_calendars")) {
-                    // Setting the necessary items for each respective pages
-                    title.setText("Sync Calendars");
-                    arrow.setVisibility(View.GONE);
-                    arrowTrigger = false;
-                    arrow.setImageResource(R.drawable.down_arrow);
-                    calendarView.setVisibility(View.GONE);
-                    nav_today.setVisible(false);
-                    nav_refresh.setVisible(false);
-                    nav_add.setVisible(false);
+                        navigationView.setCheckedItem(R.id.nav_agenda);
+                    } else if (selectedPages.equals("sync_calendars")) {
+                        // Setting the necessary items for each respective pages
+                        title.setText("Sync Calendars");
+                        arrow.setVisibility(View.GONE);
+                        arrowTrigger = false;
+                        arrow.setImageResource(R.drawable.down_arrow);
+                        calendarView.setVisibility(View.GONE);
+                        nav_today.setVisible(false);
+                        nav_refresh.setVisible(false);
+                        nav_add.setVisible(false);
 
-                    navigationView.setCheckedItem(R.id.sync_calendars);
-                } else if (selectedPages.equals("nav_profile")) {
-                    // Setting the necessary items for each respective pages
-                    title.setText("Profile");
-                    arrow.setVisibility(View.GONE);
-                    arrowTrigger = false;
-                    arrow.setImageResource(R.drawable.down_arrow);
-                    calendarView.setVisibility(View.GONE);
-                    nav_today.setVisible(false);
-                    nav_refresh.setVisible(false);
-                    nav_add.setVisible(false);
+                        navigationView.setCheckedItem(R.id.sync_calendars);
+                    } else if (selectedPages.equals("nav_profile")) {
+                        // Setting the necessary items for each respective pages
+                        title.setText("Profile");
+                        arrow.setVisibility(View.GONE);
+                        arrowTrigger = false;
+                        arrow.setImageResource(R.drawable.down_arrow);
+                        calendarView.setVisibility(View.GONE);
+                        nav_today.setVisible(false);
+                        nav_refresh.setVisible(false);
+                        nav_add.setVisible(false);
 
-                    navigationView.setCheckedItem(R.id.nav_profile);
-                } else if (selectedPages.equals("nav_settings")) {
-                    // Setting the necessary items for each respective pages
-                    title.setText("Settings");
-                    arrow.setVisibility(View.GONE);
-                    arrowTrigger = false;
-                    arrow.setImageResource(R.drawable.down_arrow);
-                    calendarView.setVisibility(View.GONE);
-                    nav_today.setVisible(false);
-                    nav_refresh.setVisible(false);
-                    nav_add.setVisible(false);
+                        navigationView.setCheckedItem(R.id.nav_profile);
+                    } else if (selectedPages.equals("nav_settings")) {
+                        // Setting the necessary items for each respective pages
+                        title.setText("Settings");
+                        arrow.setVisibility(View.GONE);
+                        arrowTrigger = false;
+                        arrow.setImageResource(R.drawable.down_arrow);
+                        calendarView.setVisibility(View.GONE);
+                        nav_today.setVisible(false);
+                        nav_refresh.setVisible(false);
+                        nav_add.setVisible(false);
 
-                    navigationView.setCheckedItem(R.id.nav_settings);
-                } else if (selectedPages.equals("nav_about")) {
-                    // Setting the necessary items for each respective pages
-                    title.setText("About");
-                    arrow.setVisibility(View.GONE);
-                    arrowTrigger = false;
-                    arrow.setImageResource(R.drawable.down_arrow);
-                    calendarView.setVisibility(View.GONE);
-                    nav_today.setVisible(false);
-                    nav_refresh.setVisible(false);
-                    nav_add.setVisible(false);
+                        navigationView.setCheckedItem(R.id.nav_settings);
+                    } else if (selectedPages.equals("nav_about")) {
+                        // Setting the necessary items for each respective pages
+                        title.setText("About");
+                        arrow.setVisibility(View.GONE);
+                        arrowTrigger = false;
+                        arrow.setImageResource(R.drawable.down_arrow);
+                        calendarView.setVisibility(View.GONE);
+                        nav_today.setVisible(false);
+                        nav_refresh.setVisible(false);
+                        nav_add.setVisible(false);
 
-                    navigationView.setCheckedItem(R.id.nav_about);
+                        navigationView.setCheckedItem(R.id.nav_about);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -656,7 +674,6 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
             Calbit currentCalbit = calbitList.get(i);
             if (currentCalbit.getReminders() != null) {
-
                 for (int r = 0; r < currentCalbit.getReminders().size(); r++) {
                     // Using timestamp to check the notification, 100% accurate
                     long reminderTimestamp = currentCalbit.getReminders().get(r).getTime();
@@ -734,7 +751,7 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
     public void onCalbitListResult(List<Calbit> calbitList) {
         if (calbitList.isEmpty()) {
             Toast.makeText(NavigationBar.this,
-                    "Your session has expired. Please login again.",
+                    "You have no events created!",
                     Toast.LENGTH_SHORT).show();
         } else {
             // run notifications

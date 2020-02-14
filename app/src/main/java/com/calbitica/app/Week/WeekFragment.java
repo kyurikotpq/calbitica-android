@@ -94,250 +94,251 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        try {
+            // Get the events from CAWrapper
+            CAWrapper.getAllCalbits(getActivity().getApplicationContext(), WeekFragment.this);
 
-        // Get the events from CAWrapper
-        CAWrapper.getAllCalbits(getActivity().getApplicationContext(), WeekFragment.this);
+            new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+                @Override
+                public Boolean doAsync() {
+                    weekMonthCheck = false;
+                    weekView = getActivity().findViewById(R.id.weekView);
+                    mNewEvents = new ArrayList<WeekViewEvent>();
+                    listOfCalbits = new ArrayList<>();
 
-        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-            @Override
-            public Boolean doAsync() {
-                weekMonthCheck = false;
-                weekView = getActivity().findViewById(R.id.weekView);
-                mNewEvents = new ArrayList<WeekViewEvent>();
-                listOfCalbits = new ArrayList<>();
+                    // Get the information from the getCalendarMonths(required)
+                    weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
+                        @Override
+                        public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
+                            // Populate the week view with the events
+                            List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
+                            ArrayList<WeekViewEvent> newEvents = getCalendarMonths(newYear, newMonth);
+                            events.addAll(newEvents);
+                            return events;
+                        }
+                    });
 
-                // Get the information from the getCalendarMonths(required)
-                weekView.setMonthChangeListener(new MonthLoader.MonthChangeListener() {
-                    @Override
-                    public List<WeekViewEvent> onMonthChange(int newYear, int newMonth) {
-                        // Populate the week view with the events
-                        List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
-                        ArrayList<WeekViewEvent> newEvents = getCalendarMonths(newYear, newMonth);
-                        events.addAll(newEvents);
-                        return events;
-                    }
-                });
+                    // Set up a date time interpreter to interpret how the date and time will be formatted in
+                    // the week view. This is optional.
+                    setupDateTimeInterpreter(true);
 
-                // Set up a date time interpreter to interpret how the date and time will be formatted in
-                // the week view. This is optional.
-                setupDateTimeInterpreter(true);
+                    return true;
+                }
+            }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                @Override
+                public void onResult(Boolean result) {
+                    // When click on the empty cell -> create event
+                    weekView.setEmptyViewClickListener(new WeekView.EmptyViewClickListener() {
+                        @Override
+                        public void onEmptyViewClicked(Calendar startDateTime) {
+                            Intent intent = new Intent(getContext(), WeekSaveEvent.class);
 
-                return true;
-            }
-        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-            @Override
-            public void onResult(Boolean result) {
-                // When click on the empty cell -> create event
-                weekView.setEmptyViewClickListener(new WeekView.EmptyViewClickListener() {
-                    @Override
-                    public void onEmptyViewClicked(Calendar startDateTime) {
-                        Intent intent = new Intent(getContext(), WeekSaveEvent.class);
+                            // Set the new event with duration 30mins
+                            Calendar endDateTime = (Calendar) startDateTime.clone();
+                            endDateTime.add(Calendar.MINUTE, 30);
 
-                        // Set the new event with duration 30mins
-                        Calendar endDateTime = (Calendar) startDateTime.clone();
-                        endDateTime.add(Calendar.MINUTE, 30);
+                            // Pass over the data
+                            Bundle data = new Bundle();
 
-                        // Pass over the data
-                        Bundle data = new Bundle();
+                            data.putString("startDateTime", DateUtil.localToUTC(startDateTime.getTime()));
+                            data.putString("endDateTime", DateUtil.localToUTC(endDateTime.getTime()));
+                            intent.putExtras(data);
 
-                        data.putString("startDateTime", DateUtil.localToUTC(startDateTime.getTime()));
-                        data.putString("endDateTime", DateUtil.localToUTC(endDateTime.getTime()));
-                        intent.putExtras(data);
+                            startActivityForResult(intent, 122); // show the saving activity
+                        }
+                    });
 
-                        startActivityForResult(intent, 122); // show the saving activity
-                    }
-                });
+                    // When click on the existing event -> show detail dialog
+                    weekView.setOnEventClickListener(new WeekView.EventClickListener() {
+                        @Override
+                        public void onEventClick(final WeekViewEvent event, RectF eventRect) {
+                            // Get the layout and render from the CalbiticaCalendar Modal
+                            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                            final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
 
-                // When click on the existing event -> show detail dialog
-                weekView.setOnEventClickListener(new WeekView.EventClickListener() {
-                    @Override
-                    public void onEventClick(final WeekViewEvent event, RectF eventRect) {
-                        // Get the layout and render from the CalbiticaCalendar Modal
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        final View mView = getLayoutInflater().inflate(R.layout.calendar_modal, null);
+                            check = mView.findViewById(R.id.calendar_Modal_eventCheckBox);
+                            title = mView.findViewById(R.id.calendar_Modal_eventTitle);
+                            startDateTime = mView.findViewById(R.id.calendar_Modal_eventStartDateTime);
+                            endDateTime = mView.findViewById(R.id.calendar_Modal_eventEndDateTime);
+                            editing = mView.findViewById(R.id.calendar_Modal_editing);
+                            deleting = mView.findViewById(R.id.calendar_Modal_deleting);
+                            close = mView.findViewById(R.id.calendar_Modal_eventClose);
 
-                        check = mView.findViewById(R.id.calendar_Modal_eventCheckBox);
-                        title = mView.findViewById(R.id.calendar_Modal_eventTitle);
-                        startDateTime = mView.findViewById(R.id.calendar_Modal_eventStartDateTime);
-                        endDateTime = mView.findViewById(R.id.calendar_Modal_eventEndDateTime);
-                        editing = mView.findViewById(R.id.calendar_Modal_editing);
-                        deleting = mView.findViewById(R.id.calendar_Modal_deleting);
-                        close = mView.findViewById(R.id.calendar_Modal_eventClose);
+                            // Convert to our respective  datetime format of start and end DateTime
+                            Timestamp startTimeStamp = new Timestamp(event.getStartTime().getTimeInMillis());
+                            Timestamp endTimeStamp = new Timestamp(event.getEndTime().getTimeInMillis());
+                            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, YYYY HH:mm", Locale.ENGLISH);
+                            String start = sdf.format(startTimeStamp);
+                            String end = sdf.format(endTimeStamp);
 
-                        // Convert to our respective  datetime format of start and end DateTime
-                        Timestamp startTimeStamp = new Timestamp(event.getStartTime().getTimeInMillis());
-                        Timestamp endTimeStamp = new Timestamp(event.getEndTime().getTimeInMillis());
-                        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, YYYY HH:mm", Locale.ENGLISH);
-                        String start = sdf.format(startTimeStamp);
-                        String end = sdf.format(endTimeStamp);
+                            // Put the existing data in the Modal
+                            title.setText(event.getName());
+                            startDateTime.setText("\n" + start + " - ");
+                            endDateTime.setText("\n" + end);
 
-                        // Put the existing data in the Modal
-                        title.setText(event.getName());
-                        startDateTime.setText("\n" + start + " - ");
-                        endDateTime.setText("\n" + end);
+                            // Render the Modal, must be in the last of the code
+                            builder.setView(mView);
+                            AlertDialog dialog = builder.create();
 
-                        // Render the Modal, must be in the last of the code
-                        builder.setView(mView);
-                        AlertDialog dialog = builder.create();
+                            try {
+                                dialog.show();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                            // Prepare for an edit/delete activity
+                            // get the currentSelectedMongoID
+                            int wveIndex = (int) event.getId();
+                            Calbit clickedOnCalbit = listOfCalbits.get(wveIndex);
+
+                            currentSelectedMongoID = clickedOnCalbit.get_id().toString();
+                            String mongoReminder = (clickedOnCalbit.getReminders() != null
+                                    && clickedOnCalbit.getReminders().size() > 0)
+                                    ? DateUtil.localToUTC(clickedOnCalbit.getReminders().get(0))
+                                    : "";
+
+                            if (clickedOnCalbit.getCompleted() != null) {
+                                check.setChecked(clickedOnCalbit.getCompleted().getStatus());
+                            } else {
+                                check.setChecked(false);
+                            }
+
+                            close.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    dialog.dismiss();
+                                }
+                            });
+
+                            check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                                @Override
+                                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                    // Update the database
+                                    HashMap<String, Boolean> completion = new HashMap<>();
+                                    completion.put("status", isChecked);
+                                    CAWrapper.updateCalbitCompletion(getActivity().getApplicationContext(),
+                                            currentSelectedMongoID, completion,
+                                            WeekFragment.this);
+
+                                    // We will do local updates here, regardless of the result of the API call,
+                                    // as sooner or later the real changes will show up.
+                                    int newColor = (isChecked) ? R.color.gray_3 : R.color.blue_3;
+                                    event.setColor(getResources().getColor(newColor, null));
+
+                                    // update on the list of calbits too
+                                    clickedOnCalbit.setCompleted(new TaskCompleted(isChecked));
+
+                                    // Refresh the Week Calendar to make any changes
+                                    weekView.notifyDatasetChanged();
+                                }
+                            });
+
+                            editing.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    Intent intent = new Intent(getContext(), WeekSaveEvent.class);
+
+                                    Bundle data = new Bundle();
+                                    data.putString("id", currentSelectedMongoID);
+                                    data.putLong("wveIndex", event.getId());
+                                    data.putString("title", event.getName());
+                                    data.putString("calendarID", clickedOnCalbit.getCalendarID());
+
+                                    data.putString("startDateTime", DateUtil.localToUTC(event.getStartTime().getTime()));
+                                    data.putString("endDateTime", DateUtil.localToUTC(event.getEndTime().getTime()));
+
+                                    data.putString("reminderDateTime", mongoReminder);
+                                    data.putBoolean("legitAllDay", clickedOnCalbit.getAllDay());
+                                    data.putString("googleID", clickedOnCalbit.getGoogleID());
+
+                                    intent.putExtras(data);
+
+                                    startActivityForResult(intent, 122);
+                                    dialog.dismiss();
+                                }
+                            });
+
+                            deleting.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    // Delete from Calbitica with the existing data
+                                    CAWrapper.deleteCalbit(getActivity().getApplicationContext(),
+                                            currentSelectedMongoID,
+                                            WeekFragment.this);
+
+                                    // Delete event with existing data(Only 1 data will be found and delete)
+                                    // Sadly, this is the only way to do it...
+                                    for (int i = 0; i < mNewEvents.size(); i++) {
+                                        if (mNewEvents.get(i).getId() == event.getId()) {
+                                            mNewEvents.remove(event);
+                                            listOfCalbits.removeIf(c -> c.get_id().equals(currentSelectedMongoID));
+                                        }
+                                    }
+
+                                    // reset the indices
+                                    for (int i = 0; i < mNewEvents.size(); i++) {
+                                        mNewEvents.get(i).setId(i);
+                                    }
+
+                                    // Refresh the week calendar view.
+                                    weekView.notifyDatasetChanged();
+
+                                    Toast.makeText(getActivity(), "Event deleted.", Toast.LENGTH_SHORT).show();
+                                    dialog.dismiss();
+                                }
+                            });
+
+                            close.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    dialog.dismiss();
+                                }
+                            });
+                        }
+                    });
+
+                    // When scrolling horizontally under the Week CalbiticaCalendar date
+                    weekView.setScrollListener(new WeekView.ScrollListener() {
+                        @Override
+                        public void onFirstVisibleDayChanged(Calendar newFirstVisibleDay, Calendar oldFirstVisibleDay) {
+                            // When it scroll then...
+                            if (oldFirstVisibleDay != null) {
+                                // Setting the CalbiticaCalendar title as the scrolled CalbiticaCalendar
+                                String currentMonth = DateFormat.getDateInstance(DateFormat.LONG).format(newFirstVisibleDay.getTime());
+                                NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " " + newFirstVisibleDay.get(Calendar.YEAR));
+                            }
+                        }
+                    });
+
+                    // Able to retrieve the data from the Navigation Bar of the drop-down, and change the weekView when clicked
+                    if (getArguments() != null) {
+                        String selectedDate = getArguments().getString("selectedDate");
 
                         try {
-                            dialog.show();
-                        } catch (Exception e) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm:ss z yyyy", Locale.ENGLISH);
+
+                            // Assign to the same calendar to have a link relationship of the Navigation Bar and Today
+                            NavigationBar.calendar.setTime(sdf.parse(selectedDate));
+                        } catch (java.text.ParseException e) {
                             e.printStackTrace();
                         }
 
-                        // Prepare for an edit/delete activity
-                        // get the currentSelectedMongoID
-                        int wveIndex = (int) event.getId();
-                        Calbit clickedOnCalbit = listOfCalbits.get(wveIndex);
+                        weekView.goToDate(NavigationBar.calendar);
+                    }
 
-                        currentSelectedMongoID = clickedOnCalbit.get_id().toString();
-                        String mongoReminder = (clickedOnCalbit.getReminders() != null
-                        && clickedOnCalbit.getReminders().size() > 0)
-                                ? DateUtil.localToUTC(clickedOnCalbit.getReminders().get(0))
-                                : "";
-
-                        if (clickedOnCalbit.getCompleted() != null) {
-                            check.setChecked(clickedOnCalbit.getCompleted().getStatus());
-                        } else {
-                            check.setChecked(false);
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Allow user to press the button again
+                            NavigationBar.nav_today.setEnabled(true);
+                            weekMonthCheck = true;
                         }
-
-                        close.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                            }
-                        });
-
-                        check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                            @Override
-                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                // Update the database
-                                HashMap<String, Boolean> completion = new HashMap<>();
-                                completion.put("status", isChecked);
-                                CAWrapper.updateCalbitCompletion(getActivity().getApplicationContext(),
-                                        currentSelectedMongoID, completion,
-                                        WeekFragment.this);
-
-                                // We will do local updates here, regardless of the result of the API call,
-                                // as sooner or later the real changes will show up.
-                                int newColor = (isChecked) ? R.color.gray_3 : R.color.blue_3;
-                                event.setColor(getResources().getColor(newColor, null));
-
-                                // update on the list of calbits too
-                                clickedOnCalbit.setCompleted(new TaskCompleted(isChecked));
-
-                                // Refresh the Week Calendar to make any changes
-                                weekView.notifyDatasetChanged();
-                            }
-                        });
-
-                        editing.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Intent intent = new Intent(getContext(), WeekSaveEvent.class);
-
-                                Bundle data = new Bundle();
-                                data.putString("id", currentSelectedMongoID);
-                                data.putLong("wveIndex", event.getId());
-                                data.putString("title", event.getName());
-                                data.putString("calendarID", clickedOnCalbit.getCalendarID());
-
-                                data.putString("startDateTime", DateUtil.localToUTC(event.getStartTime().getTime()));
-                                data.putString("endDateTime", DateUtil.localToUTC(event.getEndTime().getTime()));
-
-                                data.putString("reminderDateTime", mongoReminder);
-                                data.putBoolean("legitAllDay", clickedOnCalbit.getAllDay());
-                                data.putString("googleID", clickedOnCalbit.getGoogleID());
-
-                                intent.putExtras(data);
-
-                                startActivityForResult(intent, 122);
-                                dialog.dismiss();
-                            }
-                        });
-
-                        deleting.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                // Delete from Calbitica with the existing data
-                                CAWrapper.deleteCalbit(getActivity().getApplicationContext(),
-                                        currentSelectedMongoID,
-                                        WeekFragment.this);
-
-                                // Delete event with existing data(Only 1 data will be found and delete)
-                                // Sadly, this is the only way to do it...
-                                for (int i = 0; i < mNewEvents.size(); i++) {
-                                    if (mNewEvents.get(i).getId() == event.getId()) {
-                                        mNewEvents.remove(event);
-                                        listOfCalbits.removeIf(c -> c.get_id().equals(currentSelectedMongoID));
-                                    }
-                                }
-
-                                // reset the indices
-                                for (int i = 0; i < mNewEvents.size(); i++) {
-                                    mNewEvents.get(i).setId(i);
-                                }
-
-                                // Refresh the week calendar view.
-                                weekView.notifyDatasetChanged();
-
-                                Toast.makeText(getActivity(), "Event deleted.", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                            }
-                        });
-
-                        close.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                            }
-                        });
-//                            }
-//                        }).create().start();
-                    }
-                });
-
-                // When scrolling horizontally under the Week CalbiticaCalendar date
-                weekView.setScrollListener(new WeekView.ScrollListener() {
-                    @Override
-                    public void onFirstVisibleDayChanged(Calendar newFirstVisibleDay, Calendar oldFirstVisibleDay) {
-                        // When it scroll then...
-                        if (oldFirstVisibleDay != null) {
-                            // Setting the CalbiticaCalendar title as the scrolled CalbiticaCalendar
-                            String currentMonth = DateFormat.getDateInstance(DateFormat.LONG).format(newFirstVisibleDay.getTime());
-                            NavigationBar.title.setText(currentMonth.replaceAll("[^a-zA-Z]", "").substring(0, 3) + " " + newFirstVisibleDay.get(Calendar.YEAR));
-                        }
-                    }
-                });
-
-                // Able to retrieve the data from the Navigation Bar of the drop-down, and change the weekView when clicked
-                if (getArguments() != null) {
-                    String selectedDate = getArguments().getString("selectedDate");
-
-                    try {
-                        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm:ss z yyyy", Locale.ENGLISH);
-
-                        // Assign to the same calendar to have a link relationship of the Navigation Bar and Today
-                        NavigationBar.calendar.setTime(sdf.parse(selectedDate));
-                    } catch (java.text.ParseException e) {
-                        e.printStackTrace();
-                    }
-
-                    weekView.goToDate(NavigationBar.calendar);
+                    }, 3000);
                 }
-
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Allow user to press the button again
-                        NavigationBar.nav_today.setEnabled(true);
-                        weekMonthCheck = true;
-                    }
-                }, 3000);
-            }
-        }).create().start();
+            }).create().start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // Other Week View setup & enhancements
