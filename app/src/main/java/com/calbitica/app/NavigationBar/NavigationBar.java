@@ -505,44 +505,48 @@ public class NavigationBar extends AppCompatActivity implements NavigationView.O
 
             // When the previous page is the last page, just render the WeekView CalbiticaCalendar(Dashboard/Main Page)
             if (selectedList.size() <= 0) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(NavigationBar.this);
+                try {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(NavigationBar.this);
 
-                builder.setTitle("Attention!")
-                        .setMessage("Are you sure you want to exit the app")
-                        // Negative will always on the left, but I prefer in right hand side so...
-                        .setNegativeButton("Yes", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                finish();
-                            }
-                        })
-                        // Positive will always on the right, but I prefer in left hand side so...
-                        .setPositiveButton("No", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // do nothing to go back to the same page
-                            }
-                        });
+                    builder.setTitle("Attention!")
+                            .setMessage("Are you sure you want to exit the app")
+                            // Negative will always on the left, but I prefer in right hand side so...
+                            .setNegativeButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            })
+                            // Positive will always on the right, but I prefer in left hand side so...
+                            .setPositiveButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // do nothing to go back to the same page
+                                }
+                            });
 
-                builder.create().show();
+                    builder.create().show();
 
-                // Setting the necessary items for each respective pages
-                arrow.setVisibility(View.VISIBLE);
-                arrowTrigger = false;
-                arrow.setImageResource(R.drawable.down_arrow);
-                calendarView.setVisibility(View.GONE);
-                nav_today.setVisible(true);
-                nav_refresh.setVisible(true);
-                nav_add.setVisible(true);
+                    // Setting the necessary items for each respective pages
+                    arrow.setVisibility(View.VISIBLE);
+                    arrowTrigger = false;
+                    arrow.setImageResource(R.drawable.down_arrow);
+                    calendarView.setVisibility(View.GONE);
+                    nav_today.setVisible(true);
+                    nav_refresh.setVisible(true);
+                    nav_add.setVisible(true);
 
-                SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
-                String selectedMonth = month_date.format(calendar.getTime());
-                title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
+                    SimpleDateFormat month_date = new SimpleDateFormat("MMMM");
+                    String selectedMonth = month_date.format(calendar.getTime());
+                    title.setText(selectedMonth.substring(0, 3) + " " + calendar.get(Calendar.YEAR));
 
-                navigationView.setCheckedItem(R.id.nav_week);
+                    navigationView.setCheckedItem(R.id.nav_week);
 
-                // So that it will cause error, due to ArrayList cannot be less than 0, based on default page*
-                selectedList.add("nav_week");
+                    // So that it will cause error, due to ArrayList cannot be less than 0, based on default page*
+                    selectedList.add("nav_week");
+                }catch (Exception e) {
+                    e.printStackTrace();
+                }
             } else {
                 super.onBackPressed();
                 // ArrayList.get() start from '0' -> Very First Page, ArrayList.size() start from '1' -> Very First Page(Tally both of them)

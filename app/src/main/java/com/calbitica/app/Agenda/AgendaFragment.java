@@ -455,22 +455,28 @@ public class AgendaFragment extends Fragment implements CalbitResultInterface {
 
             // Based on the Agenda Calendar format, and return back the list
             // Auto-configure the task completion of color and checked according to calbitica
-            int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
-            int resourceColor = getActivity().getResources().getColor(newColor, null);
+            try {
+                int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
+                int resourceColor = getActivity().getResources().getColor(newColor, null);
 
-            BaseCalendarEvent allEvent = new BaseCalendarEvent(
-                    currentCalbit.getSummary(), "", "",
-                    resourceColor, startDateTime, endDateTime, currentCalbit.getAllDay());
+                BaseCalendarEvent allEvent = new BaseCalendarEvent(
+                        currentCalbit.getSummary(), "", "",
+                        resourceColor, startDateTime, endDateTime, currentCalbit.getAllDay());
 
-            allEvent.setId(i);
-
-            eventList.add(allEvent);
+                allEvent.setId(i);
+                eventList.add(allEvent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         // Refresh the agenda calendar view
         listOfCalbits = calbitList;
 
-        agendaView.init(eventList, minDate, maxDate,
-                Locale.getDefault(), calendarPickerController);
+        try {
+            agendaView.init(eventList, minDate, maxDate, Locale.getDefault(), calendarPickerController);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

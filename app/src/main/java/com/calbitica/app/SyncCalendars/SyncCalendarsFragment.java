@@ -170,63 +170,67 @@ public class SyncCalendarsFragment extends Fragment {
         protected void onPostExecute(Integer integer) {
             super.onPostExecute(integer);
 
-            if (checkBoxes != null) {
+            if (checkBoxes != null || !checkBoxes.equals(null)) {
                 // Check all the array that found, and do the sync upon checked...
                 for (int i = 0; i < checkBoxes.length; i++) {
                     // Enable back the control to the user
-                    progressDialog.dismiss();
-                    checkBoxes[i].setEnabled(true);
-                    NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                    try {
+                        progressDialog.dismiss();
+                        checkBoxes[i].setEnabled(true);
+                        NavigationBar.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
-                    checkBoxes[i].setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                        @Override
-                        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                            new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-                                @Override
-                                public Boolean doAsync() {
-                                    // Retrieve the JWT
-                                    String jwt = UserData.get("jwt", getActivity().getApplicationContext());
+                        checkBoxes[i].setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+                                    @Override
+                                    public Boolean doAsync() {
+                                        // Retrieve the JWT
+                                        String jwt = UserData.get("jwt", getActivity().getApplicationContext());
 
-                                    // Build the API Call, and get the specific checkbox information
-                                    Call<SyncCalendar> apiCall = CalbiticaAPI.getInstance(jwt).calendars().syncCalendar(buttonView.getHint().toString(), isChecked);
+                                        // Build the API Call, and get the specific checkbox information
+                                        Call<SyncCalendar> apiCall = CalbiticaAPI.getInstance(jwt).calendars().syncCalendar(buttonView.getHint().toString(), isChecked);
 
-                                    // Make the API Call
-                                    apiCall.enqueue(new Callback<SyncCalendar>() {
-                                        @Override
-                                        public void onResponse(Call<SyncCalendar> call, Response<SyncCalendar> response) {
-                                            if (!response.isSuccessful()) {
-                                                System.out.println("Unsuccessful to sync the CalbiticaCalendar: " + response.code());
-                                                return;
+                                        // Make the API Call
+                                        apiCall.enqueue(new Callback<SyncCalendar>() {
+                                            @Override
+                                            public void onResponse(Call<SyncCalendar> call, Response<SyncCalendar> response) {
+                                                if (!response.isSuccessful()) {
+                                                    System.out.println("Unsuccessful to sync the CalbiticaCalendar: " + response.code());
+                                                    return;
+                                                }
+
+                                                // No need loop, just a simple object and display according to the changes only
+                                                SyncCalendar syncCalendar = response.body();
+                                                message = syncCalendar.getData().getMessage();
                                             }
 
-                                            // No need loop, just a simple object and display according to the changes only
-                                            SyncCalendar syncCalendar = response.body();
-                                            message = syncCalendar.getData().getMessage();
+                                            @Override
+                                            public void onFailure(Call<SyncCalendar> call, Throwable t) {
+                                                System.out.println("Fail to sync the CalbiticaCalendar: " + t.getMessage());
+                                            }
+                                        });
+
+                                        try {
+                                            Thread.sleep(1000);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
                                         }
 
-                                        @Override
-                                        public void onFailure(Call<SyncCalendar> call, Throwable t) {
-                                            System.out.println("Fail to sync the CalbiticaCalendar: " + t.getMessage());
-                                        }
-                                    });
-
-                                    try {
-                                        Thread.sleep(1000);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
+                                        return true;
                                     }
+                                }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+                                    @Override
+                                    public void onResult(Boolean result) {
+                                        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                                    }
+                                }).create().start();
+                            }
 
-                                    return true;
-                                }
-                            }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
-                                @Override
-                                public void onResult(Boolean result) {
-                                    Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-                                }
-                            }).create().start();
-                        }
-
-                    });
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             } else {
                 // Enable back the control to the user

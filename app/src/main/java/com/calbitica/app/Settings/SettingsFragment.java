@@ -37,57 +37,60 @@ public class SettingsFragment extends Fragment {
         Button saveBTN = getActivity().findViewById(R.id.btn_HABITICA_SAVE);
 
         saveBTN.setOnClickListener(v -> {
-            String hUserID = userIDET.getText().toString();
-            String apiKey = apiKeyET.getText().toString();
+            if(userIDET.getText().toString().isEmpty() || apiKeyET.getText().toString().isEmpty()) {
+                Toast.makeText(getContext(), "Please fill up something", Toast.LENGTH_SHORT).show();
+            } else {
+                String hUserID = userIDET.getText().toString();
+                String apiKey = apiKeyET.getText().toString();
 
-            HashMap<String, String> data = new HashMap<>();
-            if(hUserID != null && !hUserID.equals("")) data.put("hUserID", hUserID);
-            if(apiKey != null && !apiKey.equals("")) data.put("apiKey", apiKey);
+                HashMap<String, String> data = new HashMap<>();
+                if(hUserID != null && !hUserID.equals("")) data.put("hUserID", hUserID);
+                if(apiKey != null && !apiKey.equals("")) data.put("apiKey", apiKey);
 
-            // Retrieve the JWT
-            String oldJWT = UserData.get("jwt", getActivity().getApplicationContext());
-            // Build the API Call
-            Call<HashMap<String, String>> apiCall = CalbiticaAPI.getInstance(oldJWT)
-                                                    .settings().saveSettings(data);
+                // Retrieve the JWT
+                String oldJWT = UserData.get("jwt", getActivity().getApplicationContext());
+                // Build the API Call
+                Call<HashMap<String, String>> apiCall = CalbiticaAPI.getInstance(oldJWT)
+                        .settings().saveSettings(data);
 
-            // Make the API Call
-            apiCall.enqueue(new Callback<HashMap<String, String>>() {
-                @Override
-                public void onResponse(Call<HashMap<String, String>> call,
-                                       Response<HashMap<String, String>> response) {
-                    if (!response.isSuccessful()) {
-                        Log.d("API JWT CALL", response.toString());
-                        return;
-                    }
-                    try {
-                        HashMap<String, String> data = response.body();
-                        if (data.containsKey("jwt")) {
-                            String jwt = data.get("jwt");
-
-                            // Handle JWT
-                            HashMap<String, String> user = new HashMap<>();
-                            user.put("jwt", jwt);
-
-                            UserData.save(user, getActivity().getApplicationContext());
-                            Log.d("API JWT: ", jwt);
-
-                            String message = (data.containsKey("message"))
-                                    ? data.get("message")
-                                    : "Something went wrong. Please try again.";
-                            Toast.makeText(getActivity(),message, Toast.LENGTH_SHORT).show();
+                // Make the API Call
+                apiCall.enqueue(new Callback<HashMap<String, String>>() {
+                    @Override
+                    public void onResponse(Call<HashMap<String, String>> call,
+                                           Response<HashMap<String, String>> response) {
+                        if (!response.isSuccessful()) {
+                            Log.d("API JWT CALL", response.toString());
+                            return;
                         }
-                    } catch (Exception e) {
-                        Log.d("API JWT FAILED", e.getLocalizedMessage());
+                        try {
+                            HashMap<String, String> data = response.body();
+                            if (data.containsKey("jwt")) {
+                                String jwt = data.get("jwt");
+
+                                // Handle JWT
+                                HashMap<String, String> user = new HashMap<>();
+                                user.put("jwt", jwt);
+
+                                UserData.save(user, getActivity().getApplicationContext());
+                                Log.d("API JWT: ", jwt);
+
+                                String message = (data.containsKey("message"))
+                                        ? data.get("message")
+                                        : "Something went wrong. Please try again.";
+                                Toast.makeText(getActivity(),message, Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (Exception e) {
+                            Log.d("API JWT FAILED", e.getLocalizedMessage());
+                        }
                     }
-                }
 
-                @Override
-                public void onFailure(Call<HashMap<String, String>> call, Throwable t) {
-                    Log.d("Save settings FAILED", call.toString());
-                    Log.d("Save settings MORE DETAILS", t.getLocalizedMessage());
-                }
-            });
-
+                    @Override
+                    public void onFailure(Call<HashMap<String, String>> call, Throwable t) {
+                        Log.d("Save settings FAILED", call.toString());
+                        Log.d("Save settings MORE DETAILS", t.getLocalizedMessage());
+                    }
+                });
+            }
         });
     }
 }
