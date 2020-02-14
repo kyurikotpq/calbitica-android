@@ -440,8 +440,12 @@ public class WeekFragment extends Fragment implements CalbitResultInterface {
             // event.getId() = i later on
             WeekViewEvent newWVE = new WeekViewEvent(i, currentCalbit.getSummary(), startDateTime, endDateTime);
 
-            int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
-            newWVE.setColor(getActivity().getResources().getColor(newColor, null));
+            try {
+                int newColor = (currentCalbit.getCompleted().getStatus()) ? R.color.gray_3 : R.color.blue_3;
+                newWVE.setColor(getActivity().getResources().getColor(newColor, null));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             newWVE.setAllDay(currentCalbit.getAllDay());
             mNewEvents.add(newWVE);
