@@ -8,6 +8,33 @@ We underestimated how many hiccups could occur in the process of development and
 We'd really, really love for you to consider this version as our submitted version without the late submission penalty. It was the best we could manage during this difficult period :')
 
 ---
+### Running the Project
+This app crashes in the emulator due to the AVD's infrastructure limitations. Therefore, we highly encourage you to run this app on an actual device.
+
+You will need a Google account and a Habitica account for the app to work. You can register for a Habitica account at [https://www.habitica.com/](https://www.habitica.com/)
+
+### Finding your Habitica User ID & API key
+In the Habitica website,
+1. Click on the profile icon in the top right hand corner of teh navigation bar
+2. Click on the `Settings` navigation item
+3. Navigate to the `API` tab on the page.
+4. Copy and paste the User ID to the corresponding field in the Settings page of our app.
+5. Click on `Show API Token` button and copy and paste the API key to the corresponding field in the Settings page of our app.
+
+### Calbitica API
+The API is hosted at [https://app.kyurikotpq.com/calbitica/](https://app.kyurikotpq.com/calbitica/) (trailing backslash is needed). A Habitica account must be connected or the API will refuse to do anything. This is because rewards (gold coins, experience points, etc.) are tagged to Habitica tasks, so a Habitica account is crucial.
+
+### Because we are using Google Sign-In
+which relies on my SHA1 fingerprint of my debug.keystore, I've included it in this project folder. Please do not share it with anyone else.
+
+Back up your existing debug.keystore in your home folder, i.e. `C:\Users\<Username>\.android`, and use this provided debug.keystore instead. If this is not done, Google Sign in will not work at all.
+
+### Access Token refreshing
+Access Tokens from the Google OAuth process expire **every hour**. Therefore, you may encounter issues with the app due to the API not being able to pull anything from your Google Calendar.
+
+Solution: signing in and out usually solves the problem, but if all else fails, revoke Calbitica's access to your account and try again.
+
+---
 ### Work breakdown:
 - Google Auth Sign In, Session Management & Sign Out: Pei Qi
 - WeekView - CRUD, Today, Refresh & Add buttons: Poh Heng
@@ -31,20 +58,7 @@ Poh Heng later mentioned that CalbiticaAPI wasn't centralised enough, especially
 
 So he wrote a class, originally named Database, to do HTTP requests *and* rendering of events. I moved the rendering codes to the fragments, triggering them through the use of interfaces (*ResultInterfaces) which was a design pattern we learnt in class.
 
-### Because we are using Google Sign-In
-which relies on my SHA1 fingerprint of my debug.keystore, I've included it in this project folder. Please do not share it with anyone else.
-
-Back up your existing debug.keystore in your home folder, i.e. `C:\Users\<Username>\.android`, and use this provided debug.keystore instead. If this is not done, Google Sign in will not work at all.
-
-### Access Token refreshing
-Access Tokens from the Google OAuth process expire every hour. Therefore, you may encounter issues with the app due to the API not being able to pull anything from your Google Calendar.
-
-Solution: signing in and out usually solves the problem, but if all else fails, revoke Calbitica's access to your account and try again.
-
-### API
-The API is hosted at [https://app.kyurikotpq.com/calbitica/](https://app.kyurikotpq.com/calbitica/) (trailing backslash is needed). A Habitica account must be connected or the API will refuse to do anything. This is because rewards (gold coins, experience points, etc.) are tagged to Habitica tasks, so a Habitica account is crucial.
-
-### Notes:
+### Notes
 * Reference Links: https://github.com/alamkanak/Android-Week-View/issues/541
     * Example: change "targetSdkVersion" 28 to 27 from app level build.gradle(from one of the comment in the link)
 * minSdkVersion 24
